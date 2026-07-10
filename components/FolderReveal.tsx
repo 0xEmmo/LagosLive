@@ -2,13 +2,24 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PARTIES, VC, VCT } from '@/lib/data';
+import { PARTIES } from '@/lib/data';
 
 const SEEN_KEY = 'll_seen_folder_reveal';
 // One party per vibe (Club, Rooftop, Festival, House Party, Lounge) so the reveal shows
 // 5 distinct vibes rather than just the first 5 parties in list order.
 const HOT_PARTY_IDS = [1, 2, 3, 5, 6];
 const HOT_PARTIES = HOT_PARTY_IDS.map((id) => PARTIES.find((p) => p.id === id)!);
+
+// Vivid, saturated ray colors — deliberately more neon/punchy than the app's muted card
+// palette, matching the high-energy "hype reveal" moment this component is for.
+const RAY_GRADIENTS = [
+  'linear-gradient(180deg,#FF7F50 0%,#FF1493 55%,#B0116B 100%)',
+  'linear-gradient(180deg,#9D4EDD 0%,#FF006E 55%,#5A2A8A 100%)',
+  'linear-gradient(180deg,#FFFB00 0%,#FFD60A 55%,#C79A00 100%)',
+  'linear-gradient(180deg,#00D9FF 0%,#0096FF 55%,#0067AE 100%)',
+  'linear-gradient(180deg,#FF8C42 0%,#FF006E 55%,#A8003F 100%)',
+];
+const FOLDER_GRADIENT = 'linear-gradient(135deg,#8B5CF6 0%,#D6409F 100%)';
 
 // Percentage-based fan geometry (converted from the original 760x610px design so it scales
 // responsively instead of being pinned to one canvas width).
@@ -99,11 +110,11 @@ export default function FolderReveal() {
           0%,
           100% {
             transform: scale(1);
-            box-shadow: 0 12px 40px rgba(109, 90, 153, 0.4);
+            box-shadow: 0 12px 40px rgba(139, 92, 246, 0.45);
           }
           50% {
             transform: scale(1.06);
-            box-shadow: 0 16px 56px rgba(109, 90, 153, 0.6), 0 0 60px rgba(168, 86, 112, 0.3);
+            box-shadow: 0 16px 56px rgba(139, 92, 246, 0.65), 0 0 60px rgba(214, 64, 159, 0.4);
           }
         }
         @keyframes fr-hint-flicker {
@@ -118,7 +129,7 @@ export default function FolderReveal() {
         .fr-ray {
           position: absolute;
           inset: 0;
-          transition: clip-path 1s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+          transition: clip-path 0.75s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
         }
         .fr-divider {
           position: absolute;
@@ -148,16 +159,16 @@ export default function FolderReveal() {
       </button>
 
       {phase === 'prompt' && (
-        <button onClick={() => setPhase('burst')} className="flex flex-1 flex-col items-center justify-center gap-6 px-8">
+        <button onClick={() => setPhase('burst')} className="flex flex-1 flex-col items-center justify-center gap-6 px-8 active:scale-[0.97] transition-transform">
           <div className="relative flex h-[220px] w-full items-end justify-center">
-            <div className="absolute bottom-[86px] flex gap-2" style={{ opacity: 0.5 }}>
-              {[60, 80, 90, 80, 60].map((h, i) => (
+            <div className="absolute bottom-[86px] flex gap-2.5" style={{ opacity: 0.75 }}>
+              {['#FF7F50', '#9D4EDD', '#FFD60A', '#00D9FF', '#FF8C42'].map((color, i) => (
                 <div
                   key={i}
                   style={{
-                    width: 2,
-                    height: h,
-                    background: 'linear-gradient(to top, rgba(168,86,112,0.6), transparent)',
+                    width: 2.5,
+                    height: [60, 80, 90, 80, 60][i],
+                    background: `linear-gradient(to top, ${color}, transparent)`,
                     transform: `rotate(${(i - 2) * 9}deg)`,
                     animation: 'fr-hint-flicker 2.4s ease-in-out infinite',
                     animationDelay: `${i * 0.15}s`,
@@ -166,8 +177,8 @@ export default function FolderReveal() {
               ))}
             </div>
             <div
-              className="fr-tap-hint flex h-[76px] w-[76px] items-center justify-center rounded-[20px]"
-              style={{ background: 'linear-gradient(135deg,#6D5A99,#A85670)' }}
+              className="fr-tap-hint flex h-[76px] w-[76px] items-center justify-center rounded-[20px] border-2"
+              style={{ background: FOLDER_GRADIENT, borderColor: 'rgba(255,255,255,0.85)' }}
             >
               <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -189,19 +200,22 @@ export default function FolderReveal() {
         <div className="flex flex-1 flex-col items-center justify-center gap-5 py-8">
           <div className="relative w-full flex-1" style={{ maxHeight: 560 }}>
             {HOT_PARTIES.map((p, i) => {
-              const gradient = `linear-gradient(180deg, ${VCT[p.vibe]} 0%, ${VC[p.vibe]} 100%)`;
-              const dark = i === 2; // middle (yellow-ish tint) ray reads better with dark text
+              const dark = i === 2; // yellow ray reads better with dark text
               const centerPct = (TOP_EDGES[i] + TOP_EDGES[i + 1]) / 2;
               return (
                 <div
                   key={p.id}
                   className="fr-ray"
-                  style={{ background: gradient, clipPath: rayClipPath(i, true) }}
+                  style={{
+                    background: RAY_GRADIENTS[i],
+                    clipPath: rayClipPath(i, true),
+                    transitionDelay: `${Math.abs(i - 2) * 0.06}s`,
+                  }}
                 >
                   <button
                     onClick={() => openParty(p.id)}
                     className="fr-ray-text absolute top-[13%] w-[19%] min-w-[56px] -translate-x-1/2 text-center"
-                    style={{ left: `${centerPct}%`, animationDelay: `${0.55 + i * 0.03}s` }}
+                    style={{ left: `${centerPct}%`, animationDelay: `${0.4 + i * 0.02}s` }}
                   >
                     <div
                       className="font-display leading-[0.95] tracking-[0.4px]"
@@ -240,18 +254,21 @@ export default function FolderReveal() {
               <div
                 key={i}
                 className="fr-divider"
-                style={{ clipPath: `polygon(${edge}% 0%,${edge + 0.4}% 0%,${BOTTOM_EDGES[i] + 0.4}% 100%,${BOTTOM_EDGES[i]}% 100%)`, animationDelay: `${0.45 + i * 0.03}s` }}
+                style={{ clipPath: `polygon(${edge}% 0%,${edge + 0.4}% 0%,${BOTTOM_EDGES[i] + 0.4}% 100%,${BOTTOM_EDGES[i]}% 100%)`, animationDelay: `${0.3 + i * 0.02}s` }}
               />
             ))}
 
-            <div className="absolute bottom-0 left-1/2 z-[5] flex h-[64px] w-[64px] -translate-x-1/2 items-center justify-center rounded-[16px]" style={{ background: 'linear-gradient(135deg,#6D5A99,#A85670)', boxShadow: '0 12px 40px rgba(109,90,153,0.4)' }}>
+            <div
+              className="absolute bottom-0 left-1/2 z-[5] flex h-[68px] w-[68px] -translate-x-1/2 items-center justify-center rounded-[18px] border-2"
+              style={{ background: FOLDER_GRADIENT, borderColor: 'rgba(255,255,255,0.85)', boxShadow: '0 12px 40px rgba(139,92,246,0.55), 0 0 44px rgba(214,64,159,0.35)' }}
+            >
               <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
             </div>
           </div>
 
-          <div className="fr-fade-plain w-full px-6 text-center" style={{ animationDelay: '0.85s' }}>
+          <div className="fr-fade-plain w-full px-6 text-center" style={{ animationDelay: '0.65s' }}>
             <div className="font-display text-xl tracking-[0.5px]" style={{ color: '#FFFFFF' }}>
               HOT PARTIES TONIGHT
             </div>
@@ -262,8 +279,8 @@ export default function FolderReveal() {
 
           <button
             onClick={dismiss}
-            className="fr-fade-plain mt-1 rounded-full border px-5 py-2.5 text-[13px] font-semibold"
-            style={{ animationDelay: '1s', background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.16)', color: '#F1F1F1' }}
+            className="fr-fade-plain mt-1 rounded-full border px-5 py-2.5 text-[13px] font-semibold active:scale-95 transition-transform"
+            style={{ animationDelay: '0.8s', background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.16)', color: '#F1F1F1' }}
           >
             Enter Lagos Live →
           </button>

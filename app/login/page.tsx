@@ -93,7 +93,9 @@ export default function LoginPage() {
 
         <div className="flex gap-2.5">
           <button
-            className="flex flex-1 items-center justify-center gap-2 rounded-[10px] border py-[11px] text-[13px] font-medium"
+            disabled
+            title="Coming soon"
+            className="flex flex-1 items-center justify-center gap-2 rounded-[10px] border py-[11px] text-[13px] font-medium opacity-50 cursor-not-allowed"
             style={{ background: 'var(--c-glass)', borderColor: 'var(--c-border3)', color: 'var(--c-text)' }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24">
@@ -102,7 +104,9 @@ export default function LoginPage() {
             Google
           </button>
           <button
-            className="flex flex-1 items-center justify-center gap-2 rounded-[10px] border py-[11px] text-[13px] font-medium"
+            disabled
+            title="Coming soon"
+            className="flex flex-1 items-center justify-center gap-2 rounded-[10px] border py-[11px] text-[13px] font-medium opacity-50 cursor-not-allowed"
             style={{ background: 'var(--c-glass)', borderColor: 'var(--c-border3)', color: 'var(--c-text)' }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--c-text)">

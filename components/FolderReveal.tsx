@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PARTIES, partyPhoto } from '@/lib/data';
+import { PARTIES, partyPhoto, VC } from '@/lib/data';
 import PartyPhoto from './PartyPhoto';
 
 const SEEN_KEY = 'll_seen_folder_reveal';
@@ -11,10 +11,7 @@ const SEEN_KEY = 'll_seen_folder_reveal';
 const HOT_PARTY_IDS = [1, 2, 3, 5, 6];
 const HOT_PARTIES = HOT_PARTY_IDS.map((id) => PARTIES.find((p) => p.id === id)!);
 
-// Vivid accent per card — glow/border color, not a fill, since the card body is now a real
-// photo. Keeps the neon "hype" pop without the light-ray clipping problem.
-const ACCENTS = ['#FF7F50', '#C147E9', '#FFD60A', '#00C2FF', '#FF6A3D'];
-const FOLDER_GRADIENT = 'linear-gradient(135deg,#8B5CF6 0%,#D6409F 100%)';
+const FOLDER_GRADIENT = 'linear-gradient(135deg,#552CB7 0%,#FB7DA8 100%)';
 
 // Fan-out geometry per card (index 2 = center, frontmost).
 const CARD_LAYOUT = [
@@ -85,11 +82,11 @@ export default function FolderReveal() {
           0%,
           100% {
             transform: scale(1);
-            box-shadow: 0 12px 40px rgba(139, 92, 246, 0.45);
+            box-shadow: 0 12px 40px rgba(85, 44, 183, 0.45);
           }
           50% {
             transform: scale(1.06);
-            box-shadow: 0 16px 56px rgba(139, 92, 246, 0.65), 0 0 60px rgba(214, 64, 159, 0.4);
+            box-shadow: 0 16px 56px rgba(85, 44, 183, 0.65), 0 0 60px rgba(251, 125, 168, 0.4);
           }
         }
         @keyframes fr-hint-flicker {
@@ -133,14 +130,14 @@ export default function FolderReveal() {
         <button onClick={() => setPhase('burst')} className="flex flex-1 flex-col items-center justify-center gap-6 px-8 active:scale-[0.97] transition-transform">
           <div className="relative flex h-[220px] w-full items-end justify-center">
             <div className="absolute bottom-[92px] flex gap-1.5">
-              {ACCENTS.map((color, i) => (
+              {HOT_PARTIES.map((p, i) => (
                 <div
-                  key={i}
+                  key={p.id}
                   className="rounded-t-[4px]"
                   style={{
                     width: 14,
                     height: [16, 24, 30, 24, 16][i],
-                    background: color,
+                    background: VC[p.vibe],
                     opacity: 0.85,
                     transform: `rotate(${(i - 2) * 8}deg)`,
                     animation: 'fr-hint-flicker 2.2s ease-in-out infinite',
@@ -171,7 +168,7 @@ export default function FolderReveal() {
 
             {HOT_PARTIES.map((p, i) => {
               const layout = CARD_LAYOUT[i];
-              const accent = ACCENTS[i];
+              const accent = VC[p.vibe];
               return (
                 <button
                   key={p.id}
@@ -241,7 +238,7 @@ function FolderBody({ open = false }: { open?: boolean }) {
     <div className="relative" style={{ width: 156, height: 104 }}>
       <div
         className="absolute inset-0 rounded-[16px] border-2 flex items-end justify-center pb-2"
-        style={{ background: FOLDER_GRADIENT, borderColor: 'rgba(255,255,255,0.85)', boxShadow: '0 12px 40px rgba(139,92,246,0.5), 0 0 44px rgba(214,64,159,0.32)' }}
+        style={{ background: FOLDER_GRADIENT, borderColor: 'rgba(255,255,255,0.85)', boxShadow: '0 12px 40px rgba(85,44,183,0.5), 0 0 44px rgba(251,125,168,0.32)' }}
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.9 }}>
           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />

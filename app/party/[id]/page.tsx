@@ -51,16 +51,16 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
           <button
             onClick={() => toggleReminder(party.id, party.title)}
             className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border"
-            style={{ background: 'var(--c-glass)', borderColor: 'var(--c-border3)', color: reminded ? '#D4BE94' : 'var(--c-text-faint)' }}
+            style={{ background: 'var(--c-glass)', borderColor: 'var(--c-border3)', color: reminded ? '#B8860B' : 'var(--c-text-faint)' }}
           >
-            <Bell size={17} fill={reminded ? '#D4BE94' : 'none'} strokeWidth={2} />
+            <Bell size={17} fill={reminded ? '#FFC567' : 'none'} strokeWidth={2} />
           </button>
           <button
             onClick={() => toggleSave(party.id)}
             className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border"
-            style={{ background: 'var(--c-glass)', borderColor: 'var(--c-border3)', color: saved ? '#A85670' : 'var(--c-text-faint)' }}
+            style={{ background: 'var(--c-glass)', borderColor: 'var(--c-border3)', color: saved ? '#C23F72' : 'var(--c-text-faint)' }}
           >
-            <Heart size={18} fill={saved ? '#A85670' : 'none'} strokeWidth={2} />
+            <Heart size={18} fill={saved ? '#FB7DA8' : 'none'} strokeWidth={2} />
           </button>
         </div>
       </div>
@@ -97,7 +97,7 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
               key={i}
               onClick={() => setCarouselIndex(i)}
               className="h-[6px] cursor-pointer rounded-[3px] transition-all"
-              style={{ width: carouselIndex === i ? 18 : 6, background: carouselIndex === i ? '#6D5A99' : 'rgba(255,255,255,0.28)' }}
+              style={{ width: carouselIndex === i ? 18 : 6, background: carouselIndex === i ? '#552CB7' : 'rgba(255,255,255,0.55)' }}
             />
           ))}
         </div>
@@ -117,18 +117,18 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
             {party.title}
           </h1>
           <div
-            className="flex-shrink-0 rounded-xl border px-3.5 py-2 text-center"
-            style={{ background: 'linear-gradient(135deg,rgba(109,90,153,0.2),rgba(168,86,112,0.12))', borderColor: 'rgba(109,90,153,0.35)' }}
+            className="flex-shrink-0 rounded-xl border-2 px-3.5 py-2 text-center"
+            style={{ background: 'linear-gradient(135deg,rgba(85,44,183,0.16),rgba(251,125,168,0.14))', borderColor: '#1A140F' }}
           >
-            <div className="font-heading text-base font-bold" style={{ color: '#A896C9' }}>{party.fee}</div>
+            <div className="font-heading text-base font-bold" style={{ color: '#552CB7' }}>{party.fee}</div>
             <div className="mt-px text-[10px]" style={{ color: 'var(--c-text-faint)' }}>entry</div>
           </div>
         </div>
 
         <div className="mb-5 flex flex-col gap-2.5">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(109,90,153,0.1)' }}>
-              <Calendar size={14} color="#6D5A99" strokeWidth={2.5} />
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(85,44,183,0.1)' }}>
+              <Calendar size={14} color="#552CB7" strokeWidth={2.5} />
             </div>
             <div>
               <div className="text-[13px] font-semibold" style={{ color: 'var(--c-text)' }}>{party.date}</div>
@@ -136,8 +136,8 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
             </div>
           </div>
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(168,86,112,0.1)' }}>
-              <MapPin size={14} color="#A85670" strokeWidth={2.5} />
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(251,125,168,0.15)' }}>
+              <MapPin size={14} color="#C23F72" strokeWidth={2.5} />
             </div>
             <div>
               <div className="text-[13px] font-semibold" style={{ color: 'var(--c-text)' }}>{party.location}</div>
@@ -145,15 +145,15 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
             </div>
           </div>
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(182,151,99,0.12)' }}>
-              <Users size={14} color="#B69763" strokeWidth={2.5} />
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(255,197,103,0.25)' }}>
+              <Users size={14} color="#B8860B" strokeWidth={2.5} />
             </div>
             <div className="flex-1">
               <div className="mb-1.5 flex items-center justify-between">
                 <div className="text-[13px] font-semibold" style={{ color: 'var(--c-text)' }}>
                   {party.spotsLeft} / {party.capacity} spots left
                 </div>
-                <div className="text-[11px]" style={{ color: spotsUrgent ? '#C48888' : 'var(--c-text-dim)', fontWeight: spotsUrgent ? 600 : 400 }}>
+                <div className="text-[11px]" style={{ color: spotsUrgent ? '#D6402C' : 'var(--c-text-dim)', fontWeight: spotsUrgent ? 600 : 400 }}>
                   {spotsUrgent ? 'Almost full!' : ''}
                 </div>
               </div>
@@ -162,7 +162,7 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
                   className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${capPct}%`,
-                    background: `linear-gradient(90deg,${capPct > 80 ? '#B85C5C' : '#6D5A99'},${capPct > 80 ? '#C2954F' : '#A85670'})`,
+                    background: `linear-gradient(90deg,${capPct > 80 ? '#FD5A46' : '#552CB7'},${capPct > 80 ? '#FFC567' : '#FB7DA8'})`,
                   }}
                 />
               </div>
@@ -173,8 +173,8 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
         <div className="mb-6 flex gap-3">
           <Link
             href={`/checkout/${party.id}`}
-            className="flex flex-1 items-center justify-center gap-2 rounded-2xl border-none py-4 font-heading text-[13px] font-bold tracking-[0.5px] text-white"
-            style={{ background: 'linear-gradient(135deg,#6D5A99,#A85670)', boxShadow: '0 8px 24px rgba(109,90,153,0.3)' }}
+            className="flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 py-4 font-heading text-[13px] font-bold tracking-[0.5px] text-white"
+            style={{ background: 'linear-gradient(135deg,#552CB7,#FB7DA8)', borderColor: '#1A140F', boxShadow: '4px 4px 0 rgba(26,20,15,0.9)' }}
           >
             <Ticket size={15} strokeWidth={2.5} />
             Get Tickets · {party.fee}
@@ -218,7 +218,7 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-1.5 rounded-[10px] border px-3.5 py-2.5 text-[13px] font-medium"
-              style={{ background: 'rgba(111,168,138,0.1)', borderColor: 'rgba(111,168,138,0.28)', color: '#8FBFA2' }}
+              style={{ background: 'rgba(0,153,94,0.1)', borderColor: 'rgba(0,153,94,0.3)', color: '#00995E' }}
             >
               <MessageCircle size={14} />
               WhatsApp
@@ -228,7 +228,7 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-1.5 rounded-[10px] border px-3.5 py-2.5 text-[13px] font-medium"
-              style={{ background: 'rgba(168,86,112,0.1)', borderColor: 'rgba(168,86,112,0.28)', color: '#C99AAE' }}
+              style={{ background: 'rgba(251,125,168,0.14)', borderColor: 'rgba(251,125,168,0.35)', color: '#C23F72' }}
             >
               <Instagram size={14} strokeWidth={2} />
               {party.instagram}
@@ -291,7 +291,7 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
                   <div className="px-[11px] py-2.5">
                     <div className="mb-[3px] font-heading text-xs font-bold" style={{ color: 'var(--c-text)' }}>{sp2.title}</div>
                     <div className="mb-1.5 text-[11px]" style={{ color: 'var(--c-text-faint)' }}>{sp2.date}</div>
-                    <div className="font-heading text-[13px] font-bold" style={{ color: '#A896C9' }}>{sp2.fee}</div>
+                    <div className="font-heading text-[13px] font-bold" style={{ color: '#552CB7' }}>{sp2.fee}</div>
                   </div>
                 </Link>
               ))}

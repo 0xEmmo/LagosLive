@@ -42,7 +42,7 @@ let toastTimer: ReturnType<typeof setTimeout> | null = null;
 export const useLagosLiveStore = create<LagosLiveState>()(
   persist(
     (set, get) => ({
-      theme: 'dark',
+      theme: 'light',
       toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
 
       user: null,

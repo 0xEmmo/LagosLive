@@ -36,7 +36,7 @@ export default function BottomNav() {
               href={finalHref}
               className="flex min-w-[52px] flex-col items-center gap-0.5 py-1.5 font-body text-[10px] transition-colors"
               style={{
-                color: active ? '#6D5A99' : 'var(--c-text-dim)',
+                color: active ? '#552CB7' : 'var(--c-text-dim)',
                 fontWeight: active ? 600 : 400,
               }}
             >
@@ -46,7 +46,7 @@ export default function BottomNav() {
                 className="h-[3px] rounded-full transition-all"
                 style={{
                   width: active ? '14px' : '4px',
-                  background: active ? '#6D5A99' : 'transparent',
+                  background: active ? '#552CB7' : 'transparent',
                 }}
               />
             </Link>

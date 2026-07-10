@@ -29,9 +29,9 @@ function Pill<T extends string>({
       onClick={onClick}
       className="whitespace-nowrap rounded-[20px] border px-3.5 py-[7px] text-[13px] font-medium outline-none transition-all"
       style={{
-        background: active ? 'rgba(109,90,153,0.2)' : 'var(--c-surface2)',
-        borderColor: active ? 'rgba(109,90,153,0.5)' : 'var(--c-border2)',
-        color: active ? '#A896C9' : 'var(--c-text-muted)',
+        background: active ? 'rgba(85,44,183,0.16)' : 'var(--c-surface2)',
+        borderColor: active ? '#1A140F' : 'var(--c-border2)',
+        color: active ? '#552CB7' : 'var(--c-text-muted)',
       }}
     >
       {label}
@@ -99,9 +99,9 @@ export default function SearchPage() {
             onClick={() => setDrawerOpen((o) => !o)}
             className="flex flex-shrink-0 items-center gap-1.5 rounded-[10px] border px-3 py-2 text-[13px] font-medium outline-none"
             style={{
-              background: activeFilterCount > 0 ? 'rgba(109,90,153,0.14)' : 'var(--c-glass)',
-              borderColor: activeFilterCount > 0 ? 'rgba(109,90,153,0.38)' : 'var(--c-border3)',
-              color: activeFilterCount > 0 ? '#A896C9' : 'var(--c-text-muted)',
+              background: activeFilterCount > 0 ? 'rgba(85,44,183,0.14)' : 'var(--c-glass)',
+              borderColor: activeFilterCount > 0 ? '#1A140F' : 'var(--c-border3)',
+              color: activeFilterCount > 0 ? '#552CB7' : 'var(--c-text-muted)',
             }}
           >
             <SlidersHorizontal size={14} strokeWidth={2.5} />
@@ -109,7 +109,7 @@ export default function SearchPage() {
             {activeFilterCount > 0 && (
               <span
                 className="flex h-[17px] w-[17px] flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
-                style={{ background: '#A85670' }}
+                style={{ background: '#FB7DA8' }}
               >
                 {activeFilterCount}
               </span>
@@ -148,7 +148,7 @@ export default function SearchPage() {
               <button
                 onClick={clearFilters}
                 className="self-start rounded-lg border px-4 py-[7px] text-[13px] font-medium"
-                style={{ background: 'rgba(168,86,112,0.1)', borderColor: 'rgba(168,86,112,0.28)', color: '#C99AAE' }}
+                style={{ background: 'rgba(214,64,44,0.1)', borderColor: 'rgba(214,64,44,0.3)', color: '#D6402C' }}
               >
                 <X size={12} className="mr-1 inline" strokeWidth={2.5} />
                 Clear all filters
@@ -160,7 +160,7 @@ export default function SearchPage() {
 
       <div className="flex items-center justify-between border-b px-5 py-[11px]" style={{ borderColor: 'var(--c-glass)' }}>
         <span className="text-[13px]" style={{ color: 'var(--c-text-faint)' }}>
-          Showing <span style={{ color: '#A896C9', fontWeight: 600 }}>{filtered.length}</span> parties
+          Showing <span style={{ color: '#552CB7', fontWeight: 600 }}>{filtered.length}</span> parties
         </span>
         <select
           value={sortBy}
@@ -179,9 +179,9 @@ export default function SearchPage() {
         <div className="flex flex-col items-center gap-4 px-6 py-[72px]">
           <div
             className="flex h-[72px] w-[72px] items-center justify-center rounded-full border"
-            style={{ background: 'rgba(109,90,153,0.08)', borderColor: 'rgba(109,90,153,0.2)' }}
+            style={{ background: 'rgba(85,44,183,0.1)', borderColor: 'rgba(85,44,183,0.16)' }}
           >
-            <SearchIcon size={32} strokeWidth={1.5} color="#6D5A99" />
+            <SearchIcon size={32} strokeWidth={1.5} color="#552CB7" />
           </div>
           <div className="font-display text-[30px] tracking-[1px]" style={{ color: 'var(--c-text)' }}>
             No parties found
@@ -192,7 +192,7 @@ export default function SearchPage() {
           <button
             onClick={clearFilters}
             className="rounded-xl border-none px-7 py-3 font-semibold text-white"
-            style={{ background: 'linear-gradient(135deg,#6D5A99,#A85670)' }}
+            style={{ background: 'linear-gradient(135deg,#552CB7,#FB7DA8)' }}
           >
             Clear filters
           </button>

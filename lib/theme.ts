@@ -18,26 +18,36 @@ export interface ThemeTokens {
 
 export const THEME_TOKENS: Record<ThemeName, ThemeTokens> = {
   dark: {
-    bg: '#14111F', header: 'rgba(20,17,31,0.9)', nav: 'rgba(17,15,26,0.95)',
-    surface: 'rgba(255,255,255,0.04)', surface2: 'rgba(255,255,255,0.05)',
-    glass: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.07)',
-    border2: 'rgba(255,255,255,0.08)', border3: 'rgba(255,255,255,0.1)',
-    text: '#F1F5F9', textMuted: '#9691A3', textFaint: '#6B6478', textDim: '#5B5568',
+    bg: '#181123', header: 'rgba(24,17,35,0.9)', nav: 'rgba(20,14,29,0.95)',
+    surface: 'rgba(255,255,255,0.05)', surface2: 'rgba(255,255,255,0.06)',
+    glass: 'rgba(255,255,255,0.07)', border: 'rgba(255,255,255,0.09)',
+    border2: 'rgba(255,255,255,0.1)', border3: 'rgba(255,255,255,0.14)',
+    text: '#FFFBF3', textMuted: '#C4B8D9', textFaint: '#8E7FA8', textDim: '#6E6084',
   },
   light: {
-    bg: '#F6F4FA', header: 'rgba(246,244,250,0.86)', nav: 'rgba(255,255,255,0.9)',
-    surface: 'rgba(20,17,31,0.035)', surface2: 'rgba(20,17,31,0.05)',
-    glass: 'rgba(20,17,31,0.045)', border: 'rgba(20,17,31,0.09)',
-    border2: 'rgba(20,17,31,0.1)', border3: 'rgba(20,17,31,0.13)',
-    text: '#211D2E', textMuted: '#5B5568', textFaint: '#847E96', textDim: '#9891A6',
+    bg: '#FFF8EC', header: 'rgba(255,248,236,0.88)', nav: 'rgba(255,255,255,0.94)',
+    surface: '#FFFFFF', surface2: '#FFFFFF',
+    glass: 'rgba(26,20,15,0.045)', border: 'rgba(26,20,15,0.85)',
+    border2: 'rgba(26,20,15,0.14)', border3: 'rgba(26,20,15,0.85)',
+    text: '#1A140F', textMuted: '#6E6558', textFaint: '#948A7C', textDim: '#B0A594',
   },
 };
 
-// Muted premium accent palette: plum-violet / wine-rose / champagne-gold
+// Retro pop palette: sunshine yellow / bubblegum pink / coral / grape purple / emerald / sky blue
 export const PALETTE = {
-  primary: '#6D5A99',
-  secondary: '#A85670',
-  accent: '#B69763',
+  primary: '#552CB7',
+  secondary: '#FB7DA8',
+  accent: '#FFC567',
+};
+
+export const RETRO = {
+  yellow: '#FFC567',
+  pink: '#FB7DA8',
+  coral: '#FD5A46',
+  purple: '#552CB7',
+  green: '#00995E',
+  blue: '#058CD7',
+  ink: '#1A140F',
 };
 
 export function themeCssVars(tokens: ThemeTokens): Record<string, string> {

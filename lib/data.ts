@@ -1,40 +1,42 @@
 import type { Party, Vibe } from './types';
 
+// Retro pop palette applied 1:1 across the six vibes: purple, blue, yellow, green, pink, coral
 export const GRADIENTS: Record<Vibe, string> = {
-  Club: 'linear-gradient(135deg,#2E2447 0%,#5A4A82 50%,#8C5E72 100%)',
-  Rooftop: 'linear-gradient(135deg,#1F3A3A 0%,#3D5A56 50%,#4A4563 100%)',
-  Festival: 'linear-gradient(135deg,#3D2A1A 0%,#8C5A32 50%,#A8453B 100%)',
-  Concert: 'linear-gradient(135deg,#1F3D30 0%,#3D6B52 50%,#3D5A54 100%)',
-  'House Party': 'linear-gradient(135deg,#3D2038 0%,#8C4A62 50%,#A8814A 100%)',
-  Lounge: 'linear-gradient(135deg,#1A1830 0%,#2E2A52 60%,#4A4470 100%)',
+  Club: 'linear-gradient(135deg,#7C4FE0 0%,#552CB7 100%)',
+  Rooftop: 'linear-gradient(135deg,#3EC6FF 0%,#058CD7 100%)',
+  Festival: 'linear-gradient(135deg,#FFDD8F 0%,#FFC567 100%)',
+  Concert: 'linear-gradient(135deg,#3DCB8F 0%,#00995E 100%)',
+  'House Party': 'linear-gradient(135deg,#FFA8C8 0%,#FB7DA8 100%)',
+  Lounge: 'linear-gradient(135deg,#FF8B78 0%,#FD5A46 100%)',
 };
 
 // Vibe accent color, background tint, and text tint (used for badges & map markers)
 export const VC: Record<Vibe, string> = {
-  Club: '#6D5A99',
-  Rooftop: '#5E7A78',
-  Festival: '#B8814A',
-  Concert: '#5C8A6B',
-  'House Party': '#A85670',
-  Lounge: '#6B5B8C',
+  Club: '#552CB7',
+  Rooftop: '#058CD7',
+  Festival: '#FFC567',
+  Concert: '#00995E',
+  'House Party': '#FB7DA8',
+  Lounge: '#FD5A46',
 };
 
 export const VCB: Record<Vibe, string> = {
-  Club: 'rgba(109,90,153,0.18)',
-  Rooftop: 'rgba(94,122,120,0.18)',
-  Festival: 'rgba(184,129,74,0.18)',
-  Concert: 'rgba(92,138,107,0.18)',
-  'House Party': 'rgba(168,86,112,0.18)',
-  Lounge: 'rgba(107,91,140,0.18)',
+  Club: 'rgba(85,44,183,0.14)',
+  Rooftop: 'rgba(5,140,215,0.14)',
+  Festival: 'rgba(255,197,103,0.3)',
+  Concert: 'rgba(0,153,94,0.14)',
+  'House Party': 'rgba(251,125,168,0.18)',
+  Lounge: 'rgba(253,90,70,0.14)',
 };
 
+// Text color used on top of VCB tints — darkened where the raw VC is too light to read (yellow/pink)
 export const VCT: Record<Vibe, string> = {
-  Club: '#A896C9',
-  Rooftop: '#9BB8B0',
-  Festival: '#D9B380',
-  Concert: '#96C2A8',
-  'House Party': '#C99AAE',
-  Lounge: '#A69BC4',
+  Club: '#552CB7',
+  Rooftop: '#058CD7',
+  Festival: '#9A6A00',
+  Concert: '#00995E',
+  'House Party': '#C23F72',
+  Lounge: '#D6402C',
 };
 
 export const VIBE_LABEL: Record<Vibe, string> = {
@@ -49,15 +51,15 @@ export const VIBE_LABEL: Record<Vibe, string> = {
 export const ALL_VIBES: Vibe[] = ['Club', 'Rooftop', 'Festival', 'Concert', 'House Party', 'Lounge'];
 
 export function distanceColor(d: number) {
-  return d < 5 ? '#6FA88A' : d < 10 ? '#C2954F' : '#B85C5C';
+  return d < 5 ? '#00995E' : d < 10 ? '#B8860B' : '#D6402C';
 }
 
 export function distanceBg(d: number) {
-  return d < 5 ? 'rgba(111,168,138,0.12)' : d < 10 ? 'rgba(194,149,79,0.12)' : 'rgba(184,92,92,0.12)';
+  return d < 5 ? 'rgba(0,153,94,0.12)' : d < 10 ? 'rgba(184,134,11,0.12)' : 'rgba(214,64,44,0.12)';
 }
 
 export function distanceBorder(d: number) {
-  return d < 5 ? 'rgba(111,168,138,0.35)' : d < 10 ? 'rgba(194,149,79,0.35)' : 'rgba(184,92,92,0.35)';
+  return d < 5 ? 'rgba(0,153,94,0.35)' : d < 10 ? 'rgba(184,134,11,0.35)' : 'rgba(214,64,44,0.35)';
 }
 
 export function partyPhoto(id: number) {

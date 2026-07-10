@@ -3,35 +3,39 @@
 @tailwind utilities;
 
 :root[data-theme='dark'] {
-  --c-bg: #14111f;
-  --c-header: rgba(20, 17, 31, 0.9);
-  --c-nav: rgba(17, 15, 26, 0.95);
-  --c-surface: rgba(255, 255, 255, 0.04);
-  --c-surface2: rgba(255, 255, 255, 0.05);
-  --c-glass: rgba(255, 255, 255, 0.06);
-  --c-border: rgba(255, 255, 255, 0.07);
-  --c-border2: rgba(255, 255, 255, 0.08);
-  --c-border3: rgba(255, 255, 255, 0.1);
-  --c-text: #f1f5f9;
-  --c-text-muted: #9691a3;
-  --c-text-faint: #6b6478;
-  --c-text-dim: #5b5568;
+  --c-bg: #181123;
+  --c-header: rgba(24, 17, 35, 0.9);
+  --c-nav: rgba(20, 14, 29, 0.95);
+  --c-surface: rgba(255, 255, 255, 0.05);
+  --c-surface2: rgba(255, 255, 255, 0.06);
+  --c-glass: rgba(255, 255, 255, 0.07);
+  --c-border: rgba(255, 255, 255, 0.09);
+  --c-border2: rgba(255, 255, 255, 0.1);
+  --c-border3: rgba(255, 255, 255, 0.14);
+  --c-text: #fffbf3;
+  --c-text-muted: #c4b8d9;
+  --c-text-faint: #8e7fa8;
+  --c-text-dim: #6e6084;
+  --c-ink: #fffbf3;
+  --c-card-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
 }
 
 :root[data-theme='light'] {
-  --c-bg: #f6f4fa;
-  --c-header: rgba(246, 244, 250, 0.86);
-  --c-nav: rgba(255, 255, 255, 0.9);
-  --c-surface: rgba(20, 17, 31, 0.035);
-  --c-surface2: rgba(20, 17, 31, 0.05);
-  --c-glass: rgba(20, 17, 31, 0.045);
-  --c-border: rgba(20, 17, 31, 0.09);
-  --c-border2: rgba(20, 17, 31, 0.1);
-  --c-border3: rgba(20, 17, 31, 0.13);
-  --c-text: #211d2e;
-  --c-text-muted: #5b5568;
-  --c-text-faint: #847e96;
-  --c-text-dim: #9891a6;
+  --c-bg: #fff8ec;
+  --c-header: rgba(255, 248, 236, 0.88);
+  --c-nav: rgba(255, 255, 255, 0.94);
+  --c-surface: #ffffff;
+  --c-surface2: #ffffff;
+  --c-glass: rgba(26, 20, 15, 0.045);
+  --c-border: rgba(26, 20, 15, 0.85);
+  --c-border2: rgba(26, 20, 15, 0.14);
+  --c-border3: rgba(26, 20, 15, 0.85);
+  --c-text: #1a140f;
+  --c-text-muted: #6e6558;
+  --c-text-faint: #948a7c;
+  --c-text-dim: #b0a594;
+  --c-ink: #1a140f;
+  --c-card-shadow: 4px 4px 0 rgba(26, 20, 15, 0.9);
 }
 
 * {
@@ -59,7 +63,7 @@ body {
   background: var(--c-bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: #3d3355;
+  background: #552cb7;
   border-radius: 2px;
 }
 
@@ -67,7 +71,7 @@ input::placeholder {
   color: var(--c-text-dim);
 }
 select option {
-  background: #1e1a2e;
+  background: var(--c-surface);
   color: var(--c-text);
 }
 
@@ -79,19 +83,19 @@ select option {
   display: none;
 }
 
-/* Leaflet overrides to match the muted-premium dark map chrome */
+/* Leaflet overrides to match the retro pop map chrome */
 .leaflet-popup-content-wrapper {
-  background: rgba(20, 17, 31, 0.96) !important;
-  border: 1px solid rgba(109, 90, 153, 0.35) !important;
+  background: #ffffff !important;
+  border: 2px solid #1a140f !important;
   border-radius: 14px !important;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
-  backdrop-filter: blur(20px);
+  box-shadow: 5px 5px 0 rgba(26, 20, 15, 0.9) !important;
 }
 .leaflet-popup-tip {
-  background: rgba(20, 17, 31, 0.96) !important;
+  background: #ffffff !important;
+  border: 2px solid #1a140f !important;
 }
 .leaflet-popup-close-button {
-  color: #94a3b8 !important;
+  color: #6e6558 !important;
   top: 8px !important;
   right: 8px !important;
   font-size: 18px !important;
@@ -100,16 +104,16 @@ select option {
   margin: 14px !important;
 }
 .leaflet-container {
-  background: #14111f !important;
+  background: #fff8ec !important;
   font-family: 'Montserrat', sans-serif !important;
 }
 .leaflet-control-zoom a {
-  background: rgba(20, 17, 31, 0.9) !important;
-  color: #f1f5f9 !important;
-  border-color: rgba(109, 90, 153, 0.3) !important;
+  background: #ffffff !important;
+  color: #1a140f !important;
+  border-color: #1a140f !important;
 }
 .leaflet-cluster-spider-leg {
-  stroke: #a896c9 !important;
+  stroke: #552cb7 !important;
   stroke-opacity: 0.55 !important;
 }
 .leaflet-marker-icon {
@@ -124,4 +128,5 @@ select option {
 
 .ll-card {
   animation: fade-in 0.4s ease-out;
+  box-shadow: var(--c-card-shadow);
 }

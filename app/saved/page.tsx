@@ -27,9 +27,9 @@ export default function SavedPage() {
         <div className="flex flex-col items-center gap-4 px-6 py-[72px]">
           <div
             className="flex h-[72px] w-[72px] items-center justify-center rounded-full border"
-            style={{ background: 'rgba(109,90,153,0.08)', borderColor: 'rgba(109,90,153,0.2)' }}
+            style={{ background: 'rgba(251,125,168,0.1)', borderColor: 'rgba(251,125,168,0.28)' }}
           >
-            <Heart size={32} strokeWidth={1.5} color="#6D5A99" />
+            <Heart size={32} strokeWidth={1.5} color="#C23F72" />
           </div>
           <div className="font-display text-[30px] tracking-[1px]" style={{ color: 'var(--c-text)' }}>
             No saved parties yet
@@ -40,7 +40,7 @@ export default function SavedPage() {
           <Link
             href="/search"
             className="rounded-xl border-none px-7 py-3 font-semibold text-white"
-            style={{ background: 'linear-gradient(135deg,#6D5A99,#A85670)' }}
+            style={{ background: 'linear-gradient(135deg,#552CB7,#FB7DA8)' }}
           >
             Browse Parties
           </Link>

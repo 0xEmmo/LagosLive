@@ -117,15 +117,15 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
               onClick={() => setTier('regular')}
               className="flex cursor-pointer items-center justify-between rounded-2xl border px-4 py-3.5 transition-all"
               style={{
-                background: tier === 'regular' ? 'rgba(109,90,153,0.14)' : 'var(--c-surface)',
-                borderColor: tier === 'regular' ? 'rgba(109,90,153,0.45)' : 'var(--c-border2)',
+                background: tier === 'regular' ? 'rgba(85,44,183,0.14)' : 'var(--c-surface)',
+                borderColor: tier === 'regular' ? '#1A140F' : 'var(--c-border2)',
               }}
             >
               <div>
                 <div className="text-sm font-semibold" style={{ color: 'var(--c-text)' }}>Regular</div>
                 <div className="mt-0.5 text-xs" style={{ color: 'var(--c-text-faint)' }}>Standard entry</div>
               </div>
-              <div className="font-heading text-[15px] font-bold" style={{ color: '#A896C9' }}>
+              <div className="font-heading text-[15px] font-bold" style={{ color: '#552CB7' }}>
                 {party.feeNum === 0 ? 'Free' : formatNaira(party.feeNum)}
               </div>
             </div>
@@ -133,15 +133,15 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
               onClick={() => setTier('vip')}
               className="flex cursor-pointer items-center justify-between rounded-2xl border px-4 py-3.5 transition-all"
               style={{
-                background: tier === 'vip' ? 'rgba(109,90,153,0.14)' : 'var(--c-surface)',
-                borderColor: tier === 'vip' ? 'rgba(109,90,153,0.45)' : 'var(--c-border2)',
+                background: tier === 'vip' ? 'rgba(85,44,183,0.14)' : 'var(--c-surface)',
+                borderColor: tier === 'vip' ? '#1A140F' : 'var(--c-border2)',
               }}
             >
               <div>
                 <div className="text-sm font-semibold" style={{ color: 'var(--c-text)' }}>VIP</div>
                 <div className="mt-0.5 text-xs" style={{ color: 'var(--c-text-faint)' }}>Priority entry &amp; reserved area</div>
               </div>
-              <div className="font-heading text-[15px] font-bold" style={{ color: '#A896C9' }}>
+              <div className="font-heading text-[15px] font-bold" style={{ color: '#552CB7' }}>
                 {party.feeNum === 0 ? 'Free' : formatNaira(party.feeNum * 2.2)}
               </div>
             </div>
@@ -188,8 +188,8 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
 
           <button
             onClick={goToPayment}
-            className="mt-5 w-full rounded-xl border-none py-[15px] font-heading text-sm font-bold text-white"
-            style={{ background: 'linear-gradient(135deg,#6D5A99,#A85670)', boxShadow: '0 8px 24px rgba(109,90,153,0.28)' }}
+            className="mt-5 w-full rounded-xl border-2 py-[15px] font-heading text-sm font-bold text-white"
+            style={{ background: 'linear-gradient(135deg,#552CB7,#FB7DA8)', borderColor: '#1A140F', boxShadow: '4px 4px 0 rgba(26,20,15,0.9)' }}
           >
             {party.feeNum === 0 ? 'Confirm RSVP' : 'Continue to Payment'}
           </button>
@@ -206,9 +206,9 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
               onClick={() => setMethod('card')}
               className="flex-1 rounded-[10px] border py-[11px] text-[13px] font-semibold"
               style={{
-                background: method === 'card' ? 'rgba(109,90,153,0.18)' : 'var(--c-surface2)',
-                borderColor: method === 'card' ? 'rgba(109,90,153,0.45)' : 'var(--c-border2)',
-                color: method === 'card' ? '#A896C9' : 'var(--c-text-muted)',
+                background: method === 'card' ? 'rgba(85,44,183,0.16)' : 'var(--c-surface2)',
+                borderColor: method === 'card' ? '#1A140F' : 'var(--c-border2)',
+                color: method === 'card' ? '#552CB7' : 'var(--c-text-muted)',
               }}
             >
               Card
@@ -217,9 +217,9 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
               onClick={() => setMethod('transfer')}
               className="flex-1 rounded-[10px] border py-[11px] text-[13px] font-semibold"
               style={{
-                background: method === 'transfer' ? 'rgba(109,90,153,0.18)' : 'var(--c-surface2)',
-                borderColor: method === 'transfer' ? 'rgba(109,90,153,0.45)' : 'var(--c-border2)',
-                color: method === 'transfer' ? '#A896C9' : 'var(--c-text-muted)',
+                background: method === 'transfer' ? 'rgba(85,44,183,0.16)' : 'var(--c-surface2)',
+                borderColor: method === 'transfer' ? '#1A140F' : 'var(--c-border2)',
+                color: method === 'transfer' ? '#552CB7' : 'var(--c-text-muted)',
               }}
             >
               Bank Transfer
@@ -266,7 +266,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
           )}
 
           {error && (
-            <div className="mb-4 rounded-[10px] border px-3.5 py-2.5 text-[13px]" style={{ background: 'rgba(184,92,92,0.1)', borderColor: 'rgba(184,92,92,0.32)', color: '#D19A9A' }}>
+            <div className="mb-4 rounded-[10px] border px-3.5 py-2.5 text-[13px]" style={{ background: 'rgba(214,64,44,0.1)', borderColor: 'rgba(214,64,44,0.32)', color: '#D6402C' }}>
               {error}
             </div>
           )}
@@ -280,8 +280,8 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
 
           <button
             onClick={submitPayment}
-            className="mt-5 w-full rounded-xl border-none py-[15px] font-heading text-sm font-bold text-white"
-            style={{ background: 'linear-gradient(135deg,#6D5A99,#A85670)', boxShadow: '0 8px 24px rgba(109,90,153,0.28)' }}
+            className="mt-5 w-full rounded-xl border-2 py-[15px] font-heading text-sm font-bold text-white"
+            style={{ background: 'linear-gradient(135deg,#552CB7,#FB7DA8)', borderColor: '#1A140F', boxShadow: '4px 4px 0 rgba(26,20,15,0.9)' }}
           >
             Pay {formatNaira(total)}
           </button>
@@ -292,9 +292,9 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
         <div className="flex flex-1 flex-col items-center p-5 text-center">
           <div
             className="my-5 flex h-16 w-16 items-center justify-center rounded-full border"
-            style={{ background: 'rgba(111,168,138,0.14)', borderColor: 'rgba(111,168,138,0.4)' }}
+            style={{ background: 'rgba(0,153,94,0.14)', borderColor: 'rgba(0,153,94,0.4)' }}
           >
-            <CheckCircle2 size={28} color="#8FBFA2" strokeWidth={2.5} />
+            <CheckCircle2 size={28} color="#00995E" strokeWidth={2.5} />
           </div>
           <h1 className="font-display mb-1.5 text-[34px] tracking-[0.5px]" style={{ color: 'var(--c-text)' }}>
             {party.feeNum === 0 ? "You're On The List!" : "You're In!"}
@@ -312,7 +312,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
             <div className="flex items-center justify-between border-t border-dashed border-white/15 px-[18px] py-4">
               <div>
                 <div className="mb-[3px] text-[10px] uppercase tracking-[0.7px]" style={{ color: 'var(--c-text-faint)' }}>Order Ref</div>
-                <div className="font-heading text-sm font-bold" style={{ color: '#A896C9' }}>{orderRef}</div>
+                <div className="font-heading text-sm font-bold" style={{ color: '#552CB7' }}>{orderRef}</div>
               </div>
               <div className="text-right">
                 <div className="mb-[3px] text-[10px] uppercase tracking-[0.7px]" style={{ color: 'var(--c-text-faint)' }}>
@@ -326,8 +326,8 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
           <div className="mt-7 flex w-full max-w-[340px] flex-col gap-2.5">
             <button
               onClick={() => router.push('/profile')}
-              className="w-full rounded-xl border-none py-[15px] font-heading text-sm font-bold text-white"
-              style={{ background: 'linear-gradient(135deg,#6D5A99,#A85670)', boxShadow: '0 8px 24px rgba(109,90,153,0.28)' }}
+              className="w-full rounded-xl border-2 py-[15px] font-heading text-sm font-bold text-white"
+              style={{ background: 'linear-gradient(135deg,#552CB7,#FB7DA8)', borderColor: '#1A140F', boxShadow: '4px 4px 0 rgba(26,20,15,0.9)' }}
             >
               View My Tickets
             </button>

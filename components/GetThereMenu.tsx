@@ -15,10 +15,10 @@ import {
 
 function rideOptions(party: Party) {
   return [
-    { key: 'google', label: 'Google Maps', dot: '#6FA88A', action: () => window.open(googleMapsDirectionsUrl(party), '_blank') },
-    { key: 'uber', label: 'Uber', dot: '#F1F5F9', action: () => window.open(uberDeepLink(party), '_blank') },
-    { key: 'bolt', label: 'Bolt', dot: '#4FBF67', action: () => openWithFallback(boltDeepLink(party), BOLT_FALLBACK_URL) },
-    { key: 'indrive', label: 'inDrive', dot: '#D9B380', action: () => openWithFallback(inDriveDeepLink(party), INDRIVE_FALLBACK_URL) },
+    { key: 'google', label: 'Google Maps', dot: '#00995E', action: () => window.open(googleMapsDirectionsUrl(party), '_blank') },
+    { key: 'uber', label: 'Uber', dot: '#1A140F', action: () => window.open(uberDeepLink(party), '_blank') },
+    { key: 'bolt', label: 'Bolt', dot: '#058CD7', action: () => openWithFallback(boltDeepLink(party), BOLT_FALLBACK_URL) },
+    { key: 'indrive', label: 'inDrive', dot: '#FFC567', action: () => openWithFallback(inDriveDeepLink(party), INDRIVE_FALLBACK_URL) },
   ];
 }
 
@@ -39,8 +39,8 @@ export default function GetThereMenu({ party }: { party: Party }) {
     <div className="relative flex-shrink-0" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 whitespace-nowrap rounded-2xl border px-[18px] py-4 text-[13px] font-semibold"
-        style={{ background: 'rgba(182,151,99,0.1)', borderColor: 'rgba(182,151,99,0.32)', color: '#D4BE94' }}
+        className="flex items-center gap-1.5 whitespace-nowrap rounded-2xl border-2 px-[18px] py-4 text-[13px] font-semibold"
+        style={{ background: 'rgba(255,197,103,0.22)', borderColor: '#1A140F', color: '#8A5A00' }}
       >
         <NavigationIcon size={14} strokeWidth={2.5} />
         Get There
@@ -48,8 +48,8 @@ export default function GetThereMenu({ party }: { party: Party }) {
       </button>
       {open && (
         <div
-          className="absolute right-0 top-full z-20 mt-2 w-52 overflow-hidden rounded-2xl border backdrop-blur-[22px]"
-          style={{ background: 'rgba(20,17,31,0.96)', borderColor: 'var(--c-border3)', boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}
+          className="absolute right-0 top-full z-20 mt-2 w-52 overflow-hidden rounded-2xl border-2"
+          style={{ background: 'var(--c-surface)', borderColor: '#1A140F', boxShadow: '5px 5px 0 rgba(26,20,15,0.4)' }}
         >
           {rideOptions(party).map((opt) => (
             <button

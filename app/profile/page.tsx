@@ -40,7 +40,7 @@ export default function ProfilePage() {
       <div className="flex flex-col items-center px-5 py-9 pb-7 text-center">
         <div
           className="flex h-[86px] w-[86px] items-center justify-center rounded-full font-display text-[32px] tracking-[1px] text-white"
-          style={{ background: 'linear-gradient(135deg,#6D5A99,#A85670)' }}
+          style={{ background: 'linear-gradient(135deg,#552CB7,#FB7DA8)' }}
         >
           {userInitials}
         </div>
@@ -59,7 +59,7 @@ export default function ProfilePage() {
           { label: 'Tickets', value: 0 },
         ].map((stat) => (
           <div key={stat.label} className="rounded-2xl border px-2 py-3.5 text-center" style={{ background: 'var(--c-surface)', borderColor: 'var(--c-border)' }}>
-            <div className="font-display text-2xl" style={{ color: '#A896C9' }}>
+            <div className="font-display text-2xl" style={{ color: '#552CB7' }}>
               {stat.value}
             </div>
             <div className="mt-0.5 text-[10px] uppercase tracking-[0.4px]" style={{ color: 'var(--c-text-faint)' }}>
@@ -77,7 +77,7 @@ export default function ProfilePage() {
         <div
           onClick={togglePush}
           className="relative h-[22px] w-10 flex-shrink-0 cursor-pointer rounded-full transition-colors"
-          style={{ background: pushEnabled ? 'linear-gradient(135deg,#6D5A99,#A85670)' : 'var(--c-border3)' }}
+          style={{ background: pushEnabled ? 'linear-gradient(135deg,#552CB7,#FB7DA8)' : 'var(--c-border3)' }}
         >
           <div
             className="absolute top-[2px] h-[18px] w-[18px] rounded-full bg-white transition-all"
@@ -94,11 +94,11 @@ export default function ProfilePage() {
         <div
           onClick={toggleTheme}
           className="relative h-[22px] w-10 flex-shrink-0 cursor-pointer rounded-full transition-colors"
-          style={{ background: theme === 'light' ? 'linear-gradient(135deg,#6D5A99,#A85670)' : 'var(--c-border3)' }}
+          style={{ background: theme === 'dark' ? 'linear-gradient(135deg,#552CB7,#FB7DA8)' : 'var(--c-border3)' }}
         >
           <div
             className="absolute top-[2px] h-[18px] w-[18px] rounded-full bg-white transition-all"
-            style={{ left: theme === 'light' ? 20 : 2 }}
+            style={{ left: theme === 'dark' ? 20 : 2 }}
           />
         </div>
       </div>
@@ -111,8 +111,8 @@ export default function ProfilePage() {
           <div className="mb-5 flex flex-col gap-2">
             {reminderList.map((p) => (
               <div key={p.id} className="flex items-center gap-2.5 rounded-xl border px-3 py-2.5" style={{ background: 'var(--c-surface)', borderColor: 'var(--c-border)' }}>
-                <div className="flex h-[34px] w-[34px] flex-shrink-0 items-center justify-center rounded-[9px]" style={{ background: 'rgba(182,151,99,0.14)' }}>
-                  <Bell size={15} color="#D4BE94" strokeWidth={2} />
+                <div className="flex h-[34px] w-[34px] flex-shrink-0 items-center justify-center rounded-[9px]" style={{ background: 'rgba(255,197,103,0.22)' }}>
+                  <Bell size={15} color="#B8860B" strokeWidth={2} />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[13px] font-semibold" style={{ color: 'var(--c-text)' }}>{p.title}</div>
@@ -141,7 +141,7 @@ export default function ProfilePage() {
           router.push('/');
         }}
         className="w-full rounded-xl border py-[15px] text-sm font-semibold"
-        style={{ background: 'rgba(184,92,92,0.1)', borderColor: 'rgba(184,92,92,0.28)', color: '#D19A9A' }}
+        style={{ background: 'rgba(214,64,44,0.1)', borderColor: 'rgba(214,64,44,0.32)', color: '#D6402C' }}
       >
         Log Out
       </button>

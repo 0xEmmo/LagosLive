@@ -53,30 +53,30 @@ export default function HomePage() {
           className="absolute inset-0"
           style={{
             background:
-              'radial-gradient(ellipse 85% 70% at 15% 50%, rgba(109,90,153,0.22) 0%, transparent 65%), radial-gradient(ellipse 65% 80% at 85% 20%, rgba(168,86,112,0.16) 0%, transparent 65%), radial-gradient(ellipse 55% 55% at 55% 88%, rgba(182,151,99,0.12) 0%, transparent 65%)',
+              'radial-gradient(ellipse 85% 70% at 15% 50%, rgba(85,44,183,0.16) 0%, transparent 65%), radial-gradient(ellipse 65% 80% at 85% 20%, rgba(251,125,168,0.16) 0%, transparent 65%), radial-gradient(ellipse 55% 55% at 55% 88%, rgba(255,197,103,0.18) 0%, transparent 65%)',
           }}
         />
         <div
           className="pointer-events-none absolute -right-[30px] -top-10 h-[200px] w-[200px] rounded-full transition-transform duration-200 ease-out"
           style={{
-            background: 'radial-gradient(circle, #6D5A992e, transparent)',
+            background: 'radial-gradient(circle, #552CB72e, transparent)',
             transform: `translate(${hero.x * 22}px, ${hero.y * 22}px)`,
           }}
         />
         <div
           className="pointer-events-none absolute left-[5px] -bottom-[25px] h-[140px] w-[140px] rounded-full transition-transform duration-200 ease-out"
           style={{
-            background: 'radial-gradient(circle, #A8567024, transparent)',
+            background: 'radial-gradient(circle, #FB7DA824, transparent)',
             transform: `translate(${hero.x * -16}px, ${hero.y * -16}px)`,
           }}
         />
         <div className="relative z-[1] max-w-[520px]">
           <div
-            className="mb-[18px] inline-flex items-center gap-[7px] rounded-[20px] border px-4 py-1.5"
-            style={{ background: 'rgba(109,90,153,0.1)', borderColor: 'rgba(109,90,153,0.25)' }}
+            className="mb-[18px] inline-flex items-center gap-[7px] rounded-[20px] border-2 px-4 py-1.5"
+            style={{ background: 'rgba(255,197,103,0.22)', borderColor: '#1A140F' }}
           >
-            <div className="h-[5px] w-[5px] rounded-full" style={{ background: '#A896C9' }} />
-            <span className="text-[11px] font-semibold uppercase tracking-[1px]" style={{ color: '#A896C9' }}>
+            <div className="h-[5px] w-[5px] rounded-full" style={{ background: '#552CB7' }} />
+            <span className="text-[11px] font-semibold uppercase tracking-[1px]" style={{ color: '#552CB7' }}>
               Lagos is Lit Tonight · 22 Events Live
             </span>
           </div>
@@ -88,7 +88,7 @@ export default function HomePage() {
             <br />
             <span
               style={{
-                background: 'linear-gradient(135deg,#6D5A99 0%,#A85670 55%,#B69763 100%)',
+                background: 'linear-gradient(135deg,#552CB7 0%,#FB7DA8 55%,#FFC567 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -102,10 +102,11 @@ export default function HomePage() {
           </p>
           <button
             onClick={getLocation}
-            className="flex items-center gap-2 rounded-[14px] border-none px-7 py-3.5 text-[15px] font-semibold text-white outline-none"
+            className="flex items-center gap-2 rounded-[14px] border-2 px-7 py-3.5 text-[15px] font-semibold text-white outline-none"
             style={{
-              background: locationLoading ? '#6D5A9972' : 'linear-gradient(135deg,#6D5A99 0%,#A85670 100%)',
-              boxShadow: '0 8px 32px rgba(109,90,153,0.28)',
+              background: locationLoading ? '#552CB772' : 'linear-gradient(135deg,#552CB7 0%,#FB7DA8 100%)',
+              borderColor: '#1A140F',
+              boxShadow: '4px 4px 0 rgba(26,20,15,0.9)',
             }}
           >
             {locationLoading ? (
@@ -123,11 +124,11 @@ export default function HomePage() {
         {QUICK_FILTERS.map((label, i) => (
           <button
             key={label}
-            className="whitespace-nowrap rounded-[20px] border px-4 py-2 text-[13px] font-medium outline-none"
+            className="whitespace-nowrap rounded-[20px] border-2 px-4 py-2 text-[13px] font-medium outline-none"
             style={{
-              background: i === 0 ? 'rgba(109,90,153,0.2)' : 'var(--c-surface2)',
-              borderColor: i === 0 ? 'rgba(109,90,153,0.45)' : 'var(--c-border2)',
-              color: i === 0 ? '#B0A0C9' : 'var(--c-text-muted)',
+              background: i === 0 ? 'rgba(85,44,183,0.14)' : 'var(--c-surface2)',
+              borderColor: i === 0 ? '#1A140F' : 'var(--c-border2)',
+              color: i === 0 ? '#552CB7' : 'var(--c-text-muted)',
             }}
           >
             {label}
@@ -147,7 +148,7 @@ export default function HomePage() {
           </span>
           <div
             className="ml-auto rounded-[6px] border px-[9px] py-0.5 text-[11px] font-semibold"
-            style={{ background: 'rgba(109,90,153,0.13)', borderColor: 'rgba(109,90,153,0.25)', color: '#A896C9' }}
+            style={{ background: 'rgba(85,44,183,0.12)', borderColor: 'rgba(85,44,183,0.3)', color: '#552CB7' }}
           >
             Filter
           </div>
@@ -157,12 +158,12 @@ export default function HomePage() {
       {/* Section heading */}
       <div className="flex items-center justify-between px-5 pb-3.5">
         <div className="flex items-center gap-2.5">
-          <div className="h-4 w-[3px] rounded-sm" style={{ background: 'linear-gradient(to bottom,#6D5A99,#A85670)' }} />
+          <div className="h-4 w-[3px] rounded-sm" style={{ background: 'linear-gradient(to bottom,#552CB7,#FB7DA8)' }} />
           <h2 className="text-xs font-bold uppercase tracking-[2px]" style={{ color: 'var(--c-text)' }}>
             Trending Tonight
           </h2>
         </div>
-        <Link href="/search" className="text-[13px] font-medium" style={{ color: '#8C7AB8' }}>
+        <Link href="/search" className="text-[13px] font-medium" style={{ color: '#552CB7' }}>
           See all →
         </Link>
       </div>

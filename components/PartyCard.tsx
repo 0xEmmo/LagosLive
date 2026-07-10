@@ -36,13 +36,13 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 17
   return (
     <Link
       href={`/party/${party.id}`}
-      className="ll-card block overflow-hidden rounded-[18px] border cursor-pointer"
+      className="ll-card block overflow-hidden rounded-[18px] border-2 cursor-pointer"
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
       style={{
         background: 'var(--c-surface)',
-        borderColor: tilt.active ? 'rgba(109,90,153,0.32)' : 'var(--c-border)',
-        boxShadow: tilt.active ? '0 24px 48px rgba(0,0,0,0.45)' : 'none',
+        borderColor: tilt.active ? '#552CB7' : 'var(--c-border)',
+        boxShadow: tilt.active ? 'var(--c-card-shadow), 0 16px 32px rgba(85,44,183,0.3)' : 'var(--c-card-shadow)',
         transform,
         transformStyle: 'preserve-3d',
         transition: tilt.active
@@ -82,9 +82,9 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 17
                   toggleReminder(party.id, party.title);
                 }}
                 className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 backdrop-blur-[8px]"
-                style={{ background: 'rgba(0,0,0,0.4)', color: reminded ? '#D4BE94' : 'rgba(255,255,255,0.65)' }}
+                style={{ background: 'rgba(0,0,0,0.4)', color: reminded ? '#FFC567' : 'rgba(255,255,255,0.75)' }}
               >
-                <Bell size={13} fill={reminded ? '#D4BE94' : 'none'} strokeWidth={2} />
+                <Bell size={13} fill={reminded ? '#FFC567' : 'none'} strokeWidth={2} />
               </button>
             )}
             <button
@@ -94,7 +94,7 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 17
                 toggleSave(party.id);
               }}
               className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 backdrop-blur-[8px]"
-              style={{ background: 'rgba(0,0,0,0.4)', color: saved ? '#A85670' : 'rgba(255,255,255,0.65)' }}
+              style={{ background: 'rgba(0,0,0,0.4)', color: saved ? '#FB7DA8' : 'rgba(255,255,255,0.75)' }}
             >
               <Heart size={13} fill="currentColor" strokeWidth={2} />
             </button>
@@ -124,7 +124,7 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 17
           </div>
         </div>
         <div className="flex items-center justify-between">
-          <span className="font-heading text-sm font-bold" style={{ color: '#A896C9' }}>
+          <span className="font-heading text-sm font-bold" style={{ color: '#552CB7' }}>
             {party.fee}
           </span>
           <span className="text-[11px]" style={{ color: 'var(--c-text-dim)' }}>

@@ -15,8 +15,8 @@ const config: Config = {
           to: { opacity: '1', transform: 'translateY(0)' },
         },
         'pulse-glow': {
-          '0%, 100%': { boxShadow: '0 8px 32px rgba(109,90,153,0.4)' },
-          '50%': { boxShadow: '0 8px 52px rgba(109,90,153,0.8), 0 0 60px rgba(168,86,112,0.35)' },
+          '0%, 100%': { boxShadow: '0 8px 32px rgba(85,44,183,0.4)' },
+          '50%': { boxShadow: '0 8px 52px rgba(85,44,183,0.8), 0 0 60px rgba(251,125,168,0.35)' },
         },
         spin: { to: { transform: 'rotate(360deg)' } },
         'toast-in': {

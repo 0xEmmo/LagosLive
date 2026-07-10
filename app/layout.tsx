@@ -34,7 +34,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="dark" className={`${bebasNeue.variable} ${montserrat.variable} ${inter.variable}`}>
+    <html lang="en" data-theme="light" className={`${bebasNeue.variable} ${montserrat.variable} ${inter.variable}`}>
       <body className="font-heading" style={{ paddingBottom: '84px' }}>
         <ThemeEffect />
         <Splash />

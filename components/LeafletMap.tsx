@@ -7,6 +7,21 @@ import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import type L from 'leaflet';
 import type { Party } from '@/lib/types';
 import { VC, VIBE_LABEL, distanceColor } from '@/lib/data';
+import {
+  googleMapsDirectionsUrl,
+  uberDeepLink,
+  boltDeepLink,
+  BOLT_FALLBACK_URL,
+  inDriveDeepLink,
+  INDRIVE_FALLBACK_URL,
+  openWithFallback,
+} from '@/lib/rideLinks';
+
+declare global {
+  interface Window {
+    __llRideFallback?: (schemeUrl: string, fallbackUrl: string) => void;
+  }
+}
 
 interface LeafletMapProps {
   parties: Party[];
@@ -24,6 +39,14 @@ export default function LeafletMap({ parties, userLocation, onSelectParty, showH
   onSelectRef.current = onSelectParty;
   const showHeatmapRef = useRef(showHeatmap);
   showHeatmapRef.current = showHeatmap;
+
+  // Expose the deferred-deep-link opener for popup buttons (raw HTML, not React) to call
+  useEffect(() => {
+    window.__llRideFallback = openWithFallback;
+    return () => {
+      delete window.__llRideFallback;
+    };
+  }, []);
 
   // Init map once
   useEffect(() => {
@@ -160,7 +183,7 @@ function renderMarkers(leaflet: typeof L, cluster: any, parties: Party[], onSele
     });
     const popupId = `ll-popup-view-${p.id}`;
     const marker = leaflet.marker([p.lat, p.lng], { icon }).bindPopup(
-      `<div style="width:222px;font-family:Inter,sans-serif">
+      `<div style="width:238px;font-family:Inter,sans-serif">
         <div style="height:90px;background:${p.gradient};border-radius:10px;margin-bottom:10px;display:flex;align-items:flex-end;padding:8px">
           <span style="background:${clr};color:white;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">${p.vibe}</span>
         </div>
@@ -170,9 +193,16 @@ function renderMarkers(leaflet: typeof L, cluster: any, parties: Party[], onSele
           <span style="color:#A896C9;font-weight:700;font-size:14px">${p.fee}</span>
           <span style="color:${dc};font-size:11px;font-weight:600">${p.distance} km away</span>
         </div>
-        <button id="${popupId}" style="width:100%;background:linear-gradient(135deg,#6D5A99,#A85670);border:none;border-radius:8px;padding:8px;color:white;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;cursor:pointer">View Details</button>
+        <button id="${popupId}" style="width:100%;background:linear-gradient(135deg,#6D5A99,#A85670);border:none;border-radius:8px;padding:8px;color:white;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:8px">View Details</button>
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:#6B6478;margin-bottom:5px">Get There</div>
+        <div style="display:flex;gap:5px">
+          <a href="${googleMapsDirectionsUrl(p)}" target="_blank" rel="noreferrer" style="flex:1;text-align:center;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:7px;padding:6px 2px;color:#9691A3;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;text-decoration:none">Maps</a>
+          <a href="${uberDeepLink(p)}" target="_blank" rel="noreferrer" style="flex:1;text-align:center;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:7px;padding:6px 2px;color:#9691A3;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;text-decoration:none">Uber</a>
+          <button onclick="window.__llRideFallback && window.__llRideFallback('${boltDeepLink(p)}','${BOLT_FALLBACK_URL}')" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:7px;padding:6px 2px;color:#9691A3;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;cursor:pointer">Bolt</button>
+          <button onclick="window.__llRideFallback && window.__llRideFallback('${inDriveDeepLink(p)}','${INDRIVE_FALLBACK_URL}')" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:7px;padding:6px 2px;color:#9691A3;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;cursor:pointer">inDrive</button>
+        </div>
       </div>`,
-      { maxWidth: 250 }
+      { maxWidth: 270 }
     );
     marker.on('popupopen', () => {
       const btn = document.getElementById(popupId);

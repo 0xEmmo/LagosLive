@@ -12,7 +12,6 @@ import {
   MapPin,
   Users,
   Ticket,
-  Navigation as NavigationIcon,
   MessageCircle,
   Instagram,
   Share2,
@@ -21,6 +20,7 @@ import {
 import BackButton from '@/components/BackButton';
 import PartyCard from '@/components/PartyCard';
 import PartyPhoto from '@/components/PartyPhoto';
+import GetThereMenu from '@/components/GetThereMenu';
 import { PARTIES, getPartyById, partyPhoto, partyDetailPhoto, VCB, VCT, distanceColor } from '@/lib/data';
 import { useLagosLiveStore } from '@/lib/store';
 
@@ -179,16 +179,7 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
             <Ticket size={15} strokeWidth={2.5} />
             Get Tickets · {party.fee}
           </Link>
-          <a
-            href={`https://www.google.com/maps?q=${party.lat},${party.lng}`}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1.5 whitespace-nowrap rounded-2xl border px-[18px] py-4 text-[13px] font-semibold"
-            style={{ background: 'rgba(182,151,99,0.1)', borderColor: 'rgba(182,151,99,0.32)', color: '#D4BE94' }}
-          >
-            <NavigationIcon size={14} strokeWidth={2.5} />
-            Directions
-          </a>
+          <GetThereMenu party={party} />
         </div>
 
         <div className="mb-5 h-px" style={{ background: 'var(--c-border)' }} />

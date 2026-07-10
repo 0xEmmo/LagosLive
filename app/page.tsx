@@ -10,23 +10,26 @@ import { PARTIES } from '@/lib/data';
 
 const QUICK_FILTERS = ['All', 'Tonight', 'This Weekend', 'Rooftop', 'Club', 'Free Entry', 'Festival'];
 
-const HERO_TAGLINES = [
-  'Lagos Never Sleeps',
-  'The City Is Calling',
-  'Wetin Dey Happen Tonight?',
-  "Don't Sleep On Lagos Tonight",
-  'Owambe Mode: On',
+// Pill tagline + hero headline rotate together, keyed off the same daily index, so the two
+// pieces of copy always read as one cohesive line rather than two unrelated random phrases.
+const HERO_COPY = [
+  { pill: 'Lagos Never Sleeps', line1: 'Where Lagos', line2: 'Comes Alive.' },
+  { pill: 'The City Is Calling', line1: 'Lagos Is', line2: 'Calling You.' },
+  { pill: 'Wetin Dey Happen?', line1: 'Feel The', line2: 'City Tonight.' },
+  { pill: "Don't Sleep On Lagos", line1: 'Own The', line2: 'Night Out.' },
+  { pill: 'Owambe Mode: On', line1: 'Step Into', line2: 'The Night.' },
 ];
 
-function dailyTagline() {
+function dailyHeroCopy() {
   const now = new Date();
   const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000);
-  return HERO_TAGLINES[dayOfYear % HERO_TAGLINES.length];
+  return HERO_COPY[dayOfYear % HERO_COPY.length];
 }
 
 export default function HomePage() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [hero, setHero] = useState({ x: 0, y: 0 });
+  const heroCopy = dailyHeroCopy();
 
   const getLocation = () => {
     setLocationLoading(true);
@@ -91,14 +94,14 @@ export default function HomePage() {
           >
             <div className="h-[5px] w-[5px] rounded-full" style={{ background: '#552CB7' }} />
             <span className="text-[11px] font-semibold uppercase tracking-[1px]" style={{ color: '#552CB7' }}>
-              {dailyTagline()} · 22 Events Live
+              {heroCopy.pill} · 22 Events Live
             </span>
           </div>
           <h1
             className="font-display mb-[18px] leading-[0.9] tracking-[1px]"
             style={{ fontSize: 'clamp(58px,13vw,104px)', fontWeight: 400 }}
           >
-            <span style={{ color: 'var(--c-text)' }}>Find Your </span>
+            <span style={{ color: 'var(--c-text)' }}>{heroCopy.line1} </span>
             <br />
             <span
               style={{
@@ -108,7 +111,7 @@ export default function HomePage() {
                 backgroundClip: 'text',
               }}
             >
-              Next Vibe.
+              {heroCopy.line2}
             </span>
           </h1>
           <p className="mb-7 max-w-[380px] text-[15px] leading-[1.65]" style={{ color: 'var(--c-text-muted)' }}>

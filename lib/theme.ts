@@ -18,11 +18,11 @@ export interface ThemeTokens {
 
 export const THEME_TOKENS: Record<ThemeName, ThemeTokens> = {
   dark: {
-    bg: '#181123', header: 'rgba(24,17,35,0.9)', nav: 'rgba(20,14,29,0.95)',
-    surface: 'rgba(255,255,255,0.05)', surface2: 'rgba(255,255,255,0.06)',
-    glass: 'rgba(255,255,255,0.07)', border: 'rgba(255,255,255,0.09)',
-    border2: 'rgba(255,255,255,0.1)', border3: 'rgba(255,255,255,0.14)',
-    text: '#FFFBF3', textMuted: '#C4B8D9', textFaint: '#8E7FA8', textDim: '#6E6084',
+    bg: '#111111', header: 'rgba(17,17,17,0.9)', nav: 'rgba(14,14,14,0.95)',
+    surface: '#171A1F', surface2: '#191D22',
+    glass: 'rgba(166,161,147,0.06)', border: 'rgba(166,161,147,0.22)',
+    border2: 'rgba(166,161,147,0.14)', border3: 'rgba(166,161,147,0.3)',
+    text: '#F2EFE9', textMuted: '#A6A193', textFaint: '#83806F', textDim: '#625F53',
   },
   light: {
     bg: '#FFF8EC', header: 'rgba(255,248,236,0.88)', nav: 'rgba(255,255,255,0.94)',
@@ -49,6 +49,23 @@ export const RETRO = {
   blue: '#058CD7',
   ink: '#1A140F',
 };
+
+// Luxury dark palette used for always-dark brand moments (splash, toast) and dark theme mode
+export const LUXURY = {
+  red: '#800020',
+  navy: '#0B1D34',
+  pine: '#0E2B24',
+  beige: '#A6A193',
+  black: '#111111',
+};
+
+// Brand accent pair for always-dark surfaces (Splash, Toast, FolderReveal) that don't
+// otherwise change with the theme toggle — keeps them visually consistent with whichever
+// mode is active instead of a single fixed color.
+export function brandAccent(theme: ThemeName) {
+  // Brightened red (not the raw swatch) so text/fills stay legible against a near-black bg
+  return theme === 'dark' ? { from: '#C4102E', to: LUXURY.navy, muted: LUXURY.beige } : { from: PALETTE.primary, to: PALETTE.secondary, muted: '#C4B8D9' };
+}
 
 export function themeCssVars(tokens: ThemeTokens): Record<string, string> {
   return {

@@ -3,21 +3,21 @@
 @tailwind utilities;
 
 :root[data-theme='dark'] {
-  --c-bg: #181123;
-  --c-header: rgba(24, 17, 35, 0.9);
-  --c-nav: rgba(20, 14, 29, 0.95);
-  --c-surface: rgba(255, 255, 255, 0.05);
-  --c-surface2: rgba(255, 255, 255, 0.06);
-  --c-glass: rgba(255, 255, 255, 0.07);
-  --c-border: rgba(255, 255, 255, 0.09);
-  --c-border2: rgba(255, 255, 255, 0.1);
-  --c-border3: rgba(255, 255, 255, 0.14);
-  --c-text: #fffbf3;
-  --c-text-muted: #c4b8d9;
-  --c-text-faint: #8e7fa8;
-  --c-text-dim: #6e6084;
-  --c-ink: #fffbf3;
-  --c-card-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  --c-bg: #111111;
+  --c-header: rgba(17, 17, 17, 0.9);
+  --c-nav: rgba(14, 14, 14, 0.95);
+  --c-surface: #171a1f;
+  --c-surface2: #191d22;
+  --c-glass: rgba(166, 161, 147, 0.06);
+  --c-border: rgba(166, 161, 147, 0.22);
+  --c-border2: rgba(166, 161, 147, 0.14);
+  --c-border3: rgba(166, 161, 147, 0.3);
+  --c-text: #f2efe9;
+  --c-text-muted: #a6a193;
+  --c-text-faint: #83806f;
+  --c-text-dim: #625f53;
+  --c-ink: #f2efe9;
+  --c-card-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
 }
 
 :root[data-theme='light'] {

@@ -61,7 +61,7 @@ export default function MapPage() {
       <div className="absolute left-3.5 right-3.5 top-3.5 z-[1000]">
         <div
           className="flex items-center gap-2.5 rounded-2xl border border-white/10 px-4 py-2.5 backdrop-blur-[22px]"
-          style={{ background: 'rgba(20,17,31,0.9)' }}
+          style={{ background: 'rgba(17,17,17,0.92)' }}
         >
           <Search size={16} strokeWidth={2.5} color="#847E96" />
           <input
@@ -73,7 +73,7 @@ export default function MapPage() {
           <div
             className="flex-shrink-0 text-[11px] font-bold tracking-[0.5px]"
             style={{
-              background: 'linear-gradient(135deg,#B79AFF,#FFA8C8)',
+              background: 'linear-gradient(135deg,#E85A7A,#A6A193)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -86,7 +86,7 @@ export default function MapPage() {
 
       {/* Legend / Filters */}
       <div className="absolute bottom-[18px] left-3.5 z-[1000]">
-        <div className="rounded-[13px] border border-[color:var(--c-border3)] px-[15px] py-2.5 backdrop-blur-[18px]" style={{ background: 'rgba(20,17,31,0.92)' }}>
+        <div className="rounded-[13px] border border-[color:var(--c-border3)] px-[15px] py-2.5 backdrop-blur-[18px]" style={{ background: 'rgba(17,17,17,0.92)' }}>
           <div className="mb-2.5 flex items-center justify-between gap-3.5">
             <div className="text-[10px] font-bold uppercase tracking-[0.9px]" style={{ color: '#847E96' }}>
               Filter by Vibe
@@ -123,13 +123,13 @@ export default function MapPage() {
           style={
             showHeatmap
               ? {
-                  background: 'linear-gradient(135deg,#552CB7,#FB7DA8)',
+                  background: 'linear-gradient(135deg,#800020,#0B1D34)',
                   borderColor: 'rgba(255,255,255,0.2)',
                   color: '#fff',
-                  boxShadow: '0 4px 20px rgba(251,125,168,0.35)',
+                  boxShadow: '0 4px 20px rgba(128,0,32,0.4)',
                 }
               : {
-                  background: 'rgba(20,17,31,0.9)',
+                  background: 'rgba(17,17,17,0.92)',
                   borderColor: 'var(--c-border3)',
                   color: '#9691A3',
                   boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
@@ -156,7 +156,7 @@ export default function MapPage() {
         <div className="absolute left-3.5 top-[68px] z-[1000]">
           <div
             className="flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-semibold backdrop-blur-[18px]"
-            style={{ background: 'rgba(20,17,31,0.92)', borderColor: 'var(--c-border3)', color: '#9691A3' }}
+            style={{ background: 'rgba(17,17,17,0.92)', borderColor: 'var(--c-border3)', color: '#9691A3' }}
           >
             <span
               className="h-1.5 w-5 rounded-full"

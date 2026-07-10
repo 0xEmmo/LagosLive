@@ -10,6 +10,20 @@ import { PARTIES } from '@/lib/data';
 
 const QUICK_FILTERS = ['All', 'Tonight', 'This Weekend', 'Rooftop', 'Club', 'Free Entry', 'Festival'];
 
+const HERO_TAGLINES = [
+  'Lagos Never Sleeps',
+  'The City Is Calling',
+  'Wetin Dey Happen Tonight?',
+  "Don't Sleep On Lagos Tonight",
+  'Owambe Mode: On',
+];
+
+function dailyTagline() {
+  const now = new Date();
+  const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000);
+  return HERO_TAGLINES[dayOfYear % HERO_TAGLINES.length];
+}
+
 export default function HomePage() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [hero, setHero] = useState({ x: 0, y: 0 });
@@ -77,7 +91,7 @@ export default function HomePage() {
           >
             <div className="h-[5px] w-[5px] rounded-full" style={{ background: '#552CB7' }} />
             <span className="text-[11px] font-semibold uppercase tracking-[1px]" style={{ color: '#552CB7' }}>
-              Lagos is Lit Tonight · 22 Events Live
+              {dailyTagline()} · 22 Events Live
             </span>
           </div>
           <h1

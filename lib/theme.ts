@@ -22,14 +22,14 @@ export const THEME_TOKENS: Record<ThemeName, ThemeTokens> = {
     surface: '#171A1F', surface2: '#191D22',
     glass: 'rgba(166,161,147,0.06)', border: 'rgba(166,161,147,0.22)',
     border2: 'rgba(166,161,147,0.14)', border3: 'rgba(166,161,147,0.3)',
-    text: '#F2EFE9', textMuted: '#A6A193', textFaint: '#83806F', textDim: '#625F53',
+    text: '#F2EFE9', textMuted: '#A6A193', textFaint: '#83806F', textDim: '#807C6E',
   },
   light: {
     bg: '#FFF8EC', header: 'rgba(255,248,236,0.88)', nav: 'rgba(255,255,255,0.94)',
     surface: '#FFFFFF', surface2: '#FFFFFF',
     glass: 'rgba(26,20,15,0.045)', border: 'rgba(26,20,15,0.85)',
     border2: 'rgba(26,20,15,0.14)', border3: 'rgba(26,20,15,0.85)',
-    text: '#1A140F', textMuted: '#6E6558', textFaint: '#948A7C', textDim: '#B0A594',
+    text: '#1A140F', textMuted: '#6E6558', textFaint: '#786E60', textDim: '#7C7263',
   },
 };
 

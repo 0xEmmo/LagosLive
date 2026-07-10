@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { getPartyById, partyPhoto } from '@/lib/data';
+import PartyPhoto from '@/components/PartyPhoto';
 import { formatNaira } from '@/lib/filters';
 
 type Step = 'details' | 'payment' | 'success';
@@ -100,7 +100,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
         <div className="flex flex-1 flex-col p-5">
           <div className="mb-[22px] flex gap-3 rounded-2xl border p-3" style={{ background: 'var(--c-surface)', borderColor: 'var(--c-border)' }}>
             <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-[10px]" style={{ background: party.gradient }}>
-              <Image src={partyPhoto(party.id)} alt={party.title} fill sizes="64px" className="object-cover" />
+              <PartyPhoto src={partyPhoto(party.id)} alt={party.title} gradient={party.gradient} sizes="64px" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="mb-1 truncate font-heading text-sm font-bold" style={{ color: 'var(--c-text)' }}>{party.title}</div>

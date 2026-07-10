@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import {
   ChevronLeft,
@@ -21,6 +20,7 @@ import {
 } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import PartyCard from '@/components/PartyCard';
+import PartyPhoto from '@/components/PartyPhoto';
 import { PARTIES, getPartyById, partyPhoto, partyDetailPhoto, VCB, VCT, distanceColor } from '@/lib/data';
 import { useLagosLiveStore } from '@/lib/store';
 
@@ -73,7 +73,7 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
         >
           {images.map((src, i) => (
             <div key={i} className="relative h-[280px] w-full flex-shrink-0" style={{ background: party.gradient }}>
-              <Image src={src} alt={`${party.title} photo ${i + 1}`} fill sizes="100vw" className="object-cover" />
+              <PartyPhoto src={src} alt={`${party.title} photo ${i + 1}`} gradient={party.gradient} sizes="100vw" priority={i === 0} />
             </div>
           ))}
         </div>
@@ -289,7 +289,7 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
                   style={{ background: 'var(--c-surface)', borderColor: 'var(--c-border)' }}
                 >
                   <div className="relative h-[108px]" style={{ background: sp2.gradient }}>
-                    <Image src={partyPhoto(sp2.id)} alt={sp2.title} fill sizes="195px" className="object-cover" />
+                    <PartyPhoto src={partyPhoto(sp2.id)} alt={sp2.title} gradient={sp2.gradient} sizes="195px" />
                     <div className="pointer-events-none absolute inset-0 z-[1]" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent 60%)' }} />
                     <div className="absolute bottom-[7px] left-2 z-[2]">
                       <span className="rounded-full px-2 py-[3px] text-[11px] font-semibold" style={{ background: VCB[sp2.vibe], color: VCT[sp2.vibe] }}>

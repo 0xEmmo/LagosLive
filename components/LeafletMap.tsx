@@ -12,14 +12,18 @@ interface LeafletMapProps {
   parties: Party[];
   userLocation: { lat: number; lng: number } | null;
   onSelectParty: (id: number) => void;
+  showHeatmap?: boolean;
 }
 
-export default function LeafletMap({ parties, userLocation, onSelectParty }: LeafletMapProps) {
+export default function LeafletMap({ parties, userLocation, onSelectParty, showHeatmap = false }: LeafletMapProps) {
   const mapRef = useRef<L.Map | null>(null);
   const clusterRef = useRef<any>(null);
+  const heatRef = useRef<any>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
   const onSelectRef = useRef(onSelectParty);
   onSelectRef.current = onSelectParty;
+  const showHeatmapRef = useRef(showHeatmap);
+  showHeatmapRef.current = showHeatmap;
 
   // Init map once
   useEffect(() => {
@@ -28,6 +32,7 @@ export default function LeafletMap({ parties, userLocation, onSelectParty }: Lea
     (async () => {
       const leaflet = (await import('leaflet')).default;
       await import('leaflet.markercluster');
+      await import('leaflet.heat');
 
       if (cancelled || mapRef.current) return;
       const el = document.getElementById('ll-map');
@@ -64,9 +69,20 @@ export default function LeafletMap({ parties, userLocation, onSelectParty }: Lea
       });
       cluster.addTo(map);
 
+      const heat = (leaflet as any).heatLayer([], {
+        radius: 42,
+        blur: 32,
+        maxZoom: 15,
+        minOpacity: 0.35,
+        gradient: { 0.2: '#2E2447', 0.4: '#6D5A99', 0.6: '#A85670', 0.8: '#C2954F', 1.0: '#E8B860' },
+      });
+
       mapRef.current = map;
       clusterRef.current = cluster;
+      heatRef.current = heat;
       renderMarkers(leaflet, cluster, parties, onSelectRef.current);
+      renderHeat(heat, parties);
+      if (showHeatmapRef.current) heat.addTo(map);
     })();
 
     return () => {
@@ -75,20 +91,32 @@ export default function LeafletMap({ parties, userLocation, onSelectParty }: Lea
         mapRef.current.remove();
         mapRef.current = null;
         clusterRef.current = null;
+        heatRef.current = null;
         userMarkerRef.current = null;
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Re-render markers when the filtered party list changes
+  // Re-render markers + heat data when the filtered party list changes
   useEffect(() => {
     if (!mapRef.current || !clusterRef.current) return;
     (async () => {
       const leaflet = (await import('leaflet')).default;
       renderMarkers(leaflet, clusterRef.current, parties, onSelectRef.current);
+      if (heatRef.current) renderHeat(heatRef.current, parties);
     })();
   }, [parties]);
+
+  // Toggle heatmap layer visibility
+  useEffect(() => {
+    if (!mapRef.current || !heatRef.current) return;
+    if (showHeatmap) {
+      heatRef.current.addTo(mapRef.current);
+    } else {
+      heatRef.current.remove();
+    }
+  }, [showHeatmap]);
 
   // User location marker
   useEffect(() => {
@@ -152,4 +180,14 @@ function renderMarkers(leaflet: typeof L, cluster: any, parties: Party[], onSele
     });
     cluster.addLayer(marker);
   });
+}
+
+// Weight each point by how full the event is so heavily-attended parties read as "hotter"
+function renderHeat(heat: any, parties: Party[]) {
+  const points = parties.map((p) => {
+    const fill = (p.capacity - p.spotsLeft) / p.capacity;
+    const intensity = 0.45 + Math.min(1, Math.max(0, fill)) * 0.55;
+    return [p.lat, p.lng, intensity];
+  });
+  heat.setLatLngs(points);
 }

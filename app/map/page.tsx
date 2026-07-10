@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { Search, Locate } from 'lucide-react';
+import { Search, Locate, Flame } from 'lucide-react';
 import { PARTIES, ALL_VIBES, VC } from '@/lib/data';
 import type { Vibe } from '@/lib/types';
 
@@ -14,6 +14,7 @@ export default function MapPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeVibes, setActiveVibes] = useState<Set<Vibe>>(new Set(ALL_VIBES));
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [showHeatmap, setShowHeatmap] = useState(false);
 
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -49,7 +50,12 @@ export default function MapPage() {
 
   return (
     <div className="relative overflow-hidden" style={{ height: 'calc(100vh - 84px)' }}>
-      <LeafletMap parties={filtered} userLocation={userLocation} onSelectParty={(id) => router.push(`/party/${id}`)} />
+      <LeafletMap
+        parties={filtered}
+        userLocation={userLocation}
+        onSelectParty={(id) => router.push(`/party/${id}`)}
+        showHeatmap={showHeatmap}
+      />
 
       {/* Top search overlay */}
       <div className="absolute left-3.5 right-3.5 top-3.5 z-[1000]">
@@ -107,8 +113,31 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* My location button */}
-      <div className="absolute bottom-[18px] right-3.5 z-[1000]">
+      {/* Map action buttons */}
+      <div className="absolute bottom-[18px] right-3.5 z-[1000] flex flex-col gap-2.5">
+        <button
+          onClick={() => setShowHeatmap((v) => !v)}
+          aria-pressed={showHeatmap}
+          title="Toggle party density heatmap"
+          className="flex h-12 w-12 items-center justify-center rounded-full border backdrop-blur-[18px] transition-colors"
+          style={
+            showHeatmap
+              ? {
+                  background: 'linear-gradient(135deg,#6D5A99,#A85670)',
+                  borderColor: 'rgba(255,255,255,0.2)',
+                  color: '#fff',
+                  boxShadow: '0 4px 20px rgba(168,86,112,0.35)',
+                }
+              : {
+                  background: 'rgba(20,17,31,0.9)',
+                  borderColor: 'var(--c-border3)',
+                  color: '#9691A3',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+                }
+          }
+        >
+          <Flame size={19} strokeWidth={2.5} fill={showHeatmap ? 'rgba(255,255,255,0.25)' : 'none'} />
+        </button>
         <button
           onClick={getLocation}
           className="flex h-12 w-12 items-center justify-center rounded-full border backdrop-blur-[18px]"
@@ -122,6 +151,23 @@ export default function MapPage() {
           <Locate size={20} strokeWidth={2.5} />
         </button>
       </div>
+
+      {showHeatmap && (
+        <div className="absolute left-3.5 top-[68px] z-[1000]">
+          <div
+            className="flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-semibold backdrop-blur-[18px]"
+            style={{ background: 'rgba(20,17,31,0.92)', borderColor: 'var(--c-border3)', color: '#9691A3' }}
+          >
+            <span
+              className="h-1.5 w-5 rounded-full"
+              style={{ background: 'linear-gradient(90deg,#2E2447,#6D5A99,#A85670,#C2954F,#E8B860)' }}
+            />
+            Low
+            <span style={{ color: 'var(--c-text-dim)' }}>→</span>
+            High turnout
+          </div>
+        </div>
+      )}
     </div>
   );
 }

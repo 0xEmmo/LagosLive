@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Heart, Bell, Calendar, MapPin } from 'lucide-react';
 import type { Party } from '@/lib/types';
 import { VCB, VCT, partyPhoto, distanceColor, distanceBg, distanceBorder } from '@/lib/data';
 import { useLagosLiveStore } from '@/lib/store';
+import PartyPhoto from './PartyPhoto';
 
 interface PartyCardProps {
   party: Party;
@@ -52,12 +52,11 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 17
       }}
     >
       <div className="relative overflow-hidden" style={{ height: imageHeight, background: party.gradient }}>
-        <Image
+        <PartyPhoto
           src={partyPhoto(party.id)}
           alt={party.title}
-          fill
+          gradient={party.gradient}
           sizes="(max-width: 768px) 100vw, 33vw"
-          className="object-cover"
         />
         <div
           className="pointer-events-none absolute inset-0 z-[1]"

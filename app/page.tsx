@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { MapPin, Search, Loader2 } from 'lucide-react';
 import HomeHeader from '@/components/HomeHeader';
 import PartyCard from '@/components/PartyCard';
+import FolderReveal from '@/components/FolderReveal';
 import { PARTIES } from '@/lib/data';
 
 const QUICK_FILTERS = ['All', 'Tonight', 'This Weekend', 'Rooftop', 'Club', 'Free Entry', 'Festival'];
@@ -43,6 +44,7 @@ export default function HomePage() {
 
   return (
     <div className="animate-fade-in">
+      <FolderReveal />
       <HomeHeader />
 
       {/* Hero */}

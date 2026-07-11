@@ -266,7 +266,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
           )}
 
           {error && (
-            <div className="mb-4 rounded-[10px] border px-3.5 py-2.5 text-[13px]" style={{ background: 'rgba(214,64,44,0.1)', borderColor: 'rgba(214,64,44,0.32)', color: '#D6402C' }}>
+            <div className="mb-4 animate-fade-in rounded-[10px] border px-3.5 py-2.5 text-[13px]" style={{ background: 'rgba(214,64,44,0.1)', borderColor: 'rgba(214,64,44,0.32)', color: '#D6402C' }}>
               {error}
             </div>
           )}

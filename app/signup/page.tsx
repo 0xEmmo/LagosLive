@@ -43,7 +43,7 @@ export default function SignupPage() {
         </div>
 
         {error && (
-          <div className="mb-4 rounded-[10px] border px-3.5 py-2.5 text-[13px]" style={{ background: 'rgba(214,64,44,0.1)', borderColor: 'rgba(214,64,44,0.32)', color: '#D6402C' }}>
+          <div className="mb-4 animate-fade-in rounded-[10px] border px-3.5 py-2.5 text-[13px]" style={{ background: 'rgba(214,64,44,0.1)', borderColor: 'rgba(214,64,44,0.32)', color: '#D6402C' }}>
             {error}
           </div>
         )}
@@ -73,7 +73,7 @@ export default function SignupPage() {
 
         <button
           onClick={submit}
-          className="w-full rounded-xl border-none py-[15px] font-heading text-sm font-bold text-white"
+          className="w-full rounded-xl border-none py-[15px] font-heading text-sm font-bold text-white transition-transform duration-150 active:scale-[0.98]"
           style={{ background: 'linear-gradient(135deg,#552CB7,#FB7DA8)', boxShadow: '0 8px 24px rgba(85,44,183,0.28)' }}
         >
           Create Account

@@ -118,7 +118,7 @@ export default function ProfilePage() {
                   <div className="truncate text-[13px] font-semibold" style={{ color: 'var(--c-text)' }}>{p.title}</div>
                   <div className="text-[11px]" style={{ color: 'var(--c-text-faint)' }}>{p.date} · {p.time}</div>
                 </div>
-                <button onClick={() => removeReminder(p.id)} className="flex-shrink-0 p-1" style={{ color: 'var(--c-text-dim)' }}>
+                <button onClick={() => removeReminder(p.id)} className="flex-shrink-0 p-1 transition-transform duration-150 active:scale-90" style={{ color: 'var(--c-text-dim)' }}>
                   <X size={13} strokeWidth={2.5} />
                 </button>
               </div>
@@ -140,7 +140,7 @@ export default function ProfilePage() {
           logout();
           router.push('/');
         }}
-        className="w-full rounded-xl border py-[15px] text-sm font-semibold"
+        className="w-full rounded-xl border py-[15px] text-sm font-semibold transition-transform duration-150 active:scale-[0.98]"
         style={{ background: 'rgba(214,64,44,0.1)', borderColor: 'rgba(214,64,44,0.32)', color: '#D6402C' }}
       >
         Log Out

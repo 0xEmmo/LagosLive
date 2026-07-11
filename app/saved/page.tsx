@@ -50,8 +50,8 @@ export default function SavedPage() {
           className="grid gap-4 px-5 py-4"
           style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', perspective: '1500px' }}
         >
-          {saved.map((party) => (
-            <PartyCard key={party.id} party={party} />
+          {saved.map((party, i) => (
+            <PartyCard key={party.id} party={party} index={i} />
           ))}
         </div>
       )}

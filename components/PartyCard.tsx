@@ -12,9 +12,10 @@ interface PartyCardProps {
   party: Party;
   showReminder?: boolean;
   imageHeight?: number;
+  index?: number;
 }
 
-export default function PartyCard({ party, showReminder = true, imageHeight = 175 }: PartyCardProps) {
+export default function PartyCard({ party, showReminder = true, imageHeight = 175, index }: PartyCardProps) {
   const [tilt, setTilt] = useState({ rx: 0, ry: 0, active: false });
   const saved = useLagosLiveStore((s) => s.savedParties.includes(party.id));
   const reminded = useLagosLiveStore((s) => s.reminders.includes(party.id));
@@ -49,6 +50,8 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 17
           ? 'transform 0.06s linear'
           : 'transform 0.5s cubic-bezier(0.22,0.9,0.3,1), box-shadow 0.3s ease, border-color 0.3s ease',
         willChange: 'transform',
+        animationDelay: index !== undefined ? `${Math.min(index, 8) * 45}ms` : undefined,
+        animationFillMode: index !== undefined ? 'backwards' : undefined,
       }}
     >
       <div className="relative overflow-hidden" style={{ height: imageHeight, background: party.gradient }}>

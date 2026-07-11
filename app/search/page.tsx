@@ -117,45 +117,53 @@ export default function SearchPage() {
           </button>
         </div>
 
-        {drawerOpen && (
-          <div className="flex flex-col gap-3 pt-3.5">
-            <FilterGroup title="Date">
-              {DATE_OPTS.map((opt) => (
-                <Pill key={opt} label={opt} active={filters.date === opt} onClick={() => setFilter('date', opt)} />
-              ))}
-            </FilterGroup>
-            <FilterGroup title="Price Range">
-              {PRICE_OPTS.map((opt) => (
-                <Pill key={opt} label={opt} active={filters.price === opt} onClick={() => setFilter('price', opt)} />
-              ))}
-            </FilterGroup>
-            <FilterGroup title="Vibe / Type">
-              {VIBE_OPTS.map((opt) => (
-                <Pill key={opt} label={opt} active={filters.vibe === opt} onClick={() => setFilter('vibe', opt)} />
-              ))}
-            </FilterGroup>
-            <FilterGroup title="Distance">
-              {DIST_OPTS.map((opt) => (
-                <Pill
-                  key={opt}
-                  label={opt}
-                  active={filters.distance === opt}
-                  onClick={() => setFilter('distance', opt)}
-                />
-              ))}
-            </FilterGroup>
-            {activeFilterCount > 0 && (
-              <button
-                onClick={clearFilters}
-                className="self-start rounded-lg border px-4 py-[7px] text-[13px] font-medium"
-                style={{ background: 'rgba(214,64,44,0.1)', borderColor: 'rgba(214,64,44,0.3)', color: '#D6402C' }}
-              >
-                <X size={12} className="mr-1 inline" strokeWidth={2.5} />
-                Clear all filters
-              </button>
-            )}
+        <div
+          className="grid transition-[grid-template-rows] duration-300 ease-out"
+          style={{ gridTemplateRows: drawerOpen ? '1fr' : '0fr' }}
+        >
+          <div className="overflow-hidden">
+            <div
+              className="flex flex-col gap-3 pt-3.5 transition-opacity duration-200 ease-out"
+              style={{ opacity: drawerOpen ? 1 : 0 }}
+            >
+              <FilterGroup title="Date">
+                {DATE_OPTS.map((opt) => (
+                  <Pill key={opt} label={opt} active={filters.date === opt} onClick={() => setFilter('date', opt)} />
+                ))}
+              </FilterGroup>
+              <FilterGroup title="Price Range">
+                {PRICE_OPTS.map((opt) => (
+                  <Pill key={opt} label={opt} active={filters.price === opt} onClick={() => setFilter('price', opt)} />
+                ))}
+              </FilterGroup>
+              <FilterGroup title="Vibe / Type">
+                {VIBE_OPTS.map((opt) => (
+                  <Pill key={opt} label={opt} active={filters.vibe === opt} onClick={() => setFilter('vibe', opt)} />
+                ))}
+              </FilterGroup>
+              <FilterGroup title="Distance">
+                {DIST_OPTS.map((opt) => (
+                  <Pill
+                    key={opt}
+                    label={opt}
+                    active={filters.distance === opt}
+                    onClick={() => setFilter('distance', opt)}
+                  />
+                ))}
+              </FilterGroup>
+              {activeFilterCount > 0 && (
+                <button
+                  onClick={clearFilters}
+                  className="self-start rounded-lg border px-4 py-[7px] text-[13px] font-medium transition-transform duration-150 active:scale-95"
+                  style={{ background: 'rgba(214,64,44,0.1)', borderColor: 'rgba(214,64,44,0.3)', color: '#D6402C' }}
+                >
+                  <X size={12} className="mr-1 inline" strokeWidth={2.5} />
+                  Clear all filters
+                </button>
+              )}
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
       <div className="flex items-center justify-between border-b px-5 py-[11px]" style={{ borderColor: 'var(--c-glass)' }}>
@@ -202,8 +210,8 @@ export default function SearchPage() {
           className="grid gap-4 px-5 py-4"
           style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', perspective: '1500px' }}
         >
-          {filtered.map((party) => (
-            <PartyCard key={party.id} party={party} showReminder={false} />
+          {filtered.map((party, i) => (
+            <PartyCard key={party.id} party={party} showReminder={false} index={i} />
           ))}
         </div>
       )}

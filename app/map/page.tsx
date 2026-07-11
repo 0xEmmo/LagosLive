@@ -152,22 +152,27 @@ export default function MapPage() {
         </button>
       </div>
 
-      {showHeatmap && (
-        <div className="absolute left-3.5 top-[68px] z-[1000]">
-          <div
-            className="flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-semibold backdrop-blur-[18px] backdrop-saturate-150"
-            style={{ background: 'rgba(17,17,17,0.92)', borderColor: 'var(--c-border3)', color: '#9691A3' }}
-          >
-            <span
-              className="h-1.5 w-5 rounded-full"
-              style={{ background: 'linear-gradient(90deg,#058CD7,#552CB7,#FB7DA8,#FD5A46,#FFC567)' }}
-            />
-            Low
-            <span style={{ color: 'var(--c-text-dim)' }}>→</span>
-            High turnout
-          </div>
+      <div
+        className="absolute left-3.5 top-[68px] z-[1000] transition-[opacity,transform] duration-200 ease-out"
+        style={{
+          opacity: showHeatmap ? 1 : 0,
+          transform: showHeatmap ? 'translateY(0) scale(1)' : 'translateY(-4px) scale(0.96)',
+          visibility: showHeatmap ? 'visible' : 'hidden',
+        }}
+      >
+        <div
+          className="flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-semibold backdrop-blur-[18px] backdrop-saturate-150"
+          style={{ background: 'rgba(17,17,17,0.92)', borderColor: 'var(--c-border3)', color: '#9691A3' }}
+        >
+          <span
+            className="h-1.5 w-5 rounded-full"
+            style={{ background: 'linear-gradient(90deg,#058CD7,#552CB7,#FB7DA8,#FD5A46,#FFC567)' }}
+          />
+          Low
+          <span style={{ color: 'var(--c-text-dim)' }}>→</span>
+          High turnout
         </div>
-      )}
+      </div>
     </div>
   );
 }

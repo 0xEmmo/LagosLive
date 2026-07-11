@@ -190,8 +190,8 @@ export default function HomePage() {
         className="grid gap-4 px-5 pb-6"
         style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', perspective: '1500px' }}
       >
-        {PARTIES.slice(0, 8).map((party) => (
-          <PartyCard key={party.id} party={party} />
+        {PARTIES.slice(0, 8).map((party, i) => (
+          <PartyCard key={party.id} party={party} index={i} />
         ))}
       </div>
     </div>

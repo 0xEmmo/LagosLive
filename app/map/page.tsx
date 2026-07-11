@@ -4,13 +4,15 @@ import { useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { Search, Locate, Flame } from 'lucide-react';
-import { PARTIES, ALL_VIBES, VC } from '@/lib/data';
+import { ALL_VIBES, VC } from '@/lib/data';
+import { useParties } from '@/lib/hooks/useParties';
 import type { Vibe } from '@/lib/types';
 
 const LeafletMap = dynamic(() => import('@/components/LeafletMap'), { ssr: false });
 
 export default function MapPage() {
   const router = useRouter();
+  const { parties } = useParties();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeVibes, setActiveVibes] = useState<Set<Vibe>>(new Set(ALL_VIBES));
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -18,10 +20,10 @@ export default function MapPage() {
 
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    return PARTIES.filter(
+    return parties.filter(
       (p) => activeVibes.has(p.vibe) && (!q || p.title.toLowerCase().includes(q) || p.location.toLowerCase().includes(q))
     );
-  }, [searchQuery, activeVibes]);
+  }, [parties, searchQuery, activeVibes]);
 
   const toggleVibe = (vibe: Vibe) => {
     setActiveVibes((s) => {

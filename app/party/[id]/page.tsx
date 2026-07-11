@@ -22,11 +22,14 @@ import PartyCard from '@/components/PartyCard';
 import PartyPhoto from '@/components/PartyPhoto';
 import GetThereMenu from '@/components/GetThereMenu';
 import SwipeCarousel from '@/components/SwipeCarousel';
-import { PARTIES, getPartyById, partyPhoto, partyDetailPhoto, VCB, VCT, distanceColor } from '@/lib/data';
+import { partyPhoto, partyDetailPhoto, VCB, VCT, distanceColor } from '@/lib/data';
+import { useParty } from '@/lib/hooks/useParty';
+import { useParties } from '@/lib/hooks/useParties';
 import { useLagosLiveStore } from '@/lib/store';
 
 export default function PartyDetailPage({ params }: { params: { id: string } }) {
-  const party = getPartyById(Number(params.id));
+  const { party, loading } = useParty(Number(params.id));
+  const { parties } = useParties();
   const [carouselIndex, setCarouselIndex] = useState(0);
 
   const saved = useLagosLiveStore((s) => (party ? s.savedParties.includes(party.id) : false));
@@ -34,12 +37,15 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
   const toggleSave = useLagosLiveStore((s) => s.toggleSave);
   const toggleReminder = useLagosLiveStore((s) => s.toggleReminder);
 
-  if (!party) notFound();
+  if (!party) {
+    if (loading) return null;
+    notFound();
+  }
 
   const images = [partyPhoto(party.id), partyDetailPhoto(party.id, 'b'), partyDetailPhoto(party.id, 'c')];
   const capPct = Math.min(100, Math.round(((party.capacity - party.spotsLeft) / party.capacity) * 100));
   const spotsUrgent = party.spotsLeft < 100;
-  const similarParties = PARTIES.filter((p) => p.id !== party.id && p.vibe === party.vibe).slice(0, 4);
+  const similarParties = parties.filter((p) => p.id !== party.id && p.vibe === party.vibe).slice(0, 4);
 
   return (
     <div className="mx-auto max-w-[720px] animate-fade-in">

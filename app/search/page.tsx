@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { Search as SearchIcon, SlidersHorizontal, X } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import PartyCard from '@/components/PartyCard';
-import { PARTIES } from '@/lib/data';
+import { useParties } from '@/lib/hooks/useParties';
 import { filterAndSortParties } from '@/lib/filters';
 import type { PartyFilters, SortBy } from '@/lib/types';
 
@@ -51,6 +51,7 @@ function FilterGroup({ title, children }: { title: string; children: React.React
 }
 
 export default function SearchPage() {
+  const { parties } = useParties();
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<PartyFilters>(EMPTY_FILTERS);
   const [sortBy, setSortBy] = useState<SortBy>('trending');
@@ -66,8 +67,8 @@ export default function SearchPage() {
   };
 
   const filtered = useMemo(
-    () => filterAndSortParties(PARTIES, searchQuery, filters, sortBy),
-    [searchQuery, filters, sortBy]
+    () => filterAndSortParties(parties, searchQuery, filters, sortBy),
+    [parties, searchQuery, filters, sortBy]
   );
 
   const activeFilterCount = Object.values(filters).filter(Boolean).length;

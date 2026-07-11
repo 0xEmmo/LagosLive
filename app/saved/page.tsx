@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { Heart } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import PartyCard from '@/components/PartyCard';
-import { PARTIES } from '@/lib/data';
+import { useParties } from '@/lib/hooks/useParties';
 import { useLagosLiveStore } from '@/lib/store';
 
 export default function SavedPage() {
+  const { parties } = useParties();
   const savedParties = useLagosLiveStore((s) => s.savedParties);
-  const saved = PARTIES.filter((p) => savedParties.includes(p.id));
+  const saved = parties.filter((p) => savedParties.includes(p.id));
 
   return (
     <div className="animate-fade-in">

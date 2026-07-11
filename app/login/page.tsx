@@ -13,13 +13,20 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const submit = () => {
+  const submit = async () => {
     if (!email.trim() || !password.trim()) {
       setError('Please enter your email and password.');
       return;
     }
-    login(email);
+    setSubmitting(true);
+    const errorMessage = await login(email.trim(), password);
+    setSubmitting(false);
+    if (errorMessage) {
+      setError(errorMessage);
+      return;
+    }
     setError('');
     router.push('/profile');
   };
@@ -77,10 +84,11 @@ export default function LoginPage() {
 
         <button
           onClick={submit}
-          className="w-full rounded-xl border-none py-[15px] font-heading text-sm font-bold text-white transition-transform duration-150 active:scale-[0.98]"
+          disabled={submitting}
+          className="w-full rounded-xl border-none py-[15px] font-heading text-sm font-bold text-white transition-transform duration-150 active:scale-[0.98] disabled:opacity-60"
           style={{ background: 'linear-gradient(135deg,#552CB7,#FB7DA8)', boxShadow: '0 8px 24px rgba(85,44,183,0.28)' }}
         >
-          Log In
+          {submitting ? 'Logging in...' : 'Log In'}
         </button>
 
         <div className="my-[22px] flex items-center gap-3">

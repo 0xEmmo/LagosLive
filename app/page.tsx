@@ -8,7 +8,8 @@ import PartyCard from '@/components/PartyCard';
 import FolderReveal from '@/components/FolderReveal';
 import Marquee from '@/components/Marquee';
 import ShinyText from '@/components/ShinyText';
-import { PARTIES, VC } from '@/lib/data';
+import { VC } from '@/lib/data';
+import { useParties } from '@/lib/hooks/useParties';
 
 const QUICK_FILTERS = ['All', 'Tonight', 'This Weekend', 'Rooftop', 'Club', 'Free Entry', 'Festival'];
 
@@ -32,6 +33,7 @@ export default function HomePage() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [hero, setHero] = useState({ x: 0, y: 0 });
   const heroCopy = dailyHeroCopy();
+  const { parties } = useParties();
 
   const getLocation = () => {
     setLocationLoading(true);
@@ -103,7 +105,7 @@ export default function HomePage() {
               className="text-[11px] font-semibold uppercase tracking-[1px]"
               style={{ color: 'rgba(85,44,183,0.78)' }}
             >
-              {heroCopy.pill} · 22 Events Live
+              {heroCopy.pill} · {parties.length} Events Live
             </ShinyText>
           </div>
           <h1
@@ -184,7 +186,7 @@ export default function HomePage() {
       {/* Trending ticker */}
       <div className="mb-4 border-y py-2.5" style={{ borderColor: 'var(--c-glass)' }}>
         <Marquee durationSeconds={34}>
-          {PARTIES.slice(0, 10).map((p) => (
+          {parties.slice(0, 10).map((p) => (
             <span
               key={p.id}
               className="flex items-center gap-1.5 whitespace-nowrap text-[12px] font-medium"
@@ -216,7 +218,7 @@ export default function HomePage() {
         className="grid gap-4 px-5 pb-6"
         style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', perspective: '1500px' }}
       >
-        {PARTIES.slice(0, 8).map((party, i) => (
+        {parties.slice(0, 8).map((party, i) => (
           <PartyCard key={party.id} party={party} index={i} />
         ))}
       </div>

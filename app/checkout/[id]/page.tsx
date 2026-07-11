@@ -5,16 +5,25 @@ import { useRouter } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { getPartyById, partyPhoto } from '@/lib/data';
+import { partyPhoto } from '@/lib/data';
+import { useParty } from '@/lib/hooks/useParty';
+import { useLagosLiveStore } from '@/lib/store';
+import { supabase } from '@/lib/supabase/client';
 import PartyPhoto from '@/components/PartyPhoto';
 import { formatNaira } from '@/lib/filters';
 
 type Step = 'details' | 'payment' | 'success';
 type Tier = 'regular' | 'vip';
 
+function generateOrderRef() {
+  return 'LL-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+
 export default function CheckoutPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const party = getPartyById(Number(params.id));
+  const { party, loading } = useParty(Number(params.id));
+  const user = useLagosLiveStore((s) => s.user);
+  const authLoading = useLagosLiveStore((s) => s.authLoading);
 
   const [step, setStep] = useState<Step>('details');
   const [tier, setTier] = useState<Tier>('regular');
@@ -26,6 +35,11 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   const [cardCvv, setCardCvv] = useState('');
   const [error, setError] = useState('');
   const [orderRef, setOrderRef] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && !user) router.replace('/login');
+  }, [authLoading, user, router]);
 
   useEffect(() => {
     if (step !== 'success') return;
@@ -39,7 +53,11 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
     });
   }, [step]);
 
-  if (!party) notFound();
+  if (!party) {
+    if (loading) return null;
+    notFound();
+  }
+  if (!user) return null;
 
   const unitPrice = tier === 'vip' ? party.feeNum * 2.2 : party.feeNum;
   const serviceFee = party.feeNum > 0 ? 500 * qty : 0;
@@ -57,10 +75,32 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
     }
   };
 
+  const placeOrder = async (paymentMethod: 'card' | 'transfer' | null) => {
+    setSubmitting(true);
+    const ref = generateOrderRef();
+    const { error: insertError } = await supabase.from('orders').insert({
+      user_id: user.id,
+      party_id: party.id,
+      tier,
+      quantity: qty,
+      unit_price: Math.round(unitPrice),
+      service_fee: serviceFee,
+      total: Math.round(total),
+      payment_method: paymentMethod,
+      order_ref: ref,
+    });
+    setSubmitting(false);
+    if (insertError) {
+      setError('Something went wrong placing your order. Please try again.');
+      return;
+    }
+    setOrderRef(ref);
+    setStep('success');
+  };
+
   const goToPayment = () => {
     if (party.feeNum === 0) {
-      setOrderRef('LL-' + Math.random().toString(36).slice(2, 8).toUpperCase());
-      setStep('success');
+      placeOrder(null);
     } else {
       setError('');
       setStep('payment');
@@ -75,8 +115,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
       }
     }
     setError('');
-    setOrderRef('LL-' + Math.random().toString(36).slice(2, 8).toUpperCase());
-    setStep('success');
+    placeOrder(method);
   };
 
   const headerLabel = step === 'payment' ? 'Payment' : step === 'success' ? 'Confirmed' : 'Checkout';
@@ -201,10 +240,11 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
 
           <button
             onClick={goToPayment}
-            className="mt-5 w-full rounded-xl border-2 py-[15px] font-heading text-sm font-bold text-white"
+            disabled={submitting}
+            className="mt-5 w-full rounded-xl border-2 py-[15px] font-heading text-sm font-bold text-white disabled:opacity-60"
             style={{ background: 'linear-gradient(135deg,#552CB7,#FB7DA8)', borderColor: '#1A140F', boxShadow: '4px 4px 0 rgba(26,20,15,0.9)' }}
           >
-            {party.feeNum === 0 ? 'Confirm RSVP' : 'Continue to Payment'}
+            {submitting ? 'Confirming...' : party.feeNum === 0 ? 'Confirm RSVP' : 'Continue to Payment'}
           </button>
         </div>
       )}
@@ -293,10 +333,11 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
 
           <button
             onClick={submitPayment}
-            className="mt-5 w-full rounded-xl border-2 py-[15px] font-heading text-sm font-bold text-white"
+            disabled={submitting}
+            className="mt-5 w-full rounded-xl border-2 py-[15px] font-heading text-sm font-bold text-white disabled:opacity-60"
             style={{ background: 'linear-gradient(135deg,#552CB7,#FB7DA8)', borderColor: '#1A140F', boxShadow: '4px 4px 0 rgba(26,20,15,0.9)' }}
           >
-            Pay {formatNaira(total)}
+            {submitting ? 'Processing...' : `Pay ${formatNaira(total)}`}
           </button>
         </div>
       )}

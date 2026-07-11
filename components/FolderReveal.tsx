@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PARTIES, partyPhoto, VC } from '@/lib/data';
+import { partyPhoto, VC } from '@/lib/data';
+import { useParties } from '@/lib/hooks/useParties';
 import { useLagosLiveStore } from '@/lib/store';
 import { brandAccent } from '@/lib/theme';
 import PartyPhoto from './PartyPhoto';
@@ -11,7 +12,6 @@ const SEEN_KEY = 'll_seen_folder_reveal';
 // One party per vibe (Club, Rooftop, Festival, House Party, Lounge) so the reveal shows
 // 5 distinct vibes rather than just the first 5 parties in list order.
 const HOT_PARTY_IDS = [1, 2, 3, 5, 6];
-const HOT_PARTIES = HOT_PARTY_IDS.map((id) => PARTIES.find((p) => p.id === id)!);
 
 // Fan-out geometry per card (index 2 = center, frontmost).
 const CARD_LAYOUT = [
@@ -28,6 +28,10 @@ export default function FolderReveal() {
   const router = useRouter();
   const theme = useLagosLiveStore((s) => s.theme);
   const accent = brandAccent(theme);
+  const { parties } = useParties();
+  const hotParties = HOT_PARTY_IDS.map((id) => parties.find((p) => p.id === id)).filter(
+    (p): p is NonNullable<typeof p> => !!p
+  );
   const [phase, setPhase] = useState<Phase>('closed');
   const [dismissing, setDismissing] = useState(false);
 
@@ -146,7 +150,7 @@ export default function FolderReveal() {
         <button onClick={() => setPhase('burst')} className="flex flex-1 flex-col items-center justify-center gap-6 px-8 active:scale-[0.97] transition-transform">
           <div className="relative flex h-[220px] w-full items-end justify-center">
             <div className="absolute bottom-[92px] flex gap-1.5">
-              {HOT_PARTIES.map((p, i) => (
+              {hotParties.map((p, i) => (
                 <div
                   key={p.id}
                   className="rounded-t-[4px]"
@@ -182,7 +186,7 @@ export default function FolderReveal() {
               <FolderBody open accent={accent} />
             </div>
 
-            {HOT_PARTIES.map((p, i) => {
+            {hotParties.map((p, i) => {
               const layout = CARD_LAYOUT[i];
               const accent = VC[p.vibe];
               return (

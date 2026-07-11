@@ -15,16 +15,58 @@ export default function SignupPage() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [confirmationSent, setConfirmationSent] = useState(false);
 
-  const submit = () => {
+  const submit = async () => {
     if (!name.trim() || !email.trim() || !password.trim()) {
       setError('Please fill in your name, email and password.');
       return;
     }
-    signup(name, email);
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    setSubmitting(true);
+    const { error: signupError, needsEmailConfirmation } = await signup(name.trim(), email.trim(), password);
+    setSubmitting(false);
+    if (signupError) {
+      setError(signupError);
+      return;
+    }
     setError('');
-    router.push('/profile');
+    if (needsEmailConfirmation) {
+      setConfirmationSent(true);
+    } else {
+      router.push('/profile');
+    }
   };
+
+  if (confirmationSent) {
+    return (
+      <div className="flex min-h-screen flex-col animate-fade-in">
+        <div className="px-5 py-4">
+          <BackButton href="/" />
+        </div>
+        <div className="mx-auto flex w-full max-w-[400px] flex-1 flex-col items-center justify-center px-7 pb-[60px] text-center">
+          <LogoMark size={56} />
+          <h1 className="font-display mb-1.5 mt-[18px] text-[34px] tracking-[1px]" style={{ color: 'var(--c-text)' }}>
+            Check Your Email
+          </h1>
+          <p className="max-w-[300px] text-sm" style={{ color: 'var(--c-text-muted)' }}>
+            We sent a confirmation link to <strong>{email}</strong>. Confirm your email, then log in.
+          </p>
+          <Link
+            href="/login"
+            className="mt-7 w-full rounded-xl border-none py-[15px] text-center font-heading text-sm font-bold text-white"
+            style={{ background: 'linear-gradient(135deg,#552CB7,#FB7DA8)', boxShadow: '0 8px 24px rgba(85,44,183,0.28)' }}
+          >
+            Go to Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col animate-fade-in">
@@ -73,10 +115,11 @@ export default function SignupPage() {
 
         <button
           onClick={submit}
-          className="w-full rounded-xl border-none py-[15px] font-heading text-sm font-bold text-white transition-transform duration-150 active:scale-[0.98]"
+          disabled={submitting}
+          className="w-full rounded-xl border-none py-[15px] font-heading text-sm font-bold text-white transition-transform duration-150 active:scale-[0.98] disabled:opacity-60"
           style={{ background: 'linear-gradient(135deg,#552CB7,#FB7DA8)', boxShadow: '0 8px 24px rgba(85,44,183,0.28)' }}
         >
-          Create Account
+          {submitting ? 'Creating Account...' : 'Create Account'}
         </button>
 
         <p className="mt-[26px] text-center text-[13px]" style={{ color: 'var(--c-text-muted)' }}>

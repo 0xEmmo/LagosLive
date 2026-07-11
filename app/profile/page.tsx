@@ -4,12 +4,13 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { X, Bell } from 'lucide-react';
-import { PARTIES } from '@/lib/data';
+import { useParties } from '@/lib/hooks/useParties';
 import { useLagosLiveStore } from '@/lib/store';
 
 export default function ProfilePage() {
   const router = useRouter();
   const user = useLagosLiveStore((s) => s.user);
+  const authLoading = useLagosLiveStore((s) => s.authLoading);
   const savedParties = useLagosLiveStore((s) => s.savedParties);
   const reminders = useLagosLiveStore((s) => s.reminders);
   const pushEnabled = useLagosLiveStore((s) => s.pushEnabled);
@@ -18,10 +19,11 @@ export default function ProfilePage() {
   const toggleTheme = useLagosLiveStore((s) => s.toggleTheme);
   const removeReminder = useLagosLiveStore((s) => s.removeReminder);
   const logout = useLagosLiveStore((s) => s.logout);
+  const { parties } = useParties();
 
   useEffect(() => {
-    if (!user) router.replace('/login');
-  }, [user, router]);
+    if (!authLoading && !user) router.replace('/login');
+  }, [authLoading, user, router]);
 
   if (!user) return null;
 
@@ -33,7 +35,7 @@ export default function ProfilePage() {
     .join('')
     .toUpperCase();
 
-  const reminderList = PARTIES.filter((p) => reminders.includes(p.id));
+  const reminderList = parties.filter((p) => reminders.includes(p.id));
 
   return (
     <div className="mx-auto max-w-[480px] p-5 animate-fade-in">
@@ -136,8 +138,8 @@ export default function ProfilePage() {
         <span style={{ color: 'var(--c-text-faint)' }}>→</span>
       </Link>
       <button
-        onClick={() => {
-          logout();
+        onClick={async () => {
+          await logout();
           router.push('/');
         }}
         className="w-full rounded-xl border py-[15px] text-sm font-semibold transition-transform duration-150 active:scale-[0.98]"

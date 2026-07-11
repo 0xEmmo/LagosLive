@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Bebas_Neue, Montserrat, Inter } from 'next/font/google';
 import './globals.css';
 import ThemeEffect from '@/components/ThemeEffect';
+import AuthListener from '@/components/AuthListener';
 import Splash from '@/components/Splash';
 import Toast from '@/components/Toast';
 import BottomNav from '@/components/BottomNav';
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" data-theme="light" className={`${bebasNeue.variable} ${montserrat.variable} ${inter.variable}`}>
       <body className="font-heading" style={{ paddingBottom: '84px' }}>
         <ThemeEffect />
+        <AuthListener />
         <Splash />
         <Toast />
         {children}

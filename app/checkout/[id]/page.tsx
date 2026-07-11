@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { getPartyById, partyPhoto } from '@/lib/data';
 import PartyPhoto from '@/components/PartyPhoto';
 import { formatNaira } from '@/lib/filters';
@@ -25,6 +26,18 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   const [cardCvv, setCardCvv] = useState('');
   const [error, setError] = useState('');
   const [orderRef, setOrderRef] = useState('');
+
+  useEffect(() => {
+    if (step !== 'success') return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    confetti({
+      particleCount: 90,
+      spread: 70,
+      startVelocity: 38,
+      origin: { y: 0.35 },
+      colors: ['#552CB7', '#FB7DA8', '#FFC567', '#00995E', '#058CD7'],
+    });
+  }, [step]);
 
   if (!party) notFound();
 

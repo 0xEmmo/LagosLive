@@ -31,6 +31,18 @@ const config: Config = {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(240%)' },
         },
+        marquee: {
+          from: { transform: 'translateX(0)' },
+          to: { transform: 'translateX(calc(-100% - var(--gap)))' },
+        },
+        'blob-float-a': {
+          '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+          '50%': { transform: 'translate(-14px, 18px) scale(1.08)' },
+        },
+        'blob-float-b': {
+          '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+          '50%': { transform: 'translate(16px, -14px) scale(1.06)' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 0.4s ease-out',
@@ -39,6 +51,9 @@ const config: Config = {
         'toast-in': 'toast-in 0.35s cubic-bezier(0.2,0.9,0.3,1)',
         'splash-mark-in': 'splash-mark-in 0.55s cubic-bezier(0.22,0.9,0.3,1)',
         'splash-bar': 'splash-bar 1.1s ease-in-out infinite',
+        marquee: 'marquee var(--duration,32s) linear infinite',
+        'blob-float-a': 'blob-float-a 17s ease-in-out infinite',
+        'blob-float-b': 'blob-float-b 19s ease-in-out infinite',
       },
     },
   },

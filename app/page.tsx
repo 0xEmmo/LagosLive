@@ -6,7 +6,8 @@ import { MapPin, Search, Loader2 } from 'lucide-react';
 import HomeHeader from '@/components/HomeHeader';
 import PartyCard from '@/components/PartyCard';
 import FolderReveal from '@/components/FolderReveal';
-import { PARTIES } from '@/lib/data';
+import Marquee from '@/components/Marquee';
+import { PARTIES, VC } from '@/lib/data';
 
 const QUICK_FILTERS = ['All', 'Tonight', 'This Weekend', 'Rooftop', 'Club', 'Free Entry', 'Festival'];
 
@@ -73,20 +74,24 @@ export default function HomePage() {
               'radial-gradient(ellipse 85% 70% at 15% 50%, rgba(85,44,183,0.16) 0%, transparent 65%), radial-gradient(ellipse 65% 80% at 85% 20%, rgba(251,125,168,0.16) 0%, transparent 65%), radial-gradient(ellipse 55% 55% at 55% 88%, rgba(255,197,103,0.18) 0%, transparent 65%)',
           }}
         />
-        <div
-          className="pointer-events-none absolute -right-[30px] -top-10 h-[200px] w-[200px] rounded-full transition-transform duration-200 ease-out"
-          style={{
-            background: 'radial-gradient(circle, #552CB72e, transparent)',
-            transform: `translate(${hero.x * 22}px, ${hero.y * 22}px)`,
-          }}
-        />
-        <div
-          className="pointer-events-none absolute left-[5px] -bottom-[25px] h-[140px] w-[140px] rounded-full transition-transform duration-200 ease-out"
-          style={{
-            background: 'radial-gradient(circle, #FB7DA824, transparent)',
-            transform: `translate(${hero.x * -16}px, ${hero.y * -16}px)`,
-          }}
-        />
+        <div className="pointer-events-none absolute -right-[30px] -top-10 h-[200px] w-[200px] animate-blob-float-a rounded-full">
+          <div
+            className="h-full w-full rounded-full transition-transform duration-200 ease-out"
+            style={{
+              background: 'radial-gradient(circle, #552CB72e, transparent)',
+              transform: `translate(${hero.x * 22}px, ${hero.y * 22}px)`,
+            }}
+          />
+        </div>
+        <div className="pointer-events-none absolute left-[5px] -bottom-[25px] h-[140px] w-[140px] animate-blob-float-b rounded-full">
+          <div
+            className="h-full w-full rounded-full transition-transform duration-200 ease-out"
+            style={{
+              background: 'radial-gradient(circle, #FB7DA824, transparent)',
+              transform: `translate(${hero.x * -16}px, ${hero.y * -16}px)`,
+            }}
+          />
+        </div>
         <div className="relative z-[1] max-w-[520px]">
           <div
             className="mb-[18px] inline-flex items-center gap-[7px] rounded-[20px] border-2 px-4 py-1.5"
@@ -171,6 +176,23 @@ export default function HomePage() {
           </div>
         </div>
       </Link>
+
+      {/* Trending ticker */}
+      <div className="mb-4 border-y py-2.5" style={{ borderColor: 'var(--c-glass)' }}>
+        <Marquee durationSeconds={34}>
+          {PARTIES.slice(0, 10).map((p) => (
+            <span
+              key={p.id}
+              className="flex items-center gap-1.5 whitespace-nowrap text-[12px] font-medium"
+              style={{ color: 'var(--c-text-muted)' }}
+            >
+              <span className="h-[6px] w-[6px] rounded-full" style={{ background: VC[p.vibe] }} />
+              {p.title}
+              <span style={{ color: 'var(--c-text-dim)' }}>·</span>
+            </span>
+          ))}
+        </Marquee>
+      </div>
 
       {/* Section heading */}
       <div className="flex items-center justify-between px-5 pb-3.5">

@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Check, X, Ban, RotateCcw } from 'lucide-react';
+import { Check, X, Ban, RotateCcw, Eye, Pencil, Trash2 } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import { useParties } from '@/lib/hooks/useParties';
-import { updatePartyStatus } from '@/lib/queries';
+import { updatePartyStatus, deleteParty } from '@/lib/queries';
 import { useLagosLiveStore } from '@/lib/store';
 import type { Party, PartyStatus } from '@/lib/types';
 
@@ -16,35 +17,46 @@ const STATUS_STYLE: Record<PartyStatus, { label: string; bg: string; color: stri
   suspended: { label: 'Suspended', bg: 'rgba(214,64,44,0.12)', color: '#D6402C' },
 };
 
-function ActionButton({
-  icon,
-  label,
-  onClick,
-  tone,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-  tone: 'positive' | 'negative' | 'neutral';
-}) {
-  const colors = {
-    positive: { bg: 'rgba(0,153,94,0.1)', border: 'rgba(0,153,94,0.3)', color: '#00995E' },
-    negative: { bg: 'rgba(214,64,44,0.1)', border: 'rgba(214,64,44,0.3)', color: '#D6402C' },
-    neutral: { bg: 'var(--c-glass)', border: 'var(--c-border3)', color: 'var(--c-text-muted)' },
-  }[tone];
+type Tone = 'positive' | 'negative' | 'neutral';
+
+const TONE_COLORS: Record<Tone, { bg: string; border: string; color: string }> = {
+  positive: { bg: 'rgba(0,153,94,0.1)', border: 'rgba(0,153,94,0.3)', color: '#00995E' },
+  negative: { bg: 'rgba(214,64,44,0.1)', border: 'rgba(214,64,44,0.3)', color: '#D6402C' },
+  neutral: { bg: 'var(--c-glass)', border: 'var(--c-border3)', color: 'var(--c-text-muted)' },
+};
+
+const actionClass =
+  'flex items-center gap-1.5 rounded-[10px] border px-3 py-2 text-[12px] font-semibold transition-transform duration-150 active:scale-95';
+
+function ActionButton({ icon, label, onClick, tone }: { icon: React.ReactNode; label: string; onClick: () => void; tone: Tone }) {
+  const colors = TONE_COLORS[tone];
   return (
-    <button
-      onClick={onClick}
-      className="flex items-center gap-1.5 rounded-[10px] border px-3 py-2 text-[12px] font-semibold transition-transform duration-150 active:scale-95"
-      style={{ background: colors.bg, borderColor: colors.border, color: colors.color }}
-    >
+    <button onClick={onClick} className={actionClass} style={{ background: colors.bg, borderColor: colors.border, color: colors.color }}>
       {icon}
       {label}
     </button>
   );
 }
 
-function EventRow({ party, onSetStatus }: { party: Party; onSetStatus: (id: number, status: PartyStatus) => void }) {
+function ActionLink({ icon, label, href, tone }: { icon: React.ReactNode; label: string; href: string; tone: Tone }) {
+  const colors = TONE_COLORS[tone];
+  return (
+    <Link href={href} className={actionClass} style={{ background: colors.bg, borderColor: colors.border, color: colors.color }}>
+      {icon}
+      {label}
+    </Link>
+  );
+}
+
+function EventRow({
+  party,
+  onSetStatus,
+  onDelete,
+}: {
+  party: Party;
+  onSetStatus: (id: number, status: PartyStatus) => void;
+  onDelete: (party: Party) => void;
+}) {
   const statusStyle = STATUS_STYLE[party.status];
   return (
     <div className="rounded-xl border p-4" style={{ background: 'var(--c-surface)', borderColor: 'var(--c-border)' }}>
@@ -60,6 +72,8 @@ function EventRow({ party, onSetStatus }: { party: Party; onSetStatus: (id: numb
         </span>
       </div>
       <div className="flex flex-wrap gap-2">
+        <ActionLink icon={<Eye size={13} strokeWidth={2.5} />} label="View" href={`/party/${party.id}`} tone="neutral" />
+        <ActionLink icon={<Pencil size={13} strokeWidth={2.5} />} label="Edit" href={`/host/${party.id}/edit`} tone="neutral" />
         {party.status === 'pending' && (
           <>
             <ActionButton icon={<Check size={13} strokeWidth={2.5} />} label="Approve" tone="positive" onClick={() => onSetStatus(party.id, 'approved')} />
@@ -72,6 +86,7 @@ function EventRow({ party, onSetStatus }: { party: Party; onSetStatus: (id: numb
         {(party.status === 'suspended' || party.status === 'rejected') && (
           <ActionButton icon={<RotateCcw size={13} strokeWidth={2.5} />} label="Reinstate" tone="positive" onClick={() => onSetStatus(party.id, 'approved')} />
         )}
+        <ActionButton icon={<Trash2 size={13} strokeWidth={2.5} />} label="Delete" tone="negative" onClick={() => onDelete(party)} />
       </div>
     </div>
   );
@@ -103,6 +118,22 @@ export default function AdminPage() {
     }
   };
 
+  const remove = async (party: Party) => {
+    if (!confirm(`Delete "${party.title}" permanently? This can't be undone.`)) return;
+    const prev = parties;
+    setParties((p) => p.filter((x) => x.id !== party.id));
+    try {
+      await deleteParty(party.id);
+    } catch (err) {
+      setParties(prev);
+      alert(
+        err instanceof Error && err.message.includes('foreign key')
+          ? "Can't delete — this event already has ticket orders. Suspend it instead."
+          : 'Something went wrong deleting this event.'
+      );
+    }
+  };
+
   const pending = parties.filter((p) => p.status === 'pending');
   const rest = parties.filter((p) => p.status !== 'pending').sort((a, b) => b.id - a.id);
 
@@ -126,7 +157,7 @@ export default function AdminPage() {
           {pending.length === 0 ? (
             <div className="text-sm" style={{ color: 'var(--c-text-faint)' }}>Nothing waiting on review.</div>
           ) : (
-            pending.map((p) => <EventRow key={p.id} party={p} onSetStatus={setStatus} />)
+            pending.map((p) => <EventRow key={p.id} party={p} onSetStatus={setStatus} onDelete={remove} />)
           )}
         </div>
 
@@ -135,7 +166,7 @@ export default function AdminPage() {
         </div>
         <div className="flex flex-col gap-2.5">
           {rest.map((p) => (
-            <EventRow key={p.id} party={p} onSetStatus={setStatus} />
+            <EventRow key={p.id} party={p} onSetStatus={setStatus} onDelete={remove} />
           ))}
         </div>
       </div>

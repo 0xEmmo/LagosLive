@@ -135,15 +135,23 @@ export async function createParty(input: PartyFormInput, createdBy: string): Pro
   return toParty(data);
 }
 
-export async function updateParty(id: number, input: PartyFormInput, createdBy: string): Promise<Party> {
-  const row = toRow(input, createdBy);
-  // spots_left is managed by the order-decrement trigger from here on — don't
-  // reset it back to full capacity every time the organizer edits other fields.
-  const { spots_left, ...updateFields } = row;
+export async function updateParty(id: number, input: PartyFormInput): Promise<Party> {
+  // toRow needs a createdBy to satisfy PartyInsert's type, but an edit must never
+  // reassign ownership (an admin editing someone else's event would otherwise
+  // silently transfer it to themselves) — spots_left and created_by are both
+  // stripped from the actual update payload below.
+  const row = toRow(input, '');
+  const { spots_left, created_by, ...updateFields } = row;
   void spots_left;
+  void created_by;
   const { data, error } = await supabase.from('parties').update(updateFields).eq('id', id).select().single();
   if (error) throw error;
   return toParty(data);
+}
+
+export async function deleteParty(id: number): Promise<void> {
+  const { error } = await supabase.from('parties').delete().eq('id', id);
+  if (error) throw error;
 }
 
 // Admin-only in practice: the "admins manage any party" RLS policy is the

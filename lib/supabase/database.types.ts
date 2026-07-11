@@ -91,6 +91,7 @@ export type Database = {
           organizer: string
           spots_left: number
           starts_at: string
+          status: string
           time: string
           title: string
           vibe: string
@@ -119,6 +120,7 @@ export type Database = {
           organizer: string
           spots_left: number
           starts_at: string
+          status?: string
           time: string
           title: string
           vibe: string
@@ -147,6 +149,7 @@ export type Database = {
           organizer?: string
           spots_left?: number
           starts_at?: string
+          status?: string
           time?: string
           title?: string
           vibe?: string
@@ -159,6 +162,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          is_admin: boolean
           name: string
           push_enabled: boolean
         }
@@ -166,6 +170,7 @@ export type Database = {
           created_at?: string
           email: string
           id: string
+          is_admin?: boolean
           name: string
           push_enabled?: boolean
         }
@@ -173,6 +178,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          is_admin?: boolean
           name?: string
           push_enabled?: boolean
         }

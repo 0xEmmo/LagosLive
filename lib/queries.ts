@@ -1,6 +1,6 @@
 import { supabase } from './supabase/client';
 import type { Database } from './supabase/database.types';
-import type { Party, Vibe } from './types';
+import type { Party, PartyStatus, Vibe } from './types';
 import { haversineKm } from './geo';
 
 type PartyRow = Database['public']['Tables']['parties']['Row'];
@@ -45,6 +45,7 @@ function toParty(row: PartyRow, userLocation?: { lat: number; lng: number } | nu
     isWeekend: row.is_weekend ?? false,
     isThisWeek: startsAt.getTime() - Date.now() < ONE_WEEK_MS && startsAt.getTime() > Date.now() - 24 * 60 * 60 * 1000,
     createdBy: row.created_by,
+    status: row.status as PartyStatus,
   };
 }
 
@@ -143,4 +144,35 @@ export async function updateParty(id: number, input: PartyFormInput, createdBy: 
   const { data, error } = await supabase.from('parties').update(updateFields).eq('id', id).select().single();
   if (error) throw error;
   return toParty(data);
+}
+
+// Admin-only in practice: the "admins manage any party" RLS policy is the
+// only update policy that lets a non-owner change status.
+export async function updatePartyStatus(id: number, status: PartyStatus): Promise<void> {
+  const { error } = await supabase.from('parties').update({ status }).eq('id', id);
+  if (error) throw error;
+}
+
+export interface OrganizerPartyStats {
+  ordersCount: number;
+  ticketsSold: number;
+  revenue: number;
+}
+
+// Relies on the "organizers read orders on their own parties" RLS policy —
+// only returns orders for parties the caller actually owns, regardless of
+// who bought the ticket.
+export async function fetchOrganizerOrderStats(partyIds: number[]): Promise<Record<number, OrganizerPartyStats>> {
+  if (partyIds.length === 0) return {};
+  const { data, error } = await supabase.from('orders').select('party_id, quantity, total').in('party_id', partyIds);
+  if (error) throw error;
+  const stats: Record<number, OrganizerPartyStats> = {};
+  for (const row of data) {
+    const entry = stats[row.party_id] ?? { ordersCount: 0, ticketsSold: 0, revenue: 0 };
+    entry.ordersCount += 1;
+    entry.ticketsSold += row.quantity;
+    entry.revenue += row.total;
+    stats[row.party_id] = entry;
+  }
+  return stats;
 }

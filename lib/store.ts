@@ -9,6 +9,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  isAdmin: boolean;
 }
 
 export interface Toast {
@@ -114,7 +115,9 @@ export const useLagosLiveStore = create<LagosLiveState>()(
           supabase.from('reminders').select('party_id, notified_at').eq('user_id', userId),
         ]);
         set({
-          user: profile ? { id: profile.id, name: profile.name, email: profile.email } : null,
+          user: profile
+            ? { id: profile.id, name: profile.name, email: profile.email, isAdmin: profile.is_admin }
+            : null,
           pushEnabled: profile?.push_enabled ?? true,
           savedParties: (saved ?? []).map((r) => r.party_id),
           reminders: (rem ?? []).map((r) => r.party_id),

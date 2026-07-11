@@ -1,4 +1,5 @@
 export type Vibe = 'Club' | 'Rooftop' | 'Festival' | 'Concert' | 'House Party' | 'Lounge';
+export type PartyStatus = 'pending' | 'approved' | 'rejected' | 'suspended';
 
 export interface Party {
   id: number;
@@ -27,6 +28,7 @@ export interface Party {
   isWeekend: boolean;
   isThisWeek: boolean;
   createdBy: string | null;
+  status: PartyStatus;
 }
 
 export type DateFilter = 'This Week' | 'This Weekend' | 'Next Week';

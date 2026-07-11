@@ -42,7 +42,7 @@ function toParty(row: PartyRow, userLocation?: { lat: number; lng: number } | nu
     whatsapp: row.whatsapp,
     description: row.description,
     gradient: row.gradient,
-    isWeekend: row.is_weekend,
+    isWeekend: row.is_weekend ?? false,
     isThisWeek: startsAt.getTime() - Date.now() < ONE_WEEK_MS && startsAt.getTime() > Date.now() - 24 * 60 * 60 * 1000,
     createdBy: row.created_by,
   };

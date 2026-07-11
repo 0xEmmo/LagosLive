@@ -84,7 +84,7 @@ export type Database = {
           gradient: string
           id: number
           instagram: string
-          is_weekend: boolean
+          is_weekend: boolean | null
           lat: number
           lng: number
           location: string
@@ -112,7 +112,7 @@ export type Database = {
           gradient: string
           id?: never
           instagram: string
-          is_weekend?: never
+          is_weekend?: boolean | null
           lat: number
           lng: number
           location: string
@@ -140,7 +140,7 @@ export type Database = {
           gradient?: string
           id?: never
           instagram?: string
-          is_weekend?: never
+          is_weekend?: boolean | null
           lat?: number
           lng?: number
           location?: string

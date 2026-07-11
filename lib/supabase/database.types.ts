@@ -73,22 +73,24 @@ export type Database = {
           age_restriction: string
           capacity: number
           created_at: string
+          created_by: string | null
           date: string
           description: string
           distance: number
           dress_code: string
+          ends_at: string
           fee: string
           fee_num: number
           gradient: string
           id: number
           instagram: string
-          is_this_week: boolean
           is_weekend: boolean
           lat: number
           lng: number
           location: string
           organizer: string
           spots_left: number
+          starts_at: string
           time: string
           title: string
           vibe: string
@@ -99,22 +101,24 @@ export type Database = {
           age_restriction: string
           capacity: number
           created_at?: string
+          created_by?: string | null
           date: string
           description: string
           distance: number
           dress_code: string
+          ends_at: string
           fee: string
           fee_num: number
           gradient: string
           id?: never
           instagram: string
-          is_this_week?: boolean
-          is_weekend?: boolean
+          is_weekend?: never
           lat: number
           lng: number
           location: string
           organizer: string
           spots_left: number
+          starts_at: string
           time: string
           title: string
           vibe: string
@@ -125,22 +129,24 @@ export type Database = {
           age_restriction?: string
           capacity?: number
           created_at?: string
+          created_by?: string | null
           date?: string
           description?: string
           distance?: number
           dress_code?: string
+          ends_at?: string
           fee?: string
           fee_num?: number
           gradient?: string
           id?: never
           instagram?: string
-          is_this_week?: boolean
-          is_weekend?: boolean
+          is_weekend?: never
           lat?: number
           lng?: number
           location?: string
           organizer?: string
           spots_left?: number
+          starts_at?: string
           time?: string
           title?: string
           vibe?: string
@@ -175,16 +181,19 @@ export type Database = {
       reminders: {
         Row: {
           created_at: string
+          notified_at: string | null
           party_id: number
           user_id: string
         }
         Insert: {
           created_at?: string
+          notified_at?: string | null
           party_id: number
           user_id: string
         }
         Update: {
           created_at?: string
+          notified_at?: string | null
           party_id?: number
           user_id?: string
         }

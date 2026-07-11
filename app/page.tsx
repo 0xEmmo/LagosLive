@@ -10,6 +10,7 @@ import Marquee from '@/components/Marquee';
 import ShinyText from '@/components/ShinyText';
 import { VC } from '@/lib/data';
 import { useParties } from '@/lib/hooks/useParties';
+import { useLagosLiveStore } from '@/lib/store';
 
 const QUICK_FILTERS = ['All', 'Tonight', 'This Weekend', 'Rooftop', 'Club', 'Free Entry', 'Festival'];
 
@@ -30,29 +31,12 @@ function dailyHeroCopy() {
 }
 
 export default function HomePage() {
-  const [locationLoading, setLocationLoading] = useState(false);
   const [hero, setHero] = useState({ x: 0, y: 0 });
   const heroCopy = dailyHeroCopy();
   const { parties } = useParties();
-
-  const getLocation = () => {
-    setLocationLoading(true);
-    if (!navigator.geolocation) {
-      setLocationLoading(false);
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      ({ coords: { latitude: lat, longitude: lng } }) => {
-        console.log('Lagos Live — User location:', { lat, lng });
-        setLocationLoading(false);
-      },
-      (err) => {
-        console.warn('Location error:', err.message);
-        setLocationLoading(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  };
+  const locationStatus = useLagosLiveStore((s) => s.locationStatus);
+  const requestLocation = useLagosLiveStore((s) => s.requestLocation);
+  const locationLoading = locationStatus === 'loading';
 
   const onHeroMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -129,7 +113,7 @@ export default function HomePage() {
             Discover the hottest parties, clubs &amp; events across Lagos — right now.
           </p>
           <button
-            onClick={getLocation}
+            onClick={requestLocation}
             className="flex items-center gap-2 rounded-[14px] border-2 px-7 py-3.5 text-[15px] font-semibold text-white outline-none"
             style={{
               background: locationLoading ? '#552CB772' : 'linear-gradient(135deg,#552CB7 0%,#FB7DA8 100%)',

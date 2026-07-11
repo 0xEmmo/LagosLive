@@ -5,6 +5,8 @@ export interface Party {
   title: string;
   date: string;
   time: string;
+  startsAt: string;
+  endsAt: string;
   location: string;
   address: string;
   lat: number;
@@ -24,6 +26,7 @@ export interface Party {
   gradient: string;
   isWeekend: boolean;
   isThisWeek: boolean;
+  createdBy: string | null;
 }
 
 export type DateFilter = 'This Week' | 'This Weekend' | 'Next Week';

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Search, Locate, Flame } from 'lucide-react';
 import { ALL_VIBES, VC } from '@/lib/data';
 import { useParties } from '@/lib/hooks/useParties';
+import { useLagosLiveStore } from '@/lib/store';
 import type { Vibe } from '@/lib/types';
 
 const LeafletMap = dynamic(() => import('@/components/LeafletMap'), { ssr: false });
@@ -13,9 +14,10 @@ const LeafletMap = dynamic(() => import('@/components/LeafletMap'), { ssr: false
 export default function MapPage() {
   const router = useRouter();
   const { parties } = useParties();
+  const userLocation = useLagosLiveStore((s) => s.userLocation);
+  const requestLocation = useLagosLiveStore((s) => s.requestLocation);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeVibes, setActiveVibes] = useState<Set<Vibe>>(new Set(ALL_VIBES));
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [showHeatmap, setShowHeatmap] = useState(false);
 
   const filtered = useMemo(() => {
@@ -36,18 +38,6 @@ export default function MapPage() {
   const resetFilters = () => {
     setActiveVibes(new Set(ALL_VIBES));
     setSearchQuery('');
-  };
-
-  const getLocation = () => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      ({ coords: { latitude: lat, longitude: lng } }) => setUserLocation({ lat, lng }),
-      (err) => {
-        console.warn('Location error:', err.message);
-        setUserLocation({ lat: 6.455, lng: 3.384 });
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
   };
 
   return (
@@ -141,7 +131,7 @@ export default function MapPage() {
           <Flame size={19} strokeWidth={2.5} fill={showHeatmap ? 'rgba(255,255,255,0.25)' : 'none'} />
         </button>
         <button
-          onClick={getLocation}
+          onClick={requestLocation}
           className="flex h-12 w-12 items-center justify-center rounded-full border backdrop-blur-[18px] backdrop-saturate-150"
           style={{
             background: 'rgba(255,197,103,0.18)',

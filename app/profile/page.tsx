@@ -137,6 +137,14 @@ export default function ProfilePage() {
         My Saved Parties
         <span style={{ color: 'var(--c-text-faint)' }}>→</span>
       </Link>
+      <Link
+        href="/host"
+        className="mb-4 flex w-full items-center justify-between rounded-xl border px-4 py-[15px] text-sm font-medium"
+        style={{ background: 'var(--c-surface)', borderColor: 'var(--c-border)', color: 'var(--c-text)' }}
+      >
+        List an Event
+        <span style={{ color: 'var(--c-text-faint)' }}>→</span>
+      </Link>
       <button
         onClick={async () => {
           await logout();

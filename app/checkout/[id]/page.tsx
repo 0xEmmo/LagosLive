@@ -91,7 +91,11 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
     });
     setSubmitting(false);
     if (insertError) {
-      setError('Something went wrong placing your order. Please try again.');
+      setError(
+        insertError.message.includes('Not enough spots left')
+          ? "Sorry, this party just sold out. Try a smaller quantity or a different tier."
+          : 'Something went wrong placing your order. Please try again.'
+      );
       return;
     }
     setOrderRef(ref);
@@ -237,6 +241,12 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
               <span>{formatNaira(total)}</span>
             </div>
           </div>
+
+          {error && (
+            <div className="mt-4 animate-fade-in rounded-[10px] border px-3.5 py-2.5 text-[13px]" style={{ background: 'rgba(214,64,44,0.1)', borderColor: 'rgba(214,64,44,0.32)', color: '#D6402C' }}>
+              {error}
+            </div>
+          )}
 
           <button
             onClick={goToPayment}

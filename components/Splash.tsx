@@ -4,6 +4,11 @@ import { useEffect, useState } from 'react';
 import { useLagosLiveStore } from '@/lib/store';
 import { brandAccent } from '@/lib/theme';
 
+// Higgsfield-generated nightlife photo; the Ken Burns pan/zoom below fakes motion
+// on a static image so the splash reads as "alive" without a real video asset.
+const SPLASH_PHOTO_URL =
+  'https://d8j0ntlcm91z4.cloudfront.net/user_3GLGCL6FRDIn1tOUJe2QDaRO1tC/hf_20260711_051449_f2e2bb22-caea-49a4-86e8-acf2d31e01ce.png';
+
 export default function Splash() {
   const theme = useLagosLiveStore((s) => s.theme);
   const accent = brandAccent(theme);
@@ -26,6 +31,14 @@ export default function Splash() {
       className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-[#111111] transition-opacity duration-[450ms] ease-out"
       style={{ opacity: fading ? 0 : 1, pointerEvents: fading ? 'none' : 'auto' }}
     >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={SPLASH_PHOTO_URL}
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full origin-center animate-ken-burns object-cover motion-reduce:animate-none"
+      />
+      <div className="absolute inset-0" style={{ background: 'rgba(17,17,17,0.62)' }} />
       <div
         className="absolute inset-0"
         style={{

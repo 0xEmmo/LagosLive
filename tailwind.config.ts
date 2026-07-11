@@ -47,6 +47,10 @@ const config: Config = {
           '0%, 90%, 100%': { backgroundPosition: 'calc(-100% - var(--shiny-width, 100px)) 0' },
           '30%, 60%': { backgroundPosition: 'calc(100% + var(--shiny-width, 100px)) 0' },
         },
+        'ken-burns': {
+          from: { transform: 'scale(1) translate(0, 0)' },
+          to: { transform: 'scale(1.14) translate(-1%, -1.5%)' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 0.4s ease-out',
@@ -59,6 +63,7 @@ const config: Config = {
         'blob-float-a': 'blob-float-a 17s ease-in-out infinite',
         'blob-float-b': 'blob-float-b 19s ease-in-out infinite',
         'shiny-text': 'shiny-text 8s ease-in-out infinite',
+        'ken-burns': 'ken-burns 2.6s ease-out forwards',
       },
     },
   },

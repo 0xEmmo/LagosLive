@@ -21,6 +21,7 @@ import BackButton from '@/components/BackButton';
 import PartyCard from '@/components/PartyCard';
 import PartyPhoto from '@/components/PartyPhoto';
 import GetThereMenu from '@/components/GetThereMenu';
+import SwipeCarousel from '@/components/SwipeCarousel';
 import { PARTIES, getPartyById, partyPhoto, partyDetailPhoto, VCB, VCT, distanceColor } from '@/lib/data';
 import { useLagosLiveStore } from '@/lib/store';
 
@@ -43,21 +44,21 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
   return (
     <div className="mx-auto max-w-[720px] animate-fade-in">
       <div
-        className="sticky top-0 z-40 flex items-center justify-between border-b px-5 py-3.5 backdrop-blur-[22px]"
+        className="sticky top-0 z-40 flex items-center justify-between border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150"
         style={{ background: 'var(--c-header)', borderColor: 'var(--c-border)' }}
       >
         <BackButton href="/" />
         <div className="flex gap-2">
           <button
             onClick={() => toggleReminder(party.id, party.title)}
-            className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border"
+            className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border transition-transform duration-150 active:scale-90"
             style={{ background: 'var(--c-glass)', borderColor: 'var(--c-border3)', color: reminded ? '#B8860B' : 'var(--c-text-faint)' }}
           >
             <Bell size={17} fill={reminded ? '#FFC567' : 'none'} strokeWidth={2} />
           </button>
           <button
             onClick={() => toggleSave(party.id)}
-            className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border"
+            className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border transition-transform duration-150 active:scale-90"
             style={{ background: 'var(--c-glass)', borderColor: 'var(--c-border3)', color: saved ? '#C23F72' : 'var(--c-text-faint)' }}
           >
             <Heart size={18} fill={saved ? '#FB7DA8' : 'none'} strokeWidth={2} />
@@ -65,28 +66,25 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
         </div>
       </div>
 
-      {/* Image carousel */}
+      {/* Image carousel — drag/swipe with 1:1 tracking, or use the arrow buttons */}
       <div className="relative h-[280px] overflow-hidden">
-        <div
-          className="flex h-full transition-transform duration-[450ms]"
-          style={{ transform: `translateX(${-carouselIndex * 100}%)`, transitionTimingFunction: 'cubic-bezier(0.25,0.46,0.45,0.94)' }}
-        >
+        <SwipeCarousel count={images.length} index={carouselIndex} onIndexChange={setCarouselIndex}>
           {images.map((src, i) => (
             <div key={i} className="relative h-[280px] w-full flex-shrink-0" style={{ background: party.gradient }}>
               <PartyPhoto src={src} alt={`${party.title} photo ${i + 1}`} gradient={party.gradient} sizes="100vw" priority={i === 0} />
             </div>
           ))}
-        </div>
+        </SwipeCarousel>
         <button
           onClick={() => setCarouselIndex((i) => Math.max(0, i - 1))}
-          className="absolute left-3 top-1/2 z-[3] flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 text-white backdrop-blur-[8px]"
+          className="absolute left-3 top-1/2 z-[3] flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 text-white backdrop-blur-[8px] backdrop-saturate-150 transition-transform duration-150 active:scale-90"
           style={{ background: 'rgba(0,0,0,0.4)' }}
         >
           <ChevronLeft size={13} strokeWidth={2.5} />
         </button>
         <button
-          onClick={() => setCarouselIndex((i) => Math.min(2, i + 1))}
-          className="absolute right-3 top-1/2 z-[3] flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 text-white backdrop-blur-[8px]"
+          onClick={() => setCarouselIndex((i) => Math.min(images.length - 1, i + 1))}
+          className="absolute right-3 top-1/2 z-[3] flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 text-white backdrop-blur-[8px] backdrop-saturate-150 transition-transform duration-150 active:scale-90"
           style={{ background: 'rgba(0,0,0,0.4)' }}
         >
           <ChevronRight size={13} strokeWidth={2.5} />
@@ -96,14 +94,14 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
             <div
               key={i}
               onClick={() => setCarouselIndex(i)}
-              className="h-[6px] cursor-pointer rounded-[3px] transition-all"
+              className="h-[6px] cursor-pointer rounded-[3px] transition-[width,background-color] duration-200 ease-out"
               style={{ width: carouselIndex === i ? 18 : 6, background: carouselIndex === i ? '#552CB7' : 'rgba(255,255,255,0.55)' }}
             />
           ))}
         </div>
         <div className="absolute bottom-3.5 left-4 z-[3]">
           <span
-            className="rounded-full border px-3 py-[5px] text-xs font-bold backdrop-blur-[8px]"
+            className="rounded-full border px-3 py-[5px] text-xs font-bold backdrop-blur-[8px] backdrop-saturate-150"
             style={{ background: VCB[party.vibe], color: VCT[party.vibe], borderColor: 'rgba(255,255,255,0.12)' }}
           >
             {party.vibe}
@@ -159,7 +157,7 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
               </div>
               <div className="h-[5px] overflow-hidden rounded-full" style={{ background: 'var(--c-border2)' }}>
                 <div
-                  className="h-full rounded-full transition-all duration-500"
+                  className="h-full rounded-full transition-[width] duration-500 ease-out"
                   style={{
                     width: `${capPct}%`,
                     background: `linear-gradient(90deg,${capPct > 80 ? '#FD5A46' : '#552CB7'},${capPct > 80 ? '#FFC567' : '#FB7DA8'})`,

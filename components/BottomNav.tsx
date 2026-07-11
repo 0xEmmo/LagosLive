@@ -23,7 +23,7 @@ export default function BottomNav() {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-50 border-t backdrop-blur-[28px]"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t backdrop-blur-[28px] backdrop-saturate-150"
       style={{ background: 'var(--c-nav)', borderColor: 'var(--c-border2)' }}
     >
       <div className="flex items-center justify-around px-0 pb-[10px] pt-2">
@@ -34,7 +34,7 @@ export default function BottomNav() {
             <Link
               key={href}
               href={finalHref}
-              className="flex min-w-[52px] flex-col items-center gap-0.5 py-1.5 font-body text-[10px] transition-colors"
+              className="flex min-w-[52px] flex-col items-center gap-0.5 py-1.5 font-body text-[10px] transition-colors duration-150 active:scale-90"
               style={{
                 color: active ? '#552CB7' : 'var(--c-text-dim)',
                 fontWeight: active ? 600 : 400,
@@ -43,7 +43,7 @@ export default function BottomNav() {
               <Icon size={22} strokeWidth={1.8} fill={active && Icon === Home ? 'currentColor' : 'none'} />
               <span>{label}</span>
               <div
-                className="h-[3px] rounded-full transition-all"
+                className="h-[3px] rounded-full transition-[width,background-color] duration-200 ease-out"
                 style={{
                   width: active ? '14px' : '4px',
                   background: active ? '#552CB7' : 'transparent',

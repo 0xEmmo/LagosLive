@@ -14,7 +14,7 @@ export default function SavedPage() {
   return (
     <div className="animate-fade-in">
       <div
-        className="sticky top-0 z-40 flex items-center gap-3 border-b px-5 py-3.5 backdrop-blur-[22px]"
+        className="sticky top-0 z-40 flex items-center gap-3 border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150"
         style={{ background: 'var(--c-header)', borderColor: 'var(--c-border)' }}
       >
         <BackButton href="/" />

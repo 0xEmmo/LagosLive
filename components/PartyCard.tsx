@@ -81,7 +81,7 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 17
                   e.stopPropagation();
                   toggleReminder(party.id, party.title);
                 }}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 backdrop-blur-[8px]"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 backdrop-blur-[8px] backdrop-saturate-150 transition-transform duration-150 active:scale-90"
                 style={{ background: 'rgba(0,0,0,0.4)', color: reminded ? '#FFC567' : 'rgba(255,255,255,0.75)' }}
               >
                 <Bell size={13} fill={reminded ? '#FFC567' : 'none'} strokeWidth={2} />
@@ -93,7 +93,7 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 17
                 e.stopPropagation();
                 toggleSave(party.id);
               }}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 backdrop-blur-[8px]"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 backdrop-blur-[8px] backdrop-saturate-150 transition-transform duration-150 active:scale-90"
               style={{ background: 'rgba(0,0,0,0.4)', color: saved ? '#FB7DA8' : 'rgba(255,255,255,0.75)' }}
             >
               <Heart size={13} fill="currentColor" strokeWidth={2} />
@@ -102,7 +102,7 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 17
         </div>
         <div className="absolute bottom-[10px] left-[10px] z-[2]">
           <span
-            className="rounded-full px-2.5 py-1 text-[11px] font-semibold backdrop-blur-[8px]"
+            className="rounded-full px-2.5 py-1 text-[11px] font-semibold backdrop-blur-[8px] backdrop-saturate-150"
             style={{ background: VCB[party.vibe], color: VCT[party.vibe], border: '1px solid rgba(255,255,255,0.08)' }}
           >
             {party.vibe}

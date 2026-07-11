@@ -76,12 +76,12 @@ export default function ProfilePage() {
         </div>
         <div
           onClick={togglePush}
-          className="relative h-[22px] w-10 flex-shrink-0 cursor-pointer rounded-full transition-colors"
+          className="relative h-[22px] w-10 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-150"
           style={{ background: pushEnabled ? 'linear-gradient(135deg,#552CB7,#FB7DA8)' : 'var(--c-border3)' }}
         >
           <div
-            className="absolute top-[2px] h-[18px] w-[18px] rounded-full bg-white transition-all"
-            style={{ left: pushEnabled ? 20 : 2 }}
+            className="absolute left-[2px] top-[2px] h-[18px] w-[18px] rounded-full bg-white transition-transform duration-150 ease-out"
+            style={{ transform: `translateX(${pushEnabled ? 18 : 0}px)` }}
           />
         </div>
       </div>
@@ -93,12 +93,12 @@ export default function ProfilePage() {
         </div>
         <div
           onClick={toggleTheme}
-          className="relative h-[22px] w-10 flex-shrink-0 cursor-pointer rounded-full transition-colors"
+          className="relative h-[22px] w-10 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-150"
           style={{ background: theme === 'dark' ? 'linear-gradient(135deg,#552CB7,#FB7DA8)' : 'var(--c-border3)' }}
         >
           <div
-            className="absolute top-[2px] h-[18px] w-[18px] rounded-full bg-white transition-all"
-            style={{ left: theme === 'dark' ? 20 : 2 }}
+            className="absolute left-[2px] top-[2px] h-[18px] w-[18px] rounded-full bg-white transition-transform duration-150 ease-out"
+            style={{ transform: `translateX(${theme === 'dark' ? 18 : 0}px)` }}
           />
         </div>
       </div>

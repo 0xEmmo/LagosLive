@@ -4,8 +4,8 @@
 
 :root[data-theme='dark'] {
   --c-bg: #111111;
-  --c-header: rgba(17, 17, 17, 0.9);
-  --c-nav: rgba(14, 14, 14, 0.95);
+  --c-header: rgba(17, 17, 17, 0.68);
+  --c-nav: rgba(14, 14, 14, 0.72);
   --c-surface: #171a1f;
   --c-surface2: #191d22;
   --c-glass: rgba(166, 161, 147, 0.06);
@@ -22,8 +22,8 @@
 
 :root[data-theme='light'] {
   --c-bg: #fff8ec;
-  --c-header: rgba(255, 248, 236, 0.88);
-  --c-nav: rgba(255, 255, 255, 0.94);
+  --c-header: rgba(255, 248, 236, 0.65);
+  --c-nav: rgba(255, 255, 255, 0.72);
   --c-surface: #ffffff;
   --c-surface2: #ffffff;
   --c-glass: rgba(26, 20, 15, 0.045);
@@ -60,6 +60,23 @@ button:not(:disabled) {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Glass surfaces fall back to solid + no blur for users who find translucency hard to read */
+@media (prefers-reduced-transparency: reduce) {
+  :root[data-theme='dark'] {
+    --c-header: #111111;
+    --c-nav: #0e0e0e;
+  }
+  :root[data-theme='light'] {
+    --c-header: #fff8ec;
+    --c-nav: #ffffff;
+  }
+  .backdrop-blur-\[22px\],
+  .backdrop-blur-\[18px\],
+  .backdrop-blur-\[28px\] {
+    backdrop-filter: none !important;
   }
 }
 

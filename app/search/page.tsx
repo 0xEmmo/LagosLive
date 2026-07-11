@@ -27,7 +27,7 @@ function Pill<T extends string>({
   return (
     <button
       onClick={onClick}
-      className="whitespace-nowrap rounded-[20px] border px-3.5 py-[7px] text-[13px] font-medium outline-none transition-all"
+      className="whitespace-nowrap rounded-[20px] border px-3.5 py-[7px] text-[13px] font-medium outline-none transition duration-150 ease-out active:scale-95"
       style={{
         background: active ? 'rgba(85,44,183,0.16)' : 'var(--c-surface2)',
         borderColor: active ? '#1A140F' : 'var(--c-border2)',
@@ -75,7 +75,7 @@ export default function SearchPage() {
   return (
     <div className="animate-fade-in">
       <div
-        className="sticky top-0 z-40 border-b px-4 py-3 backdrop-blur-[22px]"
+        className="sticky top-0 z-40 border-b px-4 py-3 backdrop-blur-[22px] backdrop-saturate-150"
         style={{ background: 'var(--c-header)', borderColor: 'var(--c-border)' }}
       >
         <div className="flex items-center gap-2.5">

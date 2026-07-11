@@ -81,7 +81,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   return (
     <div className="mx-auto flex min-h-screen max-w-[520px] flex-col animate-fade-in">
       <div
-        className="sticky top-0 z-40 flex items-center gap-2.5 border-b px-5 py-4 backdrop-blur-[22px]"
+        className="sticky top-0 z-40 flex items-center gap-2.5 border-b px-5 py-4 backdrop-blur-[22px] backdrop-saturate-150"
         style={{ background: 'var(--c-header)', borderColor: 'var(--c-border)' }}
       >
         <button
@@ -115,7 +115,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
           <div className="mb-6 flex flex-col gap-2.5">
             <div
               onClick={() => setTier('regular')}
-              className="flex cursor-pointer items-center justify-between rounded-2xl border px-4 py-3.5 transition-all"
+              className="flex cursor-pointer items-center justify-between rounded-2xl border px-4 py-3.5 transition-colors duration-150 active:scale-[0.98]"
               style={{
                 background: tier === 'regular' ? 'rgba(85,44,183,0.14)' : 'var(--c-surface)',
                 borderColor: tier === 'regular' ? '#1A140F' : 'var(--c-border2)',
@@ -131,7 +131,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
             </div>
             <div
               onClick={() => setTier('vip')}
-              className="flex cursor-pointer items-center justify-between rounded-2xl border px-4 py-3.5 transition-all"
+              className="flex cursor-pointer items-center justify-between rounded-2xl border px-4 py-3.5 transition-colors duration-150 active:scale-[0.98]"
               style={{
                 background: tier === 'vip' ? 'rgba(85,44,183,0.14)' : 'var(--c-surface)',
                 borderColor: tier === 'vip' ? '#1A140F' : 'var(--c-border2)',
@@ -153,7 +153,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
           <div className="mb-6 flex items-center gap-[18px]">
             <button
               onClick={() => setQty((q) => Math.max(1, q - 1))}
-              className="h-[38px] w-[38px] rounded-[10px] border text-lg"
+              className="h-[38px] w-[38px] rounded-[10px] border text-lg transition-transform duration-150 active:scale-90"
               style={{ background: 'var(--c-glass)', borderColor: 'var(--c-border3)', color: 'var(--c-text)' }}
             >
               −
@@ -161,7 +161,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
             <span className="font-display min-w-[24px] text-center text-2xl" style={{ color: 'var(--c-text)' }}>{qty}</span>
             <button
               onClick={() => setQty((q) => Math.min(6, q + 1))}
-              className="h-[38px] w-[38px] rounded-[10px] border text-lg"
+              className="h-[38px] w-[38px] rounded-[10px] border text-lg transition-transform duration-150 active:scale-90"
               style={{ background: 'var(--c-glass)', borderColor: 'var(--c-border3)', color: 'var(--c-text)' }}
             >
               +

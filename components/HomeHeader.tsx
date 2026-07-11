@@ -11,7 +11,7 @@ export default function HomeHeader() {
 
   return (
     <div
-      className="sticky top-0 z-40 flex items-center justify-between border-b px-5 py-4 backdrop-blur-[22px]"
+      className="sticky top-0 z-40 flex items-center justify-between border-b px-5 py-4 backdrop-blur-[22px] backdrop-saturate-150"
       style={{ background: 'var(--c-header)', borderColor: 'var(--c-glass)' }}
     >
       <div className="flex items-center gap-[9px]">

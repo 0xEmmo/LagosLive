@@ -18,14 +18,14 @@ export interface ThemeTokens {
 
 export const THEME_TOKENS: Record<ThemeName, ThemeTokens> = {
   dark: {
-    bg: '#111111', header: 'rgba(17,17,17,0.9)', nav: 'rgba(14,14,14,0.95)',
+    bg: '#111111', header: 'rgba(17,17,17,0.68)', nav: 'rgba(14,14,14,0.72)',
     surface: '#171A1F', surface2: '#191D22',
     glass: 'rgba(166,161,147,0.06)', border: 'rgba(166,161,147,0.22)',
     border2: 'rgba(166,161,147,0.14)', border3: 'rgba(166,161,147,0.3)',
     text: '#F2EFE9', textMuted: '#A6A193', textFaint: '#83806F', textDim: '#807C6E',
   },
   light: {
-    bg: '#FFF8EC', header: 'rgba(255,248,236,0.88)', nav: 'rgba(255,255,255,0.94)',
+    bg: '#FFF8EC', header: 'rgba(255,248,236,0.65)', nav: 'rgba(255,255,255,0.72)',
     surface: '#FFFFFF', surface2: '#FFFFFF',
     glass: 'rgba(26,20,15,0.045)', border: 'rgba(26,20,15,0.85)',
     border2: 'rgba(26,20,15,0.14)', border3: 'rgba(26,20,15,0.85)',

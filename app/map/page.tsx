@@ -60,7 +60,7 @@ export default function MapPage() {
       {/* Top search overlay */}
       <div className="absolute left-3.5 right-3.5 top-3.5 z-[1000]">
         <div
-          className="flex items-center gap-2.5 rounded-2xl border border-white/10 px-4 py-2.5 backdrop-blur-[22px]"
+          className="flex items-center gap-2.5 rounded-2xl border border-white/10 px-4 py-2.5 backdrop-blur-[22px] backdrop-saturate-150"
           style={{ background: 'rgba(17,17,17,0.92)' }}
         >
           <Search size={16} strokeWidth={2.5} color="#847E96" />
@@ -86,7 +86,7 @@ export default function MapPage() {
 
       {/* Legend / Filters */}
       <div className="absolute bottom-[18px] left-3.5 z-[1000]">
-        <div className="rounded-[13px] border border-[color:var(--c-border3)] px-[15px] py-2.5 backdrop-blur-[18px]" style={{ background: 'rgba(17,17,17,0.92)' }}>
+        <div className="rounded-[13px] border border-[color:var(--c-border3)] px-[15px] py-2.5 backdrop-blur-[18px] backdrop-saturate-150" style={{ background: 'rgba(17,17,17,0.92)' }}>
           <div className="mb-2.5 flex items-center justify-between gap-3.5">
             <div className="text-[10px] font-bold uppercase tracking-[0.9px]" style={{ color: '#847E96' }}>
               Filter by Vibe
@@ -119,7 +119,7 @@ export default function MapPage() {
           onClick={() => setShowHeatmap((v) => !v)}
           aria-pressed={showHeatmap}
           title="Toggle party density heatmap"
-          className="flex h-12 w-12 items-center justify-center rounded-full border backdrop-blur-[18px] transition-colors"
+          className="flex h-12 w-12 items-center justify-center rounded-full border backdrop-blur-[18px] backdrop-saturate-150 transition-colors"
           style={
             showHeatmap
               ? {
@@ -140,7 +140,7 @@ export default function MapPage() {
         </button>
         <button
           onClick={getLocation}
-          className="flex h-12 w-12 items-center justify-center rounded-full border backdrop-blur-[18px]"
+          className="flex h-12 w-12 items-center justify-center rounded-full border backdrop-blur-[18px] backdrop-saturate-150"
           style={{
             background: 'rgba(255,197,103,0.18)',
             borderColor: 'rgba(255,197,103,0.45)',
@@ -155,7 +155,7 @@ export default function MapPage() {
       {showHeatmap && (
         <div className="absolute left-3.5 top-[68px] z-[1000]">
           <div
-            className="flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-semibold backdrop-blur-[18px]"
+            className="flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-semibold backdrop-blur-[18px] backdrop-saturate-150"
             style={{ background: 'rgba(17,17,17,0.92)', borderColor: 'var(--c-border3)', color: '#9691A3' }}
           >
             <span

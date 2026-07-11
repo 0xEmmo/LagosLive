@@ -12,7 +12,15 @@ import { VC } from '@/lib/data';
 import { useParties } from '@/lib/hooks/useParties';
 import { useLagosLiveStore } from '@/lib/store';
 
-const QUICK_FILTERS = ['All', 'Tonight', 'This Weekend', 'Rooftop', 'Club', 'Free Entry', 'Festival'];
+const QUICK_FILTERS = [
+  { label: 'All', href: '/search' },
+  { label: 'Tonight', href: '/search?date=Tonight' },
+  { label: 'This Weekend', href: '/search?date=This+Weekend' },
+  { label: 'Rooftop', href: '/search?vibe=Rooftop' },
+  { label: 'Club', href: '/search?vibe=Club' },
+  { label: 'Free Entry', href: '/search?price=Free' },
+  { label: 'Festival', href: '/search?vibe=Festival' },
+] as const;
 
 // Pill tagline + hero headline rotate together, keyed off the same daily index, so the two
 // pieces of copy always read as one cohesive line rather than two unrelated random phrases.
@@ -133,10 +141,11 @@ export default function HomePage() {
 
       {/* Quick filter pills */}
       <div className="no-scrollbar flex gap-2 overflow-x-auto px-5 pb-3.5">
-        {QUICK_FILTERS.map((label, i) => (
-          <button
+        {QUICK_FILTERS.map(({ label, href }, i) => (
+          <Link
             key={label}
-            className="whitespace-nowrap rounded-[20px] border-2 px-4 py-2 text-[13px] font-medium outline-none"
+            href={href}
+            className="whitespace-nowrap rounded-[20px] border-2 px-4 py-2 text-[13px] font-medium outline-none transition-transform duration-150 active:scale-95"
             style={{
               background: i === 0 ? 'rgba(85,44,183,0.14)' : 'var(--c-surface2)',
               borderColor: i === 0 ? '#1A140F' : 'var(--c-border2)',
@@ -144,7 +153,7 @@ export default function HomePage() {
             }}
           >
             {label}
-          </button>
+          </Link>
         ))}
       </div>
 

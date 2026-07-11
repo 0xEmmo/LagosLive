@@ -1,14 +1,15 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Search as SearchIcon, SlidersHorizontal, X } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import PartyCard from '@/components/PartyCard';
 import { useParties } from '@/lib/hooks/useParties';
 import { filterAndSortParties } from '@/lib/filters';
-import type { PartyFilters, SortBy } from '@/lib/types';
+import type { DateFilter, PartyFilters, PriceFilter, SortBy, Vibe } from '@/lib/types';
 
-const DATE_OPTS = ['This Week', 'This Weekend', 'Next Week'] as const;
+const DATE_OPTS = ['Tonight', 'This Week', 'This Weekend', 'Next Week'] as const;
 const PRICE_OPTS = ['Free', '₦5k-10k', '₦10k-20k', '₦20k+'] as const;
 const VIBE_OPTS = ['Club', 'Rooftop', 'House Party', 'Lounge', 'Festival', 'Concert'] as const;
 const DIST_OPTS = ['0-5km', '5-10km', '10km+'] as const;
@@ -50,12 +51,25 @@ function FilterGroup({ title, children }: { title: string; children: React.React
   );
 }
 
-export default function SearchPage() {
+function SearchPageContent() {
+  const searchParams = useSearchParams();
   const { parties } = useParties();
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<PartyFilters>(EMPTY_FILTERS);
   const [sortBy, setSortBy] = useState<SortBy>('trending');
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Lets the home page's quick-filter pills (and anything else) deep-link
+  // straight into a pre-applied filter, e.g. /search?vibe=Rooftop.
+  useEffect(() => {
+    const date = searchParams.get('date') as DateFilter | null;
+    const price = searchParams.get('price') as PriceFilter | null;
+    const vibe = searchParams.get('vibe') as Vibe | null;
+    if (date || price || vibe) {
+      setFilters((f) => ({ ...f, date: date ?? f.date, price: price ?? f.price, vibe: vibe ?? f.vibe }));
+      setDrawerOpen(true);
+    }
+  }, [searchParams]);
 
   const setFilter = <K extends keyof PartyFilters>(key: K, val: NonNullable<PartyFilters[K]>) => {
     setFilters((f) => ({ ...f, [key]: f[key] === val ? null : val }));
@@ -217,5 +231,13 @@ export default function SearchPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={null}>
+      <SearchPageContent />
+    </Suspense>
   );
 }

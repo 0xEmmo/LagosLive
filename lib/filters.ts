@@ -1,5 +1,9 @@
 import type { Party, PartyFilters, SortBy } from './types';
 
+function isSameLocalDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
 export function filterAndSortParties(
   parties: Party[],
   searchQuery: string,
@@ -30,7 +34,8 @@ export function filterAndSortParties(
   else if (filters.distance === '5-10km') r = r.filter((p) => p.distance > 5 && p.distance <= 10);
   else if (filters.distance === '10km+') r = r.filter((p) => p.distance > 10);
 
-  if (filters.date === 'This Weekend') r = r.filter((p) => p.isWeekend);
+  if (filters.date === 'Tonight') r = r.filter((p) => isSameLocalDay(new Date(p.startsAt), new Date()));
+  else if (filters.date === 'This Weekend') r = r.filter((p) => p.isWeekend);
   else if (filters.date === 'This Week') r = r.filter((p) => p.isThisWeek);
 
   if (sortBy === 'date') r.sort((a, b) => a.id - b.id);

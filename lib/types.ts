@@ -31,7 +31,7 @@ export interface Party {
   status: PartyStatus;
 }
 
-export type DateFilter = 'This Week' | 'This Weekend' | 'Next Week';
+export type DateFilter = 'Tonight' | 'This Week' | 'This Weekend' | 'Next Week';
 export type PriceFilter = 'Free' | '₦5k-10k' | '₦10k-20k' | '₦20k+';
 export type DistanceFilter = '0-5km' | '5-10km' | '10km+';
 export type SortBy = 'trending' | 'date' | 'price-asc' | 'distance';

@@ -7,6 +7,7 @@ import HomeHeader from '@/components/HomeHeader';
 import PartyCard from '@/components/PartyCard';
 import FolderReveal from '@/components/FolderReveal';
 import Marquee from '@/components/Marquee';
+import ShinyText from '@/components/ShinyText';
 import { PARTIES, VC } from '@/lib/data';
 
 const QUICK_FILTERS = ['All', 'Tonight', 'This Weekend', 'Rooftop', 'Club', 'Free Entry', 'Festival'];
@@ -98,9 +99,12 @@ export default function HomePage() {
             style={{ background: 'rgba(255,197,103,0.22)', borderColor: '#1A140F' }}
           >
             <div className="h-[5px] w-[5px] rounded-full" style={{ background: '#552CB7' }} />
-            <span className="text-[11px] font-semibold uppercase tracking-[1px]" style={{ color: '#552CB7' }}>
+            <ShinyText
+              className="text-[11px] font-semibold uppercase tracking-[1px]"
+              style={{ color: 'rgba(85,44,183,0.78)' }}
+            >
               {heroCopy.pill} · 22 Events Live
-            </span>
+            </ShinyText>
           </div>
           <h1
             className="font-display mb-[18px] leading-[0.9] tracking-[1px]"

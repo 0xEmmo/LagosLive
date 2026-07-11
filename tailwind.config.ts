@@ -43,6 +43,10 @@ const config: Config = {
           '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
           '50%': { transform: 'translate(16px, -14px) scale(1.06)' },
         },
+        'shiny-text': {
+          '0%, 90%, 100%': { backgroundPosition: 'calc(-100% - var(--shiny-width, 100px)) 0' },
+          '30%, 60%': { backgroundPosition: 'calc(100% + var(--shiny-width, 100px)) 0' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 0.4s ease-out',
@@ -54,6 +58,7 @@ const config: Config = {
         marquee: 'marquee var(--duration,32s) linear infinite',
         'blob-float-a': 'blob-float-a 17s ease-in-out infinite',
         'blob-float-b': 'blob-float-b 19s ease-in-out infinite',
+        'shiny-text': 'shiny-text 8s ease-in-out infinite',
       },
     },
   },

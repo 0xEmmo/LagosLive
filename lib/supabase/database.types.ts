@@ -21,9 +21,12 @@ export type Database = {
           order_ref: string
           party_id: number
           payment_method: string | null
+          payment_ref: string | null
+          payment_status: string
           quantity: number
           service_fee: number
           status: string
+          ticket_type_id: number | null
           tier: string
           total: number
           unit_price: number
@@ -35,9 +38,12 @@ export type Database = {
           order_ref: string
           party_id: number
           payment_method?: string | null
+          payment_ref?: string | null
+          payment_status?: string
           quantity: number
           service_fee?: number
           status?: string
+          ticket_type_id?: number | null
           tier: string
           total: number
           unit_price: number
@@ -49,9 +55,12 @@ export type Database = {
           order_ref?: string
           party_id?: number
           payment_method?: string | null
+          payment_ref?: string | null
+          payment_status?: string
           quantity?: number
           service_fee?: number
           status?: string
+          ticket_type_id?: number | null
           tier?: string
           total?: number
           unit_price?: number
@@ -60,6 +69,54 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "orders_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_ticket_type_id_fkey"
+            columns: ["ticket_type_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_types: {
+        Row: {
+          created_at: string
+          id: number
+          name: string
+          party_id: number
+          price: number
+          quantity: number
+          sold: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          name: string
+          party_id: number
+          price: number
+          quantity: number
+          sold?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          name?: string
+          party_id?: number
+          price?: number
+          quantity?: number
+          sold?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_types_party_id_fkey"
             columns: ["party_id"]
             isOneToOne: false
             referencedRelation: "parties"
@@ -244,7 +301,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      confirm_order_payment: {
+        Args: {
+          p_order_id: string
+        }
+        Returns: undefined
+      }
+      settle_order_payment: {
+        Args: {
+          p_order_id: string
+          p_payment_status: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

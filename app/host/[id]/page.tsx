@@ -1,0 +1,295 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useRouter, notFound } from 'next/navigation';
+import {
+  Loader2,
+  AlertTriangle,
+  RefreshCw,
+  Ticket,
+  Wallet,
+  Users,
+  Clock,
+  Hourglass,
+  XCircle,
+  Eye,
+  Pencil,
+  MapPin,
+  TrendingUp,
+  type LucideIcon,
+} from 'lucide-react';
+import BackButton from '@/components/BackButton';
+import PartyPhoto from '@/components/PartyPhoto';
+import SalesChart from '@/components/SalesChart';
+import { fetchOrganizerEventAnalytics, type OrganizerEventAnalytics } from '@/lib/queries';
+import { formatNaira } from '@/lib/filters';
+import { partyPhoto } from '@/lib/data';
+import { useParty } from '@/lib/hooks/useParty';
+import { useLagosLiveStore } from '@/lib/store';
+import type { PartyStatus } from '@/lib/types';
+
+const STATUS_STYLE: Record<PartyStatus, { label: string; bg: string; color: string }> = {
+  pending: { label: 'Pending Review', bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
+  approved: { label: 'Live', bg: 'rgba(0,245,212,0.08)', color: '#00F5D4' },
+  rejected: { label: 'Rejected', bg: 'rgba(255,138,0,0.08)', color: '#FF8A00' },
+  suspended: { label: 'Suspended', bg: 'rgba(255,138,0,0.08)', color: '#FF8A00' },
+};
+
+function StatCard({ label, value, icon: Icon, color }: { label: string; value: string; icon: LucideIcon; color: string }) {
+  return (
+    <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-[10px] font-bold uppercase tracking-[0.8px]" style={{ color: '#6B6C80' }}>{label}</span>
+        <Icon size={14} strokeWidth={2} color={color} className="flex-shrink-0" />
+      </div>
+      <div className="font-display truncate text-[19px] leading-tight" style={{ color: '#FFFFFF' }}>{value}</div>
+    </div>
+  );
+}
+
+function ProgressBar({ sold, total, from, to }: { sold: number; total: number; from: string; to: string }) {
+  const pct = total > 0 ? Math.min(100, Math.round((sold / total) * 100)) : 0;
+  return (
+    <div className="h-[6px] w-full overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: `linear-gradient(to right, ${from}, ${to})` }} />
+    </div>
+  );
+}
+
+function PageSkeleton() {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="h-[190px] animate-pulse rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }} />
+      <div className="grid grid-cols-2 gap-2.5">
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="h-[84px] animate-pulse rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }} />
+        ))}
+      </div>
+      <div className="h-[220px] animate-pulse rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }} />
+    </div>
+  );
+}
+
+export default function EventAnalyticsPage({ params }: { params: { id: string } }) {
+  const router = useRouter();
+  const user = useLagosLiveStore((s) => s.user);
+  const authLoading = useLagosLiveStore((s) => s.authLoading);
+  const { party, loading } = useParty(Number(params.id));
+  const [analytics, setAnalytics] = useState<OrganizerEventAnalytics | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    if (!authLoading && !user) router.replace('/login?next=' + encodeURIComponent(`/host/${params.id}`));
+  }, [authLoading, user, router, params.id]);
+
+  useEffect(() => {
+    if (!user || !party) return;
+    if (party.createdBy !== user.id) {
+      router.replace('/host');
+      return;
+    }
+    let cancelled = false;
+    setAnalyticsLoading(true);
+    setAnalyticsError(null);
+    fetchOrganizerEventAnalytics(party.id)
+      .then((data) => {
+        if (!cancelled) setAnalytics(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setAnalyticsError(err instanceof Error ? err.message : 'Could not load analytics.');
+      })
+      .finally(() => {
+        if (!cancelled) setAnalyticsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [party, user, router, attempt]);
+
+  if (!user) {
+    if (authLoading) {
+      return (
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <Loader2 size={26} strokeWidth={2} color="#FF2D95" className="animate-spin" />
+        </div>
+      );
+    }
+    return null; // auth effect redirects to /login
+  }
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 size={26} strokeWidth={2} color="#FF2D95" className="animate-spin" />
+      </div>
+    );
+  }
+
+  if (!party) {
+    if (loading) {
+      return (
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <Loader2 size={26} strokeWidth={2} color="#FF2D95" className="animate-spin" />
+        </div>
+      );
+    }
+    notFound();
+  }
+
+  // Only the organizer of this event sees its performance. A non-owner is
+  // bounced back to their own dashboard (the analytics effect also redirects);
+  // admins manage other people's events through /admin, not this page.
+  if (party.createdBy !== user.id) return null;
+
+  const statusStyle = STATUS_STYLE[party.status];
+  const cancelledFailed = (analytics?.cancelledOrders ?? 0) + (analytics?.failedOrders ?? 0);
+  const totalCapacity = party.capacity;
+  const ticketsSold = analytics?.ticketsSold ?? 0;
+  const ticketsRemaining = Math.max(0, totalCapacity - ticketsSold);
+
+  return (
+    <div className="mx-auto max-w-[600px] animate-fade-in">
+      <div
+        className="sticky top-0 z-40 flex items-center gap-3 border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150"
+        style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}
+      >
+        <BackButton href="/host" />
+        <span className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>
+          Event Performance
+        </span>
+        <div className="ml-auto flex items-center gap-2">
+          <Link
+            href={`/party/${party.id}`}
+            className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-semibold glass glass-hover"
+            style={{ color: '#A7A8B5' }}
+          >
+            <Eye size={13} strokeWidth={2} />
+            View
+          </Link>
+          <Link
+            href={`/host/${party.id}/edit`}
+            className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-semibold glass glass-hover"
+            style={{ color: '#A7A8B5' }}
+          >
+            <Pencil size={13} strokeWidth={2} />
+            Edit
+          </Link>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4 p-5">
+        {analyticsLoading ? (
+          <PageSkeleton />
+        ) : analyticsError ? (
+          <div className="flex flex-col items-center gap-3 rounded-2xl px-6 py-14 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,138,0,0.2)' }}>
+            <AlertTriangle size={26} strokeWidth={1.5} color="#FF8A00" />
+            <div className="text-sm" style={{ color: '#A7A8B5' }}>
+              Couldn&apos;t load this event&apos;s performance. Check your connection and try again.
+            </div>
+            <button
+              onClick={() => setAttempt((a) => a + 1)}
+              className="flex items-center gap-2 rounded-[10px] px-4 py-2 text-[13px] font-semibold"
+              style={{ background: 'rgba(255,138,0,0.12)', border: '1px solid rgba(255,138,0,0.3)', color: '#FF8A00' }}
+            >
+              <RefreshCw size={13} strokeWidth={2.5} />
+              Retry
+            </button>
+          </div>
+        ) : !analytics ? null : (
+          <>
+            {/* Event header */}
+            <div className="overflow-hidden rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="relative" style={{ height: 150, background: party.gradient }}>
+                <PartyPhoto src={partyPhoto(party.id)} alt={party.title} gradient={party.gradient} sizes="600px" />
+                <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(7,7,11,0.92) 0%, rgba(7,7,11,0.15) 70%)' }} />
+                <span className="absolute right-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: statusStyle.bg, color: statusStyle.color, backdropFilter: 'blur(8px)' }}>
+                  {statusStyle.label}
+                </span>
+              </div>
+              <div className="p-4">
+                <div className="font-heading text-[18px] font-bold leading-tight" style={{ color: '#FFFFFF' }}>{party.title}</div>
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]" style={{ color: '#A7A8B5' }}>
+                  <span className="flex items-center gap-1.5">
+                    <Clock size={12} strokeWidth={2} color="#FF2D95" />
+                    {party.date} · {party.time}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <MapPin size={12} strokeWidth={2} color="#00BFFF" />
+                    {party.location}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Key stats */}
+            <div className="grid grid-cols-2 gap-2.5">
+              <StatCard label="Tickets Sold" value={String(ticketsSold)} icon={Ticket} color="#00F5D4" />
+              <StatCard label="Tickets Remaining" value={String(ticketsRemaining)} icon={Users} color="#FFFFFF" />
+              <StatCard label="Total Capacity" value={String(totalCapacity)} icon={Clock} color="#00BFFF" />
+              <StatCard label="Confirmed Revenue" value={formatNaira(analytics.revenue)} icon={Wallet} color="#B06AFF" />
+              <StatCard label="Pending Orders" value={String(analytics.pendingOrders)} icon={Hourglass} color="#FFD600" />
+              <StatCard label="Cancelled / Failed" value={String(cancelledFailed)} icon={XCircle} color="#FF8A00" />
+            </div>
+
+            {/* Sales over time */}
+            <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="mb-1 flex items-center gap-2">
+                <TrendingUp size={14} strokeWidth={2} color="#FF2D95" />
+                <span className="text-[11px] font-bold uppercase tracking-[1px]" style={{ color: '#A7A8B5' }}>
+                  Tickets Sold · Last 14 Days
+                </span>
+              </div>
+              <div className="pt-3">
+                <SalesChart data={analytics.series} />
+              </div>
+            </div>
+
+            {/* Ticket inventory */}
+            <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-[1px]" style={{ color: '#A7A8B5' }}>
+                  Ticket Sales by Type
+                </span>
+                <span className="text-[11px]" style={{ color: '#6B6C80' }}>
+                  {ticketsSold} / {totalCapacity} sold
+                </span>
+              </div>
+
+              <div className="mb-4">
+                <ProgressBar sold={ticketsSold} total={totalCapacity} from="#8A2BE2" to="#FF2D95" />
+              </div>
+
+              {analytics.ticketTypes.length === 0 ? (
+                <div className="text-[12px]" style={{ color: '#6B6C80' }}>
+                  No ticket types set up for this event. Sales still count against total capacity.
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {analytics.ticketTypes.map((tt) => (
+                    <div key={tt.id}>
+                      <div className="mb-1.5 flex items-baseline justify-between gap-2">
+                        <span className="text-[13px] font-semibold" style={{ color: '#FFFFFF' }}>{tt.name}</span>
+                        <span className="text-[11px]" style={{ color: '#A7A8B5' }}>
+                          <span className="font-bold" style={{ color: '#00F5D4' }}>{tt.sold}</span> sold · <span style={{ color: '#FFFFFF' }}>{tt.remaining}</span> left
+                        </span>
+                      </div>
+                      <div className="mb-1.5">
+                        <ProgressBar sold={tt.sold} total={tt.total} from="#00BFFF" to="#8A2BE2" />
+                      </div>
+                      <div className="text-[10px] uppercase tracking-[0.6px]" style={{ color: '#6B6C80' }}>
+                        {tt.total} total · {tt.price === 0 ? 'Free' : formatNaira(tt.price)} each
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

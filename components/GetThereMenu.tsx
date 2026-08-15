@@ -15,10 +15,10 @@ import {
 
 function rideOptions(party: Party) {
   return [
-    { key: 'google', label: 'Google Maps', dot: '#00995E', action: () => window.open(googleMapsDirectionsUrl(party), '_blank') },
-    { key: 'uber', label: 'Uber', dot: '#1A140F', action: () => window.open(uberDeepLink(party), '_blank') },
-    { key: 'bolt', label: 'Bolt', dot: '#058CD7', action: () => openWithFallback(boltDeepLink(party), BOLT_FALLBACK_URL) },
-    { key: 'indrive', label: 'inDrive', dot: '#FFC567', action: () => openWithFallback(inDriveDeepLink(party), INDRIVE_FALLBACK_URL) },
+    { key: 'google', label: 'Google Maps', dot: '#00F5D4', action: () => window.open(googleMapsDirectionsUrl(party), '_blank') },
+    { key: 'uber', label: 'Uber', dot: '#FF2D95', action: () => window.open(uberDeepLink(party), '_blank') },
+    { key: 'bolt', label: 'Bolt', dot: '#00BFFF', action: () => openWithFallback(boltDeepLink(party), BOLT_FALLBACK_URL) },
+    { key: 'indrive', label: 'inDrive', dot: '#FFD600', action: () => openWithFallback(inDriveDeepLink(party), INDRIVE_FALLBACK_URL) },
   ];
 }
 
@@ -39,19 +39,23 @@ export default function GetThereMenu({ party }: { party: Party }) {
     <div className="relative flex-shrink-0" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 whitespace-nowrap rounded-2xl border-2 px-[18px] py-4 text-[13px] font-semibold transition-transform duration-150 active:scale-[0.97]"
-        style={{ background: 'rgba(255,197,103,0.22)', borderColor: '#1A140F', color: '#8A5A00' }}
+        className="flex items-center gap-1.5 whitespace-nowrap rounded-2xl px-[18px] py-4 text-[13px] font-semibold transition-all duration-200 active:scale-[0.97]"
+        style={{
+          background: 'rgba(0,191,255,0.08)',
+          border: '1px solid rgba(0,191,255,0.2)',
+          color: '#00BFFF',
+        }}
       >
-        <NavigationIcon size={14} strokeWidth={2.5} />
+        <NavigationIcon size={14} strokeWidth={2} />
         Get There
-        <ChevronDown size={13} strokeWidth={2.5} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
+        <ChevronDown size={13} strokeWidth={2} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
       </button>
       <div
-        className="absolute right-0 top-full z-20 mt-2 w-52 overflow-hidden rounded-2xl border-2 transition-[opacity,transform,visibility] duration-150 ease-out"
+        className="absolute right-0 top-full z-20 mt-2 w-52 overflow-hidden rounded-2xl transition-all duration-150 ease-out"
         style={{
-          background: 'var(--c-surface)',
-          borderColor: '#1A140F',
-          boxShadow: '5px 5px 0 rgba(26,20,15,0.4)',
+          background: '#171725',
+          border: '1px solid rgba(255,255,255,0.08)',
+          boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
           transformOrigin: 'top right',
           opacity: open ? 1 : 0,
           transform: open ? 'scale(1)' : 'scale(0.95)',
@@ -66,8 +70,8 @@ export default function GetThereMenu({ party }: { party: Party }) {
               opt.action();
               setOpen(false);
             }}
-            className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-[13px] font-medium transition-transform duration-150 active:scale-[0.97]"
-            style={{ color: 'var(--c-text)' }}
+            className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-[13px] font-medium transition-colors duration-150 hover:bg-[rgba(255,255,255,0.04)] active:scale-[0.97]"
+            style={{ color: '#FFFFFF' }}
           >
             <span className="h-2 w-2 flex-shrink-0 rounded-full" style={{ background: opt.dot }} />
             {opt.label}

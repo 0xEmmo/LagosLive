@@ -8,10 +8,6 @@ interface PartyPhotoProps {
   priority?: boolean;
 }
 
-/**
- * Applies a vibe-colored duotone grade to stock photography so every party image reads as
- * intentionally art-directed rather than a random, uncolor-graded stock photo.
- */
 export default function PartyPhoto({ src, alt, gradient, sizes, priority }: PartyPhotoProps) {
   return (
     <>
@@ -22,10 +18,10 @@ export default function PartyPhoto({ src, alt, gradient, sizes, priority }: Part
         sizes={sizes}
         priority={priority}
         className="object-cover"
-        style={{ filter: 'grayscale(0.85) contrast(1.15) brightness(0.9) saturate(1.05)' }}
+        style={{ filter: 'grayscale(0.6) contrast(1.2) brightness(0.7) saturate(1.1)' }}
       />
-      <div className="pointer-events-none absolute inset-0" style={{ background: gradient, mixBlendMode: 'color', opacity: 0.85 }} />
-      <div className="pointer-events-none absolute inset-0" style={{ background: gradient, mixBlendMode: 'soft-light', opacity: 0.55 }} />
+      <div className="pointer-events-none absolute inset-0" style={{ background: gradient, mixBlendMode: 'color', opacity: 0.75 }} />
+      <div className="pointer-events-none absolute inset-0" style={{ background: gradient, mixBlendMode: 'soft-light', opacity: 0.45 }} />
     </>
   );
 }

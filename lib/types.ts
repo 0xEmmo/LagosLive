@@ -1,5 +1,15 @@
 export type Vibe = 'Club' | 'Rooftop' | 'Festival' | 'Concert' | 'House Party' | 'Lounge';
 export type PartyStatus = 'pending' | 'approved' | 'rejected' | 'suspended';
+export type OrderPaymentStatus = 'pending' | 'confirmed' | 'failed' | 'cancelled';
+
+export interface TicketType {
+  id: number;
+  partyId: number;
+  name: string;
+  price: number;
+  quantity: number;
+  sold: number;
+}
 
 export interface Party {
   id: number;
@@ -41,4 +51,22 @@ export interface PartyFilters {
   price: PriceFilter | null;
   vibe: Vibe | null;
   distance: DistanceFilter | null;
+  location: string | null;
+}
+
+// A confirmed order joined with its event — what a customer's digital ticket
+// is made of. `orderRef` doubles as the ticket code encoded in the QR (Batch 5
+// already generated it; there is deliberately no second code system).
+export interface CustomerTicket {
+  id: string;
+  partyId: number;
+  party: Party;
+  ticketTypeName: string;
+  quantity: number;
+  unitPrice: number;
+  serviceFee: number;
+  total: number;
+  orderRef: string;
+  paymentStatus: OrderPaymentStatus;
+  createdAt: string;
 }

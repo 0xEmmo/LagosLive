@@ -18,53 +18,47 @@ export interface ThemeTokens {
 
 export const THEME_TOKENS: Record<ThemeName, ThemeTokens> = {
   dark: {
-    bg: '#111111', header: 'rgba(17,17,17,0.68)', nav: 'rgba(14,14,14,0.72)',
-    surface: '#171A1F', surface2: '#191D22',
-    glass: 'rgba(166,161,147,0.06)', border: 'rgba(166,161,147,0.22)',
-    border2: 'rgba(166,161,147,0.14)', border3: 'rgba(166,161,147,0.3)',
-    text: '#F2EFE9', textMuted: '#A6A193', textFaint: '#83806F', textDim: '#807C6E',
+    bg: '#07070B', header: 'rgba(7,7,11,0.85)', nav: 'rgba(7,7,11,0.88)',
+    surface: '#171725', surface2: '#0D0D15',
+    glass: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.08)',
+    border2: 'rgba(255,255,255,0.04)', border3: 'rgba(255,255,255,0.12)',
+    text: '#FFFFFF', textMuted: '#A7A8B5', textFaint: '#6B6C80', textDim: '#6B6C80',
   },
   light: {
-    bg: '#FFF8EC', header: 'rgba(255,248,236,0.65)', nav: 'rgba(255,255,255,0.72)',
-    surface: '#FFFFFF', surface2: '#FFFFFF',
-    glass: 'rgba(26,20,15,0.045)', border: 'rgba(26,20,15,0.85)',
-    border2: 'rgba(26,20,15,0.14)', border3: 'rgba(26,20,15,0.85)',
-    text: '#1A140F', textMuted: '#6E6558', textFaint: '#786E60', textDim: '#7C7263',
+    bg: '#07070B', header: 'rgba(7,7,11,0.85)', nav: 'rgba(7,7,11,0.88)',
+    surface: '#171725', surface2: '#0D0D15',
+    glass: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.08)',
+    border2: 'rgba(255,255,255,0.04)', border3: 'rgba(255,255,255,0.12)',
+    text: '#FFFFFF', textMuted: '#A7A8B5', textFaint: '#6B6C80', textDim: '#6B6C80',
   },
 };
 
-// Retro pop palette: sunshine yellow / bubblegum pink / coral / grape purple / emerald / sky blue
 export const PALETTE = {
-  primary: '#552CB7',
-  secondary: '#FB7DA8',
-  accent: '#FFC567',
+  primary: '#FF2D95',
+  secondary: '#8A2BE2',
+  accent: '#00BFFF',
 };
 
 export const RETRO = {
-  yellow: '#FFC567',
-  pink: '#FB7DA8',
-  coral: '#FD5A46',
-  purple: '#552CB7',
-  green: '#00995E',
-  blue: '#058CD7',
-  ink: '#1A140F',
+  yellow: '#FFD600',
+  pink: '#FF2D95',
+  coral: '#FF8A00',
+  purple: '#8A2BE2',
+  green: '#00F5D4',
+  blue: '#00BFFF',
+  ink: '#07070B',
 };
 
-// Luxury dark palette used for always-dark brand moments (splash, toast) and dark theme mode
 export const LUXURY = {
   red: '#800020',
   navy: '#0B1D34',
   pine: '#0E2B24',
-  beige: '#A6A193',
-  black: '#111111',
+  beige: '#A7A8B5',
+  black: '#07070B',
 };
 
-// Brand accent pair for always-dark surfaces (Splash, Toast, FolderReveal) that don't
-// otherwise change with the theme toggle — keeps them visually consistent with whichever
-// mode is active instead of a single fixed color.
 export function brandAccent(theme: ThemeName) {
-  // Brightened red (not the raw swatch) so text/fills stay legible against a near-black bg
-  return theme === 'dark' ? { from: '#C4102E', to: LUXURY.navy, muted: LUXURY.beige } : { from: PALETTE.primary, to: PALETTE.secondary, muted: '#C4B8D9' };
+  return { from: '#FF2D95', to: '#8A2BE2', muted: '#A7A8B5' };
 }
 
 export function themeCssVars(tokens: ThemeTokens): Record<string, string> {

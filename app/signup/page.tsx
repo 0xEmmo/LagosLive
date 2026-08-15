@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import BackButton from '@/components/BackButton';
 import { LogoMark } from '@/components/Logo';
 import { useLagosLiveStore } from '@/lib/store';
 
-export default function SignupPage() {
+function SignupPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const signup = useLagosLiveStore((s) => s.signup);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -17,6 +18,10 @@ export default function SignupPage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [confirmationSent, setConfirmationSent] = useState(false);
+
+  const rawNext = searchParams.get('next');
+  const next = rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/profile';
+  const nextQuery = next !== '/profile' ? `?next=${encodeURIComponent(next)}` : '';
 
   const submit = async () => {
     if (!name.trim() || !email.trim() || !password.trim()) {
@@ -38,7 +43,7 @@ export default function SignupPage() {
     if (needsEmailConfirmation) {
       setConfirmationSent(true);
     } else {
-      router.push('/profile');
+      router.push(next);
     }
   };
 
@@ -50,16 +55,15 @@ export default function SignupPage() {
         </div>
         <div className="mx-auto flex w-full max-w-[400px] flex-1 flex-col items-center justify-center px-7 pb-[60px] text-center">
           <LogoMark size={56} />
-          <h1 className="font-display mb-1.5 mt-[18px] text-[34px] tracking-[1px]" style={{ color: 'var(--c-text)' }}>
+          <h1 className="font-display mb-1.5 mt-[18px] text-[34px] tracking-[1px]" style={{ color: '#FFFFFF' }}>
             Check Your Email
           </h1>
-          <p className="max-w-[300px] text-sm" style={{ color: 'var(--c-text-muted)' }}>
-            We sent a confirmation link to <strong>{email}</strong>. Confirm your email, then log in.
+          <p className="max-w-[300px] text-sm" style={{ color: '#A7A8B5' }}>
+            We sent a confirmation link to <strong style={{ color: '#FFFFFF' }}>{email}</strong>. Confirm your email, then log in.
           </p>
           <Link
-            href="/login"
-            className="mt-7 w-full rounded-xl border-none py-[15px] text-center font-heading text-sm font-bold text-white"
-            style={{ background: 'linear-gradient(135deg,#552CB7,#FB7DA8)', boxShadow: '0 8px 24px rgba(85,44,183,0.28)' }}
+            href={`/login${nextQuery}`}
+            className="btn-primary mt-7 w-full py-[15px] text-center text-sm font-bold"
           >
             Go to Login
           </Link>
@@ -76,16 +80,16 @@ export default function SignupPage() {
       <div className="mx-auto flex w-full max-w-[400px] flex-1 flex-col justify-center px-7 pb-[60px]">
         <div className="mb-7 text-center">
           <LogoMark size={56} />
-          <h1 className="font-display mb-1.5 mt-[18px] text-[38px] tracking-[1px]" style={{ color: 'var(--c-text)' }}>
+          <h1 className="font-display mb-1.5 mt-[18px] text-[38px] tracking-[1px]" style={{ color: '#FFFFFF' }}>
             Join the Vibe
           </h1>
-          <p className="text-sm" style={{ color: 'var(--c-text-muted)' }}>
+          <p className="text-sm" style={{ color: '#A7A8B5' }}>
             Create an account to save your favorite parties
           </p>
         </div>
 
         {error && (
-          <div className="mb-4 animate-fade-in rounded-[10px] border px-3.5 py-2.5 text-[13px]" style={{ background: 'rgba(214,64,44,0.1)', borderColor: 'rgba(214,64,44,0.32)', color: '#D6402C' }}>
+          <div className="mb-4 animate-fade-in rounded-[10px] px-3.5 py-2.5 text-[13px]" style={{ background: 'rgba(255,138,0,0.08)', border: '1px solid rgba(255,138,0,0.2)', color: '#FF8A00' }}>
             {error}
           </div>
         )}
@@ -98,7 +102,7 @@ export default function SignupPage() {
             { label: 'Password', value: password, set: setPassword, placeholder: '••••••••', type: 'password' },
           ].map((f) => (
             <div key={f.label}>
-              <div className="mb-[7px] text-[11px] font-semibold uppercase tracking-[0.8px]" style={{ color: 'var(--c-text-muted)' }}>
+              <div className="mb-[7px] text-[11px] font-semibold uppercase tracking-[0.8px]" style={{ color: '#A7A8B5' }}>
                 {f.label}
               </div>
               <input
@@ -106,8 +110,10 @@ export default function SignupPage() {
                 value={f.value}
                 onChange={(e) => f.set(e.target.value)}
                 placeholder={f.placeholder}
-                className="w-full rounded-[10px] border px-3.5 py-[13px] text-sm outline-none font-heading"
-                style={{ background: 'var(--c-glass)', borderColor: 'var(--c-border3)', color: 'var(--c-text)' }}
+                className="w-full rounded-[10px] px-3.5 py-[13px] text-sm outline-none font-heading transition-all duration-200"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#FFFFFF' }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(255,45,149,0.3)'; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
               />
             </div>
           ))}
@@ -116,19 +122,26 @@ export default function SignupPage() {
         <button
           onClick={submit}
           disabled={submitting}
-          className="w-full rounded-xl border-none py-[15px] font-heading text-sm font-bold text-white transition-transform duration-150 active:scale-[0.98] disabled:opacity-60"
-          style={{ background: 'linear-gradient(135deg,#552CB7,#FB7DA8)', boxShadow: '0 8px 24px rgba(85,44,183,0.28)' }}
+          className="btn-primary w-full py-[15px] text-sm font-bold disabled:opacity-60"
         >
           {submitting ? 'Creating Account...' : 'Create Account'}
         </button>
 
-        <p className="mt-[26px] text-center text-[13px]" style={{ color: 'var(--c-text-muted)' }}>
+        <p className="mt-[26px] text-center text-[13px]" style={{ color: '#A7A8B5' }}>
           Already have an account?{' '}
-          <Link href="/login" className="font-semibold" style={{ color: '#552CB7' }}>
+          <Link href={`/login${nextQuery}`} className="font-semibold" style={{ color: '#FF2D95' }}>
             Log in
           </Link>
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupPageContent />
+    </Suspense>
   );
 }

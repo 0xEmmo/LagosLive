@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter, notFound } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import PartyForm from '@/components/PartyForm';
 import { updateParty, deleteParty, type PartyFormInput } from '@/lib/queries';
@@ -15,17 +16,29 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
   const { party, loading } = useParty(Number(params.id));
 
   useEffect(() => {
-    if (!authLoading && !user) router.replace('/login');
-  }, [authLoading, user, router]);
+    if (!authLoading && !user) {
+      router.replace('/login?next=' + encodeURIComponent(`/host/${params.id}/edit`));
+    }
+  }, [authLoading, user, router, params.id]);
 
-  if (!user) return null;
+  if (authLoading || !user) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 size={26} strokeWidth={2} color="#FF2D95" className="animate-spin" />
+      </div>
+    );
+  }
   if (!party) {
-    if (loading) return null;
+    if (loading) {
+      return (
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <Loader2 size={26} strokeWidth={2} color="#FF2D95" className="animate-spin" />
+        </div>
+      );
+    }
     notFound();
   }
   if (party.createdBy !== user.id && !user.isAdmin) {
-    // Not your event and not an admin — RLS would reject the update anyway,
-    // redirect rather than show a form that can't actually save.
     router.replace('/host');
     return null;
   }
@@ -55,24 +68,29 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
     <div className="mx-auto max-w-[520px] animate-fade-in">
       <div
         className="sticky top-0 z-40 flex items-center gap-3 border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150"
-        style={{ background: 'var(--c-header)', borderColor: 'var(--c-border)' }}
+        style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}
       >
         <BackButton href={isAdminEditingOthersEvent ? '/admin' : '/host'} />
-        <span className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: 'var(--c-text)' }}>
+        <span className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>
           Edit Event
         </span>
       </div>
       <div className="p-5">
         {isAdminEditingOthersEvent && (
-          <div className="mb-4 rounded-[10px] border px-3.5 py-2.5 text-[13px]" style={{ background: 'rgba(255,197,103,0.14)', borderColor: 'rgba(255,197,103,0.4)', color: '#9A6A00' }}>
+          <div className="mb-4 rounded-[10px] px-3.5 py-2.5 text-[13px]" style={{ background: 'rgba(255,214,0,0.08)', border: '1px solid rgba(255,214,0,0.2)', color: '#FFD600' }}>
             You&apos;re editing {party.organizer}&apos;s event as an admin.
+          </div>
+        )}
+        {!isAdminEditingOthersEvent && party.status === 'pending' && (
+          <div className="mb-4 rounded-[10px] px-3.5 py-2.5 text-[13px]" style={{ background: 'rgba(255,214,0,0.08)', border: '1px solid rgba(255,214,0,0.2)', color: '#FFD600' }}>
+            This event is pending review and isn&apos;t public yet. Edits you make now will be included in the review.
           </div>
         )}
         <PartyForm initial={party} onSubmit={submit} submitLabel="Save Changes" />
         <button
           onClick={remove}
-          className="mt-3 w-full rounded-xl border py-[13px] text-sm font-semibold transition-transform duration-150 active:scale-[0.98]"
-          style={{ background: 'rgba(214,64,44,0.1)', borderColor: 'rgba(214,64,44,0.32)', color: '#D6402C' }}
+          className="mt-3 w-full rounded-xl py-[13px] text-sm font-semibold transition-all duration-200 active:scale-[0.98]"
+          style={{ background: 'rgba(255,138,0,0.08)', border: '1px solid rgba(255,138,0,0.2)', color: '#FF8A00' }}
         >
           Delete Event
         </button>

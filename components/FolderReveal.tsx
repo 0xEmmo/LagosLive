@@ -5,15 +5,11 @@ import { useRouter } from 'next/navigation';
 import { partyPhoto, VC } from '@/lib/data';
 import { useParties } from '@/lib/hooks/useParties';
 import { useLagosLiveStore } from '@/lib/store';
-import { brandAccent } from '@/lib/theme';
 import PartyPhoto from './PartyPhoto';
 
 const SEEN_KEY = 'll_seen_folder_reveal';
-// One party per vibe (Club, Rooftop, Festival, House Party, Lounge) so the reveal shows
-// 5 distinct vibes rather than just the first 5 parties in list order.
 const HOT_PARTY_IDS = [1, 2, 3, 5, 6];
 
-// Fan-out geometry per card (index 2 = center, frontmost).
 const CARD_LAYOUT = [
   { rotate: -24, x: -118, y: -14, z: 3 },
   { rotate: -12, x: -62, y: -46, z: 4 },
@@ -26,8 +22,6 @@ type Phase = 'closed' | 'prompt' | 'burst';
 
 export default function FolderReveal() {
   const router = useRouter();
-  const theme = useLagosLiveStore((s) => s.theme);
-  const accent = brandAccent(theme);
   const { parties } = useParties();
   const hotParties = HOT_PARTY_IDS.map((id) => parties.find((p) => p.id === id)).filter(
     (p): p is NonNullable<typeof p> => !!p
@@ -70,62 +64,24 @@ export default function FolderReveal() {
 
   return (
     <div
-      className="fixed inset-0 z-[9990] flex flex-col overflow-hidden bg-[#111111] transition-opacity duration-300 ease-out"
+      className="fixed inset-0 z-[9990] flex flex-col overflow-hidden bg-[#07070B] transition-opacity duration-300 ease-out"
       style={{ opacity: dismissing ? 0 : 1 }}
     >
       <style jsx>{`
         @keyframes fr-fade-up-plain {
-          0% {
-            opacity: 0;
-            transform: translateY(8px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          0% { opacity: 0; transform: translateY(8px); }
+          100% { opacity: 1; transform: translateY(0); }
         }
-        @keyframes fr-tap-pulse-light {
-          0%,
-          100% {
-            transform: scale(1);
-            box-shadow: 0 12px 40px rgba(85, 44, 183, 0.45);
-          }
-          50% {
-            transform: scale(1.06);
-            box-shadow: 0 16px 56px rgba(85, 44, 183, 0.65), 0 0 60px rgba(251, 125, 168, 0.4);
-          }
-        }
-        @keyframes fr-tap-pulse-dark {
-          0%,
-          100% {
-            transform: scale(1);
-            box-shadow: 0 12px 40px rgba(196, 16, 46, 0.45);
-          }
-          50% {
-            transform: scale(1.06);
-            box-shadow: 0 16px 56px rgba(196, 16, 46, 0.6), 0 0 60px rgba(11, 29, 52, 0.5);
-          }
+        @keyframes fr-tap-pulse {
+          0%, 100% { transform: scale(1); box-shadow: 0 12px 40px rgba(255,45,149,0.35); }
+          50% { transform: scale(1.06); box-shadow: 0 16px 56px rgba(255,45,149,0.55), 0 0 60px rgba(138,43,226,0.3); }
         }
         @keyframes fr-hint-flicker {
-          0%,
-          100% {
-            opacity: 0.4;
-            transform: translateY(0);
-          }
-          50% {
-            opacity: 0.85;
-            transform: translateY(-3px);
-          }
+          0%, 100% { opacity: 0.4; transform: translateY(0); }
+          50% { opacity: 0.85; transform: translateY(-3px); }
         }
-        .fr-fade-plain {
-          animation: fr-fade-up-plain 0.5s ease-out both;
-        }
-        .fr-tap-hint-light {
-          animation: fr-tap-pulse-light 1.8s ease-in-out infinite;
-        }
-        .fr-tap-hint-dark {
-          animation: fr-tap-pulse-dark 1.8s ease-in-out infinite;
-        }
+        .fr-fade-plain { animation: fr-fade-up-plain 0.5s ease-out both; }
+        .fr-tap-hint { animation: fr-tap-pulse 1.8s ease-in-out infinite; }
         .fr-card {
           position: absolute;
           left: 50%;
@@ -137,11 +93,10 @@ export default function FolderReveal() {
         }
       `}</style>
 
-      {/* Skip control */}
       <button
         onClick={dismiss}
-        className="absolute right-5 top-5 z-10 rounded-full border px-3.5 py-1.5 text-[11px] font-semibold tracking-wide"
-        style={{ background: 'rgba(166,161,147,0.08)', borderColor: 'rgba(166,161,147,0.24)', color: '#A6A193' }}
+        className="absolute right-5 top-5 z-10 rounded-full px-3.5 py-1.5 text-[11px] font-semibold tracking-wide"
+        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#A7A8B5' }}
       >
         Skip
       </button>
@@ -166,13 +121,13 @@ export default function FolderReveal() {
                 />
               ))}
             </div>
-            <FolderBody accent={accent} pulseClass={theme === 'dark' ? 'fr-tap-hint-dark' : 'fr-tap-hint-light'} />
+            <FolderBody pulseClass="fr-tap-hint" />
           </div>
           <div className="text-center">
-            <div className="font-heading text-[15px] font-semibold" style={{ color: '#F1F1F1' }}>
+            <div className="font-heading text-[15px] font-semibold" style={{ color: '#FFFFFF' }}>
               The Lagos Live Folder
             </div>
-            <div className="mt-1.5 text-xs" style={{ color: '#83806F' }}>
+            <div className="mt-1.5 text-xs" style={{ color: '#A7A8B5' }}>
               Tap to see what&apos;s popping tonight
             </div>
           </div>
@@ -183,7 +138,7 @@ export default function FolderReveal() {
         <div className="flex flex-1 flex-col items-center justify-center gap-6 py-8">
           <div className="relative w-full flex-1" style={{ maxHeight: 480 }}>
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
-              <FolderBody open accent={accent} />
+              <FolderBody open />
             </div>
 
             {hotParties.map((p, i) => {
@@ -193,11 +148,12 @@ export default function FolderReveal() {
                 <button
                   key={p.id}
                   onClick={() => openParty(p.id)}
-                  className="fr-card overflow-hidden rounded-[14px] border-2 text-left"
+                  className="fr-card overflow-hidden rounded-[14px] text-left"
                   style={{
                     zIndex: layout.z,
+                    border: '1px solid',
                     borderColor: accent,
-                    boxShadow: `0 10px 30px rgba(0,0,0,0.5), 0 0 26px ${accent}66`,
+                    boxShadow: `0 10px 30px rgba(0,0,0,0.5), 0 0 26px ${accent}55`,
                     transitionDelay: `${Math.abs(i - 2) * 0.08}s`,
                     transform: expanded
                       ? `translateX(-50%) translate(${layout.x}px, ${layout.y}px) rotate(${layout.rotate}deg) scale(1)`
@@ -209,7 +165,7 @@ export default function FolderReveal() {
                     <PartyPhoto src={partyPhoto(p.id)} alt={p.title} gradient={p.gradient} sizes="108px" />
                     <div
                       className="pointer-events-none absolute inset-0"
-                      style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.15) 55%, transparent 75%)' }}
+                      style={{ background: 'linear-gradient(to top, rgba(7,7,11,0.85) 0%, rgba(7,7,11,0.15) 55%, transparent 75%)' }}
                     />
                     <div className="absolute inset-x-0 bottom-0 p-2">
                       <span
@@ -235,15 +191,15 @@ export default function FolderReveal() {
             <div className="font-display text-xl tracking-[0.5px]" style={{ color: '#FFFFFF' }}>
               HOT PARTIES TONIGHT
             </div>
-            <div className="mt-1 text-xs" style={{ color: '#83806F' }}>
+            <div className="mt-1 text-xs" style={{ color: '#A7A8B5' }}>
               5 vibes, one tap away — Lagos Live
             </div>
           </div>
 
           <button
             onClick={dismiss}
-            className="fr-fade-plain mt-1 rounded-full border px-5 py-2.5 text-[13px] font-semibold active:scale-95 transition-transform"
-            style={{ animationDelay: '0.7s', background: 'rgba(166,161,147,0.08)', borderColor: 'rgba(166,161,147,0.28)', color: '#F2EFE9' }}
+            className="fr-fade-plain mt-1 rounded-full px-5 py-2.5 text-[13px] font-semibold active:scale-95 transition-transform"
+            style={{ animationDelay: '0.7s', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#FFFFFF' }}
           >
             Enter Lagos Live →
           </button>
@@ -255,18 +211,20 @@ export default function FolderReveal() {
 
 function FolderBody({
   open = false,
-  accent,
   pulseClass,
 }: {
   open?: boolean;
-  accent: { from: string; to: string; muted: string };
   pulseClass?: string;
 }) {
   return (
     <div className={`relative ${pulseClass ?? ''}`} style={{ width: 156, height: 104 }}>
       <div
-        className="absolute inset-0 rounded-[16px] border-2 flex items-end justify-center pb-2"
-        style={{ background: `linear-gradient(135deg,${accent.from},${accent.to})`, borderColor: 'rgba(255,255,255,0.85)', boxShadow: `0 12px 40px ${accent.from}80, 0 0 44px ${accent.to}52` }}
+        className="absolute inset-0 rounded-[16px] flex items-end justify-center pb-2"
+        style={{
+          background: 'linear-gradient(135deg,#FF2D95,#8A2BE2)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          boxShadow: '0 12px 40px rgba(255,45,149,0.4), 0 0 44px rgba(138,43,226,0.3)',
+        }}
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.9 }}>
           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -275,7 +233,7 @@ function FolderBody({
       {open && (
         <div
           className="absolute inset-x-0 bottom-0 rounded-b-[16px] rounded-t-[6px]"
-          style={{ height: 46, background: 'rgba(255,255,255,0.16)', backdropFilter: 'blur(2px)', borderTop: '1px solid rgba(255,255,255,0.4)' }}
+          style={{ height: 46, background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(2px)', borderTop: '1px solid rgba(255,255,255,0.3)' }}
         />
       )}
     </div>

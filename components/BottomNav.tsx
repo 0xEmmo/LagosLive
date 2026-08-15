@@ -24,7 +24,7 @@ export default function BottomNav() {
   return (
     <div
       className="fixed bottom-0 left-0 right-0 z-50 border-t backdrop-blur-[28px] backdrop-saturate-150"
-      style={{ background: 'var(--c-nav)', borderColor: 'var(--c-border2)' }}
+      style={{ background: 'var(--c-nav)', borderColor: 'rgba(255,255,255,0.06)' }}
     >
       <div className="flex items-center justify-around px-0 pb-[10px] pt-2">
         {ITEMS.map(({ href, match, label, Icon }) => {
@@ -34,19 +34,30 @@ export default function BottomNav() {
             <Link
               key={href}
               href={finalHref}
-              className="flex min-w-[52px] flex-col items-center gap-0.5 py-1.5 font-body text-[10px] transition-colors duration-150 active:scale-90"
-              style={{
-                color: active ? '#552CB7' : 'var(--c-text-dim)',
-                fontWeight: active ? 600 : 400,
-              }}
+              className="group flex min-w-[52px] flex-col items-center gap-0.5 py-1.5 font-body text-[10px] transition-all duration-200 active:scale-90"
+              style={{ color: active ? '#FF2D95' : '#6B6C80' }}
             >
-              <Icon size={22} strokeWidth={1.8} fill={active && Icon === Home ? 'currentColor' : 'none'} />
-              <span>{label}</span>
+              <div className="relative">
+                <Icon size={22} strokeWidth={active ? 2.2 : 1.6} />
+                {active && (
+                  <div
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                      background: 'radial-gradient(circle, rgba(255,45,149,0.2) 0%, transparent 70%)',
+                      filter: 'blur(4px)',
+                    }}
+                  />
+                )}
+              </div>
+              <span className={active ? 'font-semibold' : ''}>{label}</span>
               <div
-                className="h-[3px] rounded-full transition-[width,background-color] duration-200 ease-out"
+                className="h-[3px] rounded-full transition-all duration-300 ease-out"
                 style={{
-                  width: active ? '14px' : '4px',
-                  background: active ? '#552CB7' : 'transparent',
+                  width: active ? '20px' : '0px',
+                  background: active
+                    ? 'linear-gradient(90deg, #FF2D95, #8A2BE2)'
+                    : 'transparent',
+                  boxShadow: active ? '0 0 10px rgba(255,45,149,0.5)' : 'none',
                 }}
               />
             </Link>

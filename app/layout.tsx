@@ -16,7 +16,7 @@ const bebasNeue = Bebas_Neue({
 });
 
 const montserrat = Montserrat({
-  weight: ['500', '600', '700'],
+  weight: ['500', '600', '700', '800'],
   subsets: ['latin'],
   variable: '--font-montserrat',
   display: 'swap',
@@ -36,8 +36,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="light" className={`${bebasNeue.variable} ${montserrat.variable} ${inter.variable}`}>
-      <body className="font-heading" style={{ paddingBottom: '84px' }}>
+    <html lang="en" data-theme="dark" className={`${bebasNeue.variable} ${montserrat.variable} ${inter.variable}`}>
+      <body className="font-heading bg-bg" style={{ paddingBottom: '84px' }}>
+        <div className="fixed inset-0 z-[-1] bg-noise">
+          <div className="absolute inset-0 bg-glow-top" />
+          <div className="absolute inset-0 bg-glow-right" />
+          <div className="absolute inset-0 bg-glow-bottom" />
+        </div>
         <ThemeEffect />
         <AuthListener />
         <ReminderScheduler />

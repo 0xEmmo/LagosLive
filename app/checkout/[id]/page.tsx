@@ -99,7 +99,6 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { party, loading } = useParty(Number(params.id));
   const user = useLagosLiveStore((s) => s.user);
-  const authLoading = useLagosLiveStore((s) => s.authLoading);
 
   const [step, setStep] = useState<Step>('details');
   const [payState, setPayState] = useState<PayState>('idle');
@@ -110,10 +109,13 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   const [error, setError] = useState('');
   const [orderRef, setOrderRef] = useState('');
   const [orderId, setOrderId] = useState('');
+  const [email, setEmail] = useState('');
+  const [ticketToken, setTicketToken] = useState('');
+  const [emailSent, setEmailSent] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (!authLoading && !user) router.replace('/login');
-  }, [authLoading, user, router]);
+    if (user?.email) setEmail(user.email);
+  }, [user?.email]);
 
   useEffect(() => {
     if (step !== 'success') return;
@@ -185,11 +187,11 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
     if (loading) return null;
     notFound();
   }
-  if (!user) return null;
 
   const unitPrice = selected.price;
   const soldOut = remaining <= 0;
   const isFree = unitPrice === 0;
+  const isGuest = !user;
   const serviceFee = unitPrice > 0 ? SERVICE_FEE_PER_TICKET * qty : 0;
   const subtotal = unitPrice * qty;
   const total = subtotal + serviceFee;
@@ -208,10 +210,11 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
       const res = await fetch('/api/paystack/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reference, orderId: oid }),
+        body: JSON.stringify({ reference, orderId: oid, token: ticketToken || undefined }),
       });
-      const data = (await res.json()) as { status?: string; error?: string };
+      const data = (await res.json()) as { status?: string; error?: string; emailSent?: boolean };
       if (data.status === 'confirmed') {
+        setEmailSent(data.emailSent ?? true);
         setStep('success');
         setPayState('idle');
       } else {
@@ -228,7 +231,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
     fetch('/api/paystack/cancel', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderId: oid }),
+      body: JSON.stringify({ orderId: oid, token: ticketToken || undefined }),
     }).catch(() => {});
     setPayState('cancelled');
   };
@@ -236,18 +239,33 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   const startPayment = async () => {
     if (soldOut || !selected) return;
     setError('');
+    if (isGuest) {
+      const trimmed = email.trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(trimmed)) {
+        setError('Enter a valid email to receive your ticket.');
+        return;
+      }
+      setEmail(trimmed);
+    }
     setPayState('starting');
     try {
       const res = await fetch('/api/paystack/initialize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ partyId: party.id, ticketTypeId: selected.id || null, quantity: qty }),
+        body: JSON.stringify({
+          partyId: party.id,
+          ticketTypeId: selected.id || null,
+          quantity: qty,
+          email: email.trim().toLowerCase() || undefined,
+        }),
       });
       const data = (await res.json()) as {
         free?: boolean;
         reference?: string;
         orderId?: string;
         amountKobo?: number;
+        ticketAccessToken?: string;
+        emailSent?: boolean;
         error?: string;
       };
       if (!res.ok || !data.reference || !data.orderId) {
@@ -257,6 +275,8 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
       }
       setOrderRef(data.reference);
       setOrderId(data.orderId ?? '');
+      setTicketToken(data.ticketAccessToken ?? '');
+      setEmailSent(data.emailSent ?? null);
       if (data.free) {
         setStep('success');
         setPayState('idle');
@@ -264,7 +284,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
       }
       setPayState('paying');
       await openPaystackInline({
-        email: user.email,
+        email: email.trim().toLowerCase(),
         amountKobo: data.amountKobo ?? 0,
         reference: data.reference,
         callback: () => verifyPayment(data.reference!, data.orderId!),
@@ -278,6 +298,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
 
   const headerLabel = step === 'success' ? 'Confirmed' : 'Checkout';
   const ctaLabel = payState === 'starting' ? 'Preparing…' : isFree ? 'Confirm RSVP' : 'Continue to Payment';
+  const ticketHref = orderId ? (ticketToken ? `/ticket/${orderId}?token=${ticketToken}` : `/ticket/${orderId}`) : '/profile';
 
   return (
     <div className="mx-auto flex min-h-screen max-w-[520px] flex-col animate-fade-in">
@@ -384,6 +405,26 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
             </button>
           </div>
 
+          <div className="mb-2.5 text-[11px] font-bold uppercase tracking-[1.3px]" style={{ color: '#A7A8B5' }}>
+            Email
+          </div>
+          <div className="mb-6">
+            <input
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={!isGuest}
+              placeholder="you@example.com"
+              className="w-full rounded-2xl px-4 py-3.5 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-60"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#FFFFFF' }}
+            />
+            <div className="mt-2 text-xs" style={{ color: '#6B6C80' }}>
+              {isGuest ? 'Your ticket will be sent to this email.' : `Your ticket will be sent to ${user.email}.`}
+            </div>
+          </div>
+
           <div className="mb-auto rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
             <div className="mb-2 flex justify-between text-[13px]" style={{ color: '#A7A8B5' }}>
               <span>Subtotal ({selected.name} × {qty})</span>
@@ -430,8 +471,24 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
             {isFree ? "You're On The List!" : "You're In!"}
           </h1>
           <p className="mb-[26px] max-w-[320px] text-sm" style={{ color: '#A7A8B5' }}>
-            {isFree ? 'Your RSVP is confirmed. See you there.' : 'Your payment was successful. Your ticket is confirmed.'}
+            {isGuest
+              ? emailSent === false
+                ? "We couldn't email your ticket — use the link below to open it."
+                : `Your ticket is on its way to ${email}.`
+              : isFree
+              ? 'Your RSVP is confirmed. See you there.'
+              : 'Your payment was successful. Your ticket is confirmed.'}
           </p>
+
+          {isGuest && emailSent === false && (
+            <div
+              className="mb-4 flex w-full max-w-[340px] items-start gap-2.5 rounded-[10px] px-3.5 py-3 text-left text-[13px]"
+              style={{ background: 'rgba(255,138,0,0.08)', border: '1px solid rgba(255,138,0,0.2)', color: '#FF8A00' }}
+            >
+              <AlertTriangle size={16} strokeWidth={2} className="mt-0.5 flex-shrink-0" />
+              <span>Email delivery failed. Save this link — it&apos;s the only way to reach your ticket.</span>
+            </div>
+          )}
 
           <div className="w-full max-w-[340px] overflow-hidden rounded-2xl text-left" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
             <div className="p-[18px]">
@@ -461,7 +518,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
 
           <div className="mt-7 flex w-full max-w-[340px] flex-col gap-2.5">
             <button
-              onClick={() => router.push(orderId ? `/ticket/${orderId}` : '/profile')}
+              onClick={() => router.push(ticketHref)}
               className="btn-primary w-full py-[15px] text-sm font-bold"
             >
               View My Ticket

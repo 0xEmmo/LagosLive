@@ -17,6 +17,8 @@ export type Database = {
       orders: {
         Row: {
           created_at: string
+          customer_email: string | null
+          fulfilled_at: string | null
           id: string
           order_ref: string
           party_id: number
@@ -26,14 +28,17 @@ export type Database = {
           quantity: number
           service_fee: number
           status: string
+          ticket_access_token: string | null
           ticket_type_id: number | null
           tier: string
           total: number
           unit_price: number
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
+          customer_email?: string | null
+          fulfilled_at?: string | null
           id?: string
           order_ref: string
           party_id: number
@@ -43,14 +48,17 @@ export type Database = {
           quantity: number
           service_fee?: number
           status?: string
+          ticket_access_token?: string | null
           ticket_type_id?: number | null
           tier: string
           total: number
           unit_price: number
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
+          customer_email?: string | null
+          fulfilled_at?: string | null
           id?: string
           order_ref?: string
           party_id?: number
@@ -60,11 +68,12 @@ export type Database = {
           quantity?: number
           service_fee?: number
           status?: string
+          ticket_access_token?: string | null
           ticket_type_id?: number | null
           tier?: string
           total?: number
           unit_price?: number
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {

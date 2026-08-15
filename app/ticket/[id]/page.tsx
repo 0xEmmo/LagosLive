@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import QRCode from 'react-qr-code';
 import {
@@ -186,6 +186,8 @@ function ConfirmedTicket({ ticket }: { ticket: CustomerTicket }) {
 
 export default function TicketPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get('token') ?? '';
   const user = useLagosLiveStore((s) => s.user);
   const authLoading = useLagosLiveStore((s) => s.authLoading);
   const [ticket, setTicket] = useState<CustomerTicket | null>(null);
@@ -194,30 +196,51 @@ export default function TicketPage({ params }: { params: { id: string } }) {
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    if (!authLoading && !user) router.replace('/login');
-  }, [authLoading, user, router]);
+    if (authLoading) return;
+    if (!token && !user) router.replace('/login');
+  }, [authLoading, token, user, router]);
 
   useEffect(() => {
-    if (!user) return;
+    if (authLoading) return;
+    if (!token && !user) return;
     let cancelled = false;
     setLoading(true);
     setError(null);
-    fetchTicketById(params.id, user.id)
-      .then((data) => {
-        if (!cancelled) setTicket(data);
-      })
-      .catch((err) => {
+    const load = async () => {
+      try {
+        // Guests prove ownership with the unguessable token from their ticket
+        // link; signed-in buyers are resolved through RLS like before.
+        if (token) {
+          const res = await fetch('/api/tickets/lookup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId: params.id, token }),
+          });
+          const json = (await res.json()) as { ticket?: CustomerTicket; error?: string };
+          if (res.ok && json.ticket) {
+            if (!cancelled) setTicket(json.ticket);
+          } else if (res.status === 404) {
+            if (!cancelled) setTicket(null);
+          } else {
+            if (!cancelled) setError(json.error ?? 'Could not load this ticket.');
+          }
+        } else if (user) {
+          const data = await fetchTicketById(params.id, user.id);
+          if (!cancelled) setTicket(data);
+        }
+      } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Could not load this ticket.');
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setLoading(false);
-      });
+      }
+    };
+    load();
     return () => {
       cancelled = true;
     };
-  }, [params.id, user, attempt]);
+  }, [params.id, token, user, authLoading, attempt]);
 
-  if (!user) return null;
+  if (!user && !token) return null;
 
   return (
     <div className="relative mx-auto flex min-h-screen max-w-[520px] flex-col animate-fade-in">
@@ -271,7 +294,7 @@ export default function TicketPage({ params }: { params: { id: string } }) {
               Ticket not found
             </div>
             <div className="max-w-[280px] text-sm" style={{ color: '#A7A8B5' }}>
-              This ticket doesn&apos;t exist or isn&apos;t linked to your account.
+              This ticket doesn&apos;t exist or the link isn&apos;t valid.
             </div>
             <Link href="/profile" className="btn-primary mt-2 px-7 py-3 text-sm font-semibold">
               My Tickets

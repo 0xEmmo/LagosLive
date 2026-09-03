@@ -10,6 +10,7 @@ import { VC } from '@/lib/data';
 import { useParties } from '@/lib/hooks/useParties';
 import { useLagosLiveStore } from '@/lib/store';
 import { sortByTrending } from '@/lib/filters';
+import { EventCardGridSkeleton } from '@/components/ui/loaders-skeleton';
 import type { Vibe } from '@/lib/types';
 
 const QUICK_FILTERS: { label: string; href: string; icon?: typeof MapIcon }[] = [
@@ -18,22 +19,6 @@ const QUICK_FILTERS: { label: string; href: string; icon?: typeof MapIcon }[] = 
   { label: 'Free Entry', href: '/search?price=Free' },
   { label: 'Map View', href: '/map', icon: MapIcon },
 ];
-
-function SkeletonCard() {
-  return (
-    <div
-      className="animate-pulse overflow-hidden rounded-[20px]"
-      style={{ background: '#171725', border: '1px solid rgba(255,255,255,0.06)' }}
-    >
-      <div className="h-[200px]" style={{ background: 'rgba(255,255,255,0.04)' }} />
-      <div className="p-4">
-        <div className="mb-2 h-4 w-3/4 rounded" style={{ background: 'rgba(255,255,255,0.08)' }} />
-        <div className="mb-1 h-3 w-1/2 rounded" style={{ background: 'rgba(255,255,255,0.06)' }} />
-        <div className="h-3 w-2/3 rounded" style={{ background: 'rgba(255,255,255,0.06)' }} />
-      </div>
-    </div>
-  );
-}
 
 function GridStates({
   loading,
@@ -49,13 +34,7 @@ function GridStates({
   children: React.ReactNode;
 }) {
   if (loading) {
-    return (
-      <div className="grid gap-4 px-5 pb-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
-        {[0, 1, 2, 3].map((i) => (
-          <SkeletonCard key={i} />
-        ))}
-      </div>
-    );
+    return <EventCardGridSkeleton count={4} />;
   }
   if (error) {
     return (

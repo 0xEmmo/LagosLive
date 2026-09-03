@@ -24,6 +24,7 @@ import PartyCard from '@/components/PartyCard';
 import PartyPhoto from '@/components/PartyPhoto';
 import GetThereMenu from '@/components/GetThereMenu';
 import SwipeCarousel from '@/components/SwipeCarousel';
+import { EventDetailSkeleton } from '@/components/ui/loaders-skeleton';
 import { partyPhoto, partyDetailPhoto, VCB, VCT, distanceColor } from '@/lib/data';
 import { useParty } from '@/lib/hooks/useParty';
 import { useParties } from '@/lib/hooks/useParties';
@@ -41,28 +42,7 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
   const showToast = useLagosLiveStore((s) => s.showToast);
 
   if (loading) {
-    return (
-      <div className="mx-auto max-w-[720px] animate-pulse">
-        <div
-          className="sticky top-0 z-40 flex items-center justify-between border-b px-5 py-3.5"
-          style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}
-        >
-          <div className="h-9 w-16 rounded-[10px]" style={{ background: 'rgba(255,255,255,0.07)' }} />
-          <div className="flex gap-2">
-            <div className="h-[38px] w-[38px] rounded-[10px]" style={{ background: 'rgba(255,255,255,0.07)' }} />
-            <div className="h-[38px] w-[38px] rounded-[10px]" style={{ background: 'rgba(255,255,255,0.07)' }} />
-          </div>
-        </div>
-        <div className="h-[320px] w-full" style={{ background: 'rgba(255,255,255,0.05)' }} />
-        <div className="px-5 pt-[28px]">
-          <div className="mb-5 h-9 w-3/5 rounded-lg" style={{ background: 'rgba(255,255,255,0.08)' }} />
-          <div className="mb-6 h-[52px] w-full rounded-[14px]" style={{ background: 'rgba(255,45,149,0.15)' }} />
-          <div className="mb-3 h-[68px] w-full rounded-xl" style={{ background: 'rgba(255,255,255,0.05)' }} />
-          <div className="mb-3 h-[68px] w-full rounded-xl" style={{ background: 'rgba(255,255,255,0.05)' }} />
-          <div className="mb-3 h-[86px] w-full rounded-xl" style={{ background: 'rgba(255,255,255,0.05)' }} />
-        </div>
-      </div>
-    );
+    return <EventDetailSkeleton />;
   }
 
   if (error) {

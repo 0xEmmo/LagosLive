@@ -11,6 +11,7 @@ import { useLagosLiveStore } from '@/lib/store';
 import { fetchTicketTypes } from '@/lib/queries';
 import { openPaystackInline } from '@/lib/paystack';
 import PartyPhoto from '@/components/PartyPhoto';
+import { CheckoutSkeleton } from '@/components/ui/loaders-skeleton';
 import { formatNaira } from '@/lib/filters';
 import type { TicketType } from '@/lib/types';
 
@@ -97,7 +98,8 @@ function Overlay({
 
 export default function CheckoutPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { party, loading } = useParty(Number(params.id));
+  const partyId = Number(params.id);
+  const { party, loading } = useParty(partyId);
   const user = useLagosLiveStore((s) => s.user);
 
   const [step, setStep] = useState<Step>('details');
@@ -129,11 +131,13 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
     });
   }, [step]);
 
+  // Ticket types load in parallel with the party fetch — both depend only on
+  // `partyId`, so there's no reason to wait for the party before requesting them.
   useEffect(() => {
-    if (!party) return;
+    if (!Number.isInteger(partyId) || partyId <= 0) return;
     let cancelled = false;
     setTtLoading(true);
-    fetchTicketTypes(party.id)
+    fetchTicketTypes(partyId)
       .then((types) => {
         if (cancelled) return;
         setTicketTypes(types);
@@ -150,7 +154,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
     return () => {
       cancelled = true;
     };
-  }, [party]);
+  }, [partyId]);
 
   // Events without ticket types (the seeded ones) fall back to a single
   // "General Entry" option priced from the party's entry fee — never a mock.
@@ -184,7 +188,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   }, [remaining]);
 
   if (!party) {
-    if (loading) return null;
+    if (loading) return <CheckoutSkeleton />;
     notFound();
   }
 

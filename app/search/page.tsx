@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Search as SearchIcon, SlidersHorizontal, X, RefreshCw, AlertTriangle } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import PartyCard from '@/components/PartyCard';
+import { SearchSkeleton } from '@/components/ui/loaders-skeleton';
 import { useParties } from '@/lib/hooks/useParties';
 import { filterAndSortParties } from '@/lib/filters';
 import { VC, VCB, VCT } from '@/lib/data';
@@ -257,24 +258,7 @@ function SearchPageContent() {
       </div>
 
       {loading ? (
-        <div
-          className="grid gap-4 px-5 py-4"
-          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
-        >
-          {[0, 1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="animate-pulse overflow-hidden rounded-[20px]"
-              style={{ background: '#1A1A1D', border: '1px solid rgba(255,255,255,0.06)' }}
-            >
-              <div className="h-[200px]" style={{ background: 'rgba(255,255,255,0.04)' }} />
-              <div className="p-4">
-                <div className="mb-2 h-4 w-3/4 rounded" style={{ background: 'rgba(255,255,255,0.08)' }} />
-                <div className="h-3 w-1/2 rounded" style={{ background: 'rgba(255,255,255,0.06)' }} />
-              </div>
-            </div>
-          ))}
-        </div>
+        <SearchSkeleton count={4} />
       ) : error ? (
         <div className="flex flex-col items-center gap-4 px-6 py-[72px] text-center">
           <div

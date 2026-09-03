@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { Heart, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Heart, AlertTriangle, RefreshCw } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import PartyCard from '@/components/PartyCard';
+import { EventCardGridSkeleton } from '@/components/ui/loaders-skeleton';
 import { useParties } from '@/lib/hooks/useParties';
 import { useLagosLiveStore } from '@/lib/store';
 
@@ -26,11 +27,8 @@ export default function SavedPage() {
       </div>
 
       {loading ? (
-        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
-          <Loader2 size={28} strokeWidth={2} color="#FF2D95" className="animate-spin" />
-          <div className="text-xs font-medium uppercase tracking-[1px]" style={{ color: '#6B6C80' }}>
-            Loading saved parties…
-          </div>
+        <div className="px-5 pt-6">
+          <EventCardGridSkeleton count={3} />
         </div>
       ) : error ? (
         <div className="flex flex-col items-center gap-4 px-6 py-[72px] text-center">

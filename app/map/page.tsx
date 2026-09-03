@@ -95,7 +95,7 @@ export default function MapPage() {
         <div className="absolute left-3.5 right-3.5 top-[68px] z-[1000] flex items-center gap-2 rounded-xl px-4 py-2.5 backdrop-blur-[22px]"
           style={{ background: 'rgba(7,7,11,0.92)', border: '1px solid rgba(255,255,255,0.08)' }}
         >
-          <Loader2 size={14} strokeWidth={2.5} color="#FF2D95" className="animate-spin" />
+          <Loader2 size={14} strokeWidth={2.5} color="#FF5A2E" className="animate-spin" />
           <div className="text-xs" style={{ color: '#A7A8B5' }}>Loading parties…</div>
         </div>
       )}
@@ -110,7 +110,7 @@ export default function MapPage() {
             <div className="text-[10px] font-bold uppercase tracking-[0.9px]" style={{ color: '#6B6C80' }}>
               Filter by Vibe
             </div>
-            <span onClick={resetFilters} className="cursor-pointer text-[10px] font-semibold" style={{ color: '#8A2BE2' }}>
+            <span onClick={resetFilters} className="cursor-pointer text-[10px] font-semibold" style={{ color: '#FF5A2E' }}>
               Reset
             </span>
           </div>
@@ -142,10 +142,10 @@ export default function MapPage() {
           style={
             showHeatmap
               ? {
-                  background: 'linear-gradient(135deg,#FF2D95,#8A2BE2)',
+                  background: 'linear-gradient(135deg,#FF5A2E,#FF7F5C)',
                   border: '1px solid rgba(255,255,255,0.15)',
                   color: '#fff',
-                  boxShadow: '0 4px 20px rgba(255,45,149,0.4)',
+                  boxShadow: '0 4px 20px rgba(255,90,46,0.4)',
                 }
               : {
                   background: 'rgba(7,7,11,0.92)',
@@ -161,10 +161,10 @@ export default function MapPage() {
           onClick={requestLocation}
           className="flex h-12 w-12 items-center justify-center rounded-full backdrop-blur-[18px] backdrop-saturate-150 transition-all duration-200"
           style={{
-            background: 'rgba(0,191,255,0.1)',
-            border: '1px solid rgba(0,191,255,0.25)',
-            color: '#00BFFF',
-            boxShadow: '0 4px 20px rgba(0,191,255,0.15)',
+            background: 'rgba(255,90,46,0.1)',
+            border: '1px solid rgba(255,90,46,0.25)',
+            color: '#FF5A2E',
+            boxShadow: '0 4px 20px rgba(255,90,46,0.15)',
           }}
         >
           <Locate size={20} strokeWidth={2} />
@@ -185,7 +185,7 @@ export default function MapPage() {
         >
           <span
             className="h-1.5 w-5 rounded-full"
-            style={{ background: 'linear-gradient(90deg,#00BFFF,#8A2BE2,#FF2D95,#FF8A00,#FFD600)' }}
+            style={{ background: 'linear-gradient(90deg,#3ECF8E,#FFB347,#FF5A2E,#FF7F5C)' }}
           />
           Low
           <span style={{ color: '#6B6C80' }}>→</span>

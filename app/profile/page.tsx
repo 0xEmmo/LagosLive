@@ -69,7 +69,7 @@ export default function ProfilePage() {
       <div className="flex flex-col items-center px-5 py-9 pb-7 text-center">
         <div
           className="flex h-[86px] w-[86px] items-center justify-center rounded-full font-display text-[32px] tracking-[1px] text-white"
-          style={{ background: 'linear-gradient(135deg,#FF2D95,#8A2BE2)', boxShadow: '0 0 30px rgba(255,45,149,0.3)' }}
+          style={{ background: 'linear-gradient(135deg,#FF5A2E,#FF7F5C)', boxShadow: '0 0 30px rgba(255,90,46,0.3)' }}
         >
           {userInitials}
         </div>
@@ -83,9 +83,9 @@ export default function ProfilePage() {
 
       <div className="mb-5 grid grid-cols-3 gap-2.5">
         {[
-          { label: 'Saved', value: savedParties.length, icon: Heart, color: '#FF2D95' },
-          { label: 'Reminders', value: reminders.length, icon: Bell, color: '#FFD600' },
-          { label: 'Tickets', value: tickets.length, icon: Ticket, color: '#00BFFF' },
+          { label: 'Saved', value: savedParties.length, icon: Heart, color: '#FF5A2E' },
+          { label: 'Reminders', value: reminders.length, icon: Bell, color: '#FFB347' },
+          { label: 'Tickets', value: tickets.length, icon: Ticket, color: '#3ECF8E' },
         ].map((stat) => (
           <div key={stat.label} className="glass rounded-2xl px-2 py-4 text-center" style={{ background: 'rgba(255,255,255,0.03)' }}>
             <stat.icon size={18} strokeWidth={1.5} color={stat.color} className="mx-auto mb-1" />
@@ -109,13 +109,13 @@ export default function ProfilePage() {
           <div className="h-[84px] animate-pulse rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }} />
         </div>
       ) : ticketsError ? (
-        <div className="mb-5 flex flex-col items-center gap-3 rounded-2xl px-5 py-8 text-center" style={{ background: 'rgba(255,138,0,0.05)', border: '1px solid rgba(255,138,0,0.18)' }}>
-          <AlertTriangle size={24} strokeWidth={1.5} color="#FF8A00" />
+        <div className="mb-5 flex flex-col items-center gap-3 rounded-2xl px-5 py-8 text-center" style={{ background: 'rgba(255,90,46,0.05)', border: '1px solid rgba(255,90,46,0.18)' }}>
+          <AlertTriangle size={24} strokeWidth={1.5} color="#FF5A2E" />
           <div className="text-[13px]" style={{ color: '#A7A8B5' }}>Couldn&apos;t load your tickets.</div>
           <button
             onClick={() => setTicketsAttempt((a) => a + 1)}
             className="flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold transition-all duration-200 active:scale-95"
-            style={{ background: 'rgba(255,138,0,0.12)', border: '1px solid rgba(255,138,0,0.25)', color: '#FF8A00' }}
+            style={{ background: 'rgba(255,90,46,0.12)', border: '1px solid rgba(255,90,46,0.28)', color: '#FF5A2E' }}
           >
             <RefreshCw size={12} strokeWidth={2.5} />
             Retry
@@ -150,13 +150,13 @@ export default function ProfilePage() {
                 <div className="truncate font-heading text-[13px] font-bold" style={{ color: '#FFFFFF' }}>{t.party.title}</div>
                 <div className="mt-0.5 truncate text-[11px]" style={{ color: '#A7A8B5' }}>{t.party.date} · {t.party.time}</div>
                 <div className="mt-1 flex items-center gap-1.5">
-                  <span className="rounded-full px-2 py-[2px] text-[10px] font-semibold" style={{ background: 'rgba(255,45,149,0.12)', border: '1px solid rgba(255,45,149,0.25)', color: '#FF7AB8' }}>
+                  <span className="rounded-full px-2 py-[2px] text-[10px] font-semibold" style={{ background: 'rgba(255,90,46,0.12)', border: '1px solid rgba(255,90,46,0.25)', color: '#FF7F5C' }}>
                     {t.ticketTypeName} × {t.quantity}
                   </span>
                   <span className="truncate text-[10px]" style={{ color: '#6B6C80' }}>{t.orderRef}</span>
                 </div>
               </div>
-              <span className="flex-shrink-0 rounded-full px-2 py-[3px] text-[10px] font-bold uppercase tracking-[0.5px]" style={{ background: 'rgba(0,245,212,0.1)', border: '1px solid rgba(0,245,212,0.25)', color: '#00F5D4' }}>
+              <span className="flex-shrink-0 rounded-full px-2 py-[3px] text-[10px] font-bold uppercase tracking-[0.5px]" style={{ background: 'rgba(62,207,142,0.1)', border: '1px solid rgba(62,207,142,0.25)', color: '#3ECF8E' }}>
                 Confirmed
               </span>
             </Link>
@@ -172,7 +172,7 @@ export default function ProfilePage() {
         <div
           onClick={togglePush}
           className="relative h-[22px] w-10 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-150"
-          style={{ background: pushEnabled ? '#FF2D95' : 'rgba(255,255,255,0.12)' }}
+          style={{ background: pushEnabled ? '#FF5A2E' : 'rgba(255,255,255,0.12)' }}
         >
           <div
             className="absolute left-[2px] top-[2px] h-[18px] w-[18px] rounded-full bg-white transition-transform duration-150 ease-out"
@@ -189,8 +189,8 @@ export default function ProfilePage() {
           <div className="mb-5 flex flex-col gap-2">
             {reminderList.map((p) => (
               <div key={p.id} className="flex items-center gap-2.5 glass rounded-xl px-3 py-2.5" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                <div className="flex h-[34px] w-[34px] flex-shrink-0 items-center justify-center rounded-[9px]" style={{ background: 'rgba(255,214,0,0.12)' }}>
-                  <Bell size={15} color="#FFD600" strokeWidth={2} />
+                <div className="flex h-[34px] w-[34px] flex-shrink-0 items-center justify-center rounded-[9px]" style={{ background: 'rgba(255,179,71,0.12)' }}>
+                  <Bell size={15} color="#FFB347" strokeWidth={2} />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[13px] font-semibold" style={{ color: '#FFFFFF' }}>{p.title}</div>
@@ -227,7 +227,7 @@ export default function ProfilePage() {
           router.push('/');
         }}
         className="w-full rounded-xl py-[15px] text-sm font-semibold transition-all duration-200 active:scale-[0.98]"
-        style={{ background: 'rgba(255,138,0,0.08)', border: '1px solid rgba(255,138,0,0.2)', color: '#FF8A00' }}
+        style={{ background: 'rgba(255,90,46,0.08)', border: '1px solid rgba(255,90,46,0.22)', color: '#FF5A2E' }}
       >
         Log Out
       </button>

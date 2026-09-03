@@ -228,9 +228,11 @@ export const useLagosLiveStore = create<LagosLiveState>()(
     }),
     {
       name: 'lagos-live-store',
-      // Everything else now lives in Supabase (auth session + tables) — only
-      // the device-level theme preference still belongs in localStorage.
-      partialize: (s) => ({ theme: s.theme }),
+      partialize: (s) => ({
+        theme: s.theme,
+        savedParties: s.savedParties,
+        reminders: s.reminders,
+      }),
     }
   )
 );

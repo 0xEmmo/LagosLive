@@ -41,9 +41,9 @@ export default function GetThereMenu({ party }: { party: Party }) {
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-1.5 whitespace-nowrap rounded-2xl px-[18px] py-4 text-[13px] font-semibold transition-all duration-200 active:scale-[0.97]"
         style={{
-          background: 'rgba(0,191,255,0.08)',
-          border: '1px solid rgba(0,191,255,0.2)',
-          color: '#00BFFF',
+          background: 'rgba(255,90,46,0.08)',
+          border: '1px solid rgba(255,90,46,0.22)',
+          color: '#FF5A2E',
         }}
       >
         <NavigationIcon size={14} strokeWidth={2} />
@@ -53,7 +53,7 @@ export default function GetThereMenu({ party }: { party: Party }) {
       <div
         className="absolute right-0 top-full z-20 mt-2 w-52 overflow-hidden rounded-2xl transition-all duration-150 ease-out"
         style={{
-          background: '#171725',
+          background: '#1A1A1D',
           border: '1px solid rgba(255,255,255,0.08)',
           boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
           transformOrigin: 'top right',

@@ -1,3 +1,18 @@
+import Image from 'next/image';
+
+export function SiteLogo({ className = '' }: { className?: string }) {
+  return (
+    <Image
+      src="/Lagos Live Skyline Bridge Logo.png"
+      alt="Lagos Live"
+      width={180}
+      height={102}
+      className={`h-auto w-auto max-h-[52px] ${className}`}
+      priority
+    />
+  );
+}
+
 export function LogoMark({ size = 33 }: { size?: number }) {
   return (
     <div

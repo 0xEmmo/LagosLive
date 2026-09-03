@@ -42,7 +42,7 @@ export interface Party {
 }
 
 export type DateFilter = 'Tonight' | 'This Week' | 'This Weekend' | 'Next Week';
-export type PriceFilter = 'Free' | '₦5k-10k' | '₦10k-20k' | '₦20k+';
+export type PriceFilter = 'Free' | 'Under ₦5K' | '₦5K - ₦20K' | 'Over ₦20K';
 export type DistanceFilter = '0-5km' | '5-10km' | '10km+';
 export type SortBy = 'trending' | 'date' | 'price-asc' | 'distance';
 

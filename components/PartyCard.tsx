@@ -192,8 +192,15 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 20
           <span className="font-heading text-base font-bold gradient-text">
             {party.fee}
           </span>
-          <span className="text-[11px]" style={{ color: soldOut ? '#FF8A00' : '#6B6C80', fontWeight: soldOut ? 600 : 400 }}>
-            {soldOut ? 'Sold out' : `${party.spotsLeft} spots left`}
+          <span
+            className="rounded-full px-3 py-1 text-[11px] font-semibold transition-all duration-200"
+            style={{
+              background: soldOut ? 'rgba(255,255,255,0.06)' : 'rgba(255,45,149,0.1)',
+              border: `1px solid ${soldOut ? 'rgba(255,255,255,0.12)' : 'rgba(255,45,149,0.25)'}`,
+              color: soldOut ? '#A7A8B5' : '#FF2D95',
+            }}
+          >
+            {soldOut ? 'Sold Out' : 'Get Tickets'}
           </span>
         </div>
       </div>

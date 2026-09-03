@@ -5,12 +5,11 @@ import { usePathname } from 'next/navigation';
 import { Home, Search, Map as MapIcon, Heart, User } from 'lucide-react';
 import { useLagosLiveStore } from '@/lib/store';
 
-const ITEMS = [
+const PUBLIC_ITEMS = [
   { href: '/', match: '/', label: 'Home', Icon: Home },
   { href: '/search', match: '/search', label: 'Search', Icon: Search },
   { href: '/map', match: '/map', label: 'Map', Icon: MapIcon },
   { href: '/saved', match: '/saved', label: 'Saved', Icon: Heart },
-  { href: '/profile', match: '/profile', label: 'Profile', Icon: User },
 ];
 
 const HIDDEN_PREFIXES = ['/login', '/signup', '/checkout'];
@@ -21,19 +20,22 @@ export default function BottomNav() {
 
   if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null;
 
+  const items = user
+    ? [...PUBLIC_ITEMS, { href: '/profile', match: '/profile', label: 'Profile', Icon: User }]
+    : PUBLIC_ITEMS;
+
   return (
     <div
       className="fixed bottom-0 left-0 right-0 z-50 border-t backdrop-blur-[28px] backdrop-saturate-150"
       style={{ background: 'var(--c-nav)', borderColor: 'rgba(255,255,255,0.06)' }}
     >
       <div className="flex items-center justify-around px-0 pb-[10px] pt-2">
-        {ITEMS.map(({ href, match, label, Icon }) => {
-          const finalHref = label === 'Profile' && !user ? '/login' : href;
+        {items.map(({ href, match, label, Icon }) => {
           const active = match === '/' ? pathname === '/' : pathname.startsWith(match);
           return (
             <Link
               key={href}
-              href={finalHref}
+              href={href}
               className="group flex min-w-[52px] flex-col items-center gap-0.5 py-1.5 font-body text-[10px] transition-all duration-200 active:scale-90"
               style={{ color: active ? '#FF2D95' : '#6B6C80' }}
             >

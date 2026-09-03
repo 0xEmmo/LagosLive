@@ -30,7 +30,7 @@ function TicketStatusBadge({ status }: { status: OrderPaymentStatus }) {
     return (
       <span
         className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.6px]"
-        style={{ background: 'rgba(0,245,212,0.1)', border: '1px solid rgba(0,245,212,0.3)', color: '#00F5D4' }}
+        style={{ background: 'rgba(62,207,142,0.1)', border: '1px solid rgba(62,207,142,0.3)', color: '#3ECF8E' }}
       >
         <ShieldCheck size={12} strokeWidth={2.5} />
         Confirmed
@@ -39,9 +39,9 @@ function TicketStatusBadge({ status }: { status: OrderPaymentStatus }) {
   }
   const style =
     status === 'pending'
-      ? { background: 'rgba(255,214,0,0.1)', border: '1px solid rgba(255,214,0,0.3)', color: '#FFD600' }
+      ? { background: 'rgba(255,179,71,0.1)', border: '1px solid rgba(255,179,71,0.3)', color: '#FFB347' }
       : status === 'failed'
-      ? { background: 'rgba(255,138,0,0.1)', border: '1px solid rgba(255,138,0,0.3)', color: '#FF8A00' }
+      ? { background: 'rgba(255,90,46,0.1)', border: '1px solid rgba(255,90,46,0.3)', color: '#FF5A2E' }
       : { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.16)', color: '#A7A8B5' };
   const Icon = status === 'pending' ? Hourglass : status === 'failed' ? AlertTriangle : Ban;
   return (
@@ -61,9 +61,9 @@ function NonConfirmedTicket({ ticket }: { ticket: CustomerTicket }) {
     <div className="flex w-full max-w-[380px] flex-col items-center rounded-[24px] p-7 text-center animate-fade-in" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
       <div
         className="flex h-16 w-16 items-center justify-center rounded-full"
-        style={{ background: isPending ? 'rgba(255,214,0,0.08)' : 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)' }}
+        style={{ background: isPending ? 'rgba(255,179,71,0.08)' : 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)' }}
       >
-        {isPending ? <Hourglass size={28} color="#FFD600" strokeWidth={2} /> : <XCircle size={28} color="#A7A8B5" strokeWidth={2} />}
+        {isPending ? <Hourglass size={28} color="#FFB347" strokeWidth={2} /> : <XCircle size={28} color="#A7A8B5" strokeWidth={2} />}
       </div>
       <h1 className="font-display mt-5 text-[30px] tracking-[0.5px]" style={{ color: '#FFFFFF' }}>
         {isPending ? 'Awaiting Payment' : ticket.paymentStatus === 'failed' ? 'Payment Failed' : 'Ticket Cancelled'}
@@ -92,12 +92,12 @@ function ConfirmedTicket({ ticket }: { ticket: CustomerTicket }) {
   return (
     <div className="w-full max-w-[380px] animate-fade-in">
       {/* Outer glow wrapper */}
-      <div className="rounded-[28px] p-[1.5px]" style={{ background: 'linear-gradient(135deg, rgba(255,45,149,0.55), rgba(138,43,226,0.4), rgba(0,191,255,0.35))', boxShadow: '0 24px 80px rgba(0,0,0,0.55), 0 0 60px rgba(255,45,149,0.18)' }}>
-        <div className="overflow-hidden rounded-[26.5px]" style={{ background: '#12121C' }}>
+      <div className="rounded-[28px] p-[1.5px]" style={{ background: 'linear-gradient(135deg, rgba(255,90,46,0.55), rgba(255,127,92,0.4), rgba(255,179,71,0.35))', boxShadow: '0 24px 80px rgba(0,0,0,0.55), 0 0 60px rgba(255,90,46,0.18)' }}>
+        <div className="overflow-hidden rounded-[26.5px]" style={{ background: '#161619' }}>
           {/* Event image header */}
           <div className="relative" style={{ height: 170, background: party.gradient }}>
             <PartyPhoto src={partyPhoto(party.id)} alt={party.title} gradient={party.gradient} sizes="380px" />
-            <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(to top, #12121C 0%, transparent 55%)' }} />
+            <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(to top, #161619 0%, transparent 55%)' }} />
             <div className="absolute left-4 top-4 flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-[8px]" style={{ background: 'rgba(7,7,11,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.12)' }}>
                 <LogoMark size={28} />
@@ -117,24 +117,24 @@ function ConfirmedTicket({ ticket }: { ticket: CustomerTicket }) {
           {/* Body */}
           <div className="px-5 pb-5 pt-4">
             <div className="mb-4 flex flex-wrap gap-1.5">
-              <span className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.5px]" style={{ background: 'rgba(255,45,149,0.14)', border: '1px solid rgba(255,45,149,0.3)', color: '#FF7AB8' }}>
+              <span className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.5px]" style={{ background: 'rgba(255,90,46,0.14)', border: '1px solid rgba(255,90,46,0.3)', color: '#FF7F5C' }}>
                 {ticket.ticketTypeName}
               </span>
-              <span className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.5px]" style={{ background: 'rgba(138,43,226,0.14)', border: '1px solid rgba(138,43,226,0.3)', color: '#B06AFF' }}>
+              <span className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.5px]" style={{ background: 'rgba(255,179,71,0.14)', border: '1px solid rgba(255,179,71,0.3)', color: '#FFB347' }}>
                 {ticket.quantity} {ticket.quantity === 1 ? 'ticket' : 'tickets'}
               </span>
             </div>
 
             <div className="mb-1 flex flex-col gap-2.5 text-[13px]">
               <div className="flex items-start gap-2.5">
-                <Calendar size={15} strokeWidth={2} className="mt-0.5 flex-shrink-0" style={{ color: '#FF2D95' }} />
+                <Calendar size={15} strokeWidth={2} className="mt-0.5 flex-shrink-0" style={{ color: '#FF5A2E' }} />
                 <div>
                   <div style={{ color: '#FFFFFF' }}>{party.date}</div>
                   <div style={{ color: '#A7A8B5' }}>{party.time}</div>
                 </div>
               </div>
               <div className="flex items-start gap-2.5">
-                <MapPin size={15} strokeWidth={2} className="mt-0.5 flex-shrink-0" style={{ color: '#00BFFF' }} />
+                <MapPin size={15} strokeWidth={2} className="mt-0.5 flex-shrink-0" style={{ color: '#3ECF8E' }} />
                 <div>
                   <div style={{ color: '#FFFFFF' }}>{party.location}</div>
                   <div style={{ color: '#A7A8B5' }}>{party.address}</div>
@@ -145,8 +145,8 @@ function ConfirmedTicket({ ticket }: { ticket: CustomerTicket }) {
             {/* Perforation */}
             <div className="relative my-5">
               <div className="border-t border-dashed" style={{ borderColor: 'rgba(255,255,255,0.14)' }} />
-              <div className="absolute -left-[21px] -top-[7px] h-[14px] w-[14px] rounded-full" style={{ background: '#07070B' }} />
-              <div className="absolute -right-[21px] -top-[7px] h-[14px] w-[14px] rounded-full" style={{ background: '#07070B' }} />
+              <div className="absolute -left-[21px] -top-[7px] h-[14px] w-[14px] rounded-full" style={{ background: '#0C0C0E' }} />
+              <div className="absolute -right-[21px] -top-[7px] h-[14px] w-[14px] rounded-full" style={{ background: '#0C0C0E' }} />
             </div>
 
             {/* Order + code */}
@@ -266,13 +266,13 @@ export default function TicketPage({ params }: { params: { id: string } }) {
             <div className="h-[52px] rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }} />
             <div className="h-[52px] rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }} />
             <div className="mx-auto flex h-[200px] w-[200px] items-center justify-center rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
-              <Loader2 size={28} strokeWidth={2} color="#FF2D95" className="animate-spin" />
+              <Loader2 size={28} strokeWidth={2} color="#FF5A2E" className="animate-spin" />
             </div>
           </div>
         ) : error ? (
           <div className="flex flex-col items-center gap-4 py-[72px] text-center">
-            <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full" style={{ background: 'rgba(255,138,0,0.08)', border: '1px solid rgba(255,138,0,0.15)' }}>
-              <AlertTriangle size={32} strokeWidth={1.5} color="#FF8A00" />
+            <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full" style={{ background: 'rgba(255,90,46,0.08)', border: '1px solid rgba(255,90,46,0.18)' }}>
+              <AlertTriangle size={32} strokeWidth={1.5} color="#FF5A2E" />
             </div>
             <div className="font-display text-[28px] tracking-[1px]" style={{ color: '#FFFFFF' }}>
               Couldn&apos;t load this ticket

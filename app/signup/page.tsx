@@ -89,7 +89,7 @@ function SignupPageContent() {
         </div>
 
         {error && (
-          <div className="mb-4 animate-fade-in rounded-[10px] px-3.5 py-2.5 text-[13px]" style={{ background: 'rgba(255,138,0,0.08)', border: '1px solid rgba(255,138,0,0.2)', color: '#FF8A00' }}>
+          <div className="mb-4 animate-fade-in rounded-[10px] px-3.5 py-2.5 text-[13px]" style={{ background: 'rgba(255,90,46,0.08)', border: '1px solid rgba(255,90,46,0.25)', color: '#FF5A2E' }}>
             {error}
           </div>
         )}
@@ -112,7 +112,7 @@ function SignupPageContent() {
                 placeholder={f.placeholder}
                 className="w-full rounded-[10px] px-3.5 py-[13px] text-sm outline-none font-heading transition-all duration-200"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#FFFFFF' }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(255,45,149,0.3)'; }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(255,90,46,0.3)'; }}
                 onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
               />
             </div>
@@ -129,7 +129,7 @@ function SignupPageContent() {
 
         <p className="mt-[26px] text-center text-[13px]" style={{ color: '#A7A8B5' }}>
           Already have an account?{' '}
-          <Link href={`/login${nextQuery}`} className="font-semibold" style={{ color: '#FF2D95' }}>
+          <Link href={`/login${nextQuery}`} className="font-semibold" style={{ color: '#FF5A2E' }}>
             Log in
           </Link>
         </p>

@@ -11,7 +11,7 @@ import { VC, VCB, VCT } from '@/lib/data';
 import type { DateFilter, PartyFilters, PriceFilter, SortBy, Vibe } from '@/lib/types';
 
 const DATE_OPTS = ['Tonight', 'This Week', 'This Weekend', 'Next Week'] as const;
-const PRICE_OPTS = ['Free', '₦5k-10k', '₦10k-20k', '₦20k+'] as const;
+const PRICE_OPTS = ['Free', 'Under ₦5K', '₦5K - ₦20K', 'Over ₦20K'] as const;
 const VIBE_OPTS = ['Club', 'Rooftop', 'House Party', 'Lounge', 'Festival', 'Concert'] as const;
 const DIST_OPTS = ['0-5km', '5-10km', '10km+'] as const;
 const LOCATION_OPTS = ['Victoria Island', 'Lekki', 'Ikoyi', 'Yaba', 'Ikeja', 'Surulere', 'Ajah', 'Eko Atlantic'] as const;
@@ -37,18 +37,18 @@ function Pill<T extends string>({
         background: active
           ? accent
             ? `${accent}20`
-            : 'rgba(255,45,149,0.12)'
+            : 'rgba(255,90,46,0.12)'
           : 'rgba(255,255,255,0.04)',
         border: '1px solid',
         borderColor: active
           ? accent
             ? `${accent}40`
-            : 'rgba(255,45,149,0.3)'
+            : 'rgba(255,90,46,0.3)'
           : 'rgba(255,255,255,0.08)',
         color: active
-          ? accent || '#FF2D95'
+          ? accent || '#FF5A2E'
           : '#A7A8B5',
-        boxShadow: active ? `0 0 20px ${accent || '#FF2D95'}22` : 'none',
+        boxShadow: active ? `0 0 20px ${accent || '#FF5A2E'}22` : 'none',
       }}
     >
       {label}
@@ -134,8 +134,8 @@ function SearchPageContent() {
                 color: '#FFFFFF',
               }}
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255,45,149,0.3)';
-                e.currentTarget.style.boxShadow = '0 0 20px rgba(255,45,149,0.08)';
+                e.currentTarget.style.borderColor = 'rgba(255,90,46,0.3)';
+                e.currentTarget.style.boxShadow = '0 0 20px rgba(255,90,46,0.08)';
               }}
               onBlur={(e) => {
                 e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
@@ -147,10 +147,10 @@ function SearchPageContent() {
             onClick={() => setDrawerOpen((o) => !o)}
             className="flex flex-shrink-0 items-center gap-1.5 rounded-[10px] px-3 py-2 text-[13px] font-medium outline-none transition-all duration-200"
             style={{
-              background: activeFilterCount > 0 ? 'rgba(255,45,149,0.1)' : 'rgba(255,255,255,0.04)',
+              background: activeFilterCount > 0 ? 'rgba(255,90,46,0.1)' : 'rgba(255,255,255,0.04)',
               border: '1px solid',
-              borderColor: activeFilterCount > 0 ? 'rgba(255,45,149,0.3)' : 'rgba(255,255,255,0.08)',
-              color: activeFilterCount > 0 ? '#FF2D95' : '#A7A8B5',
+              borderColor: activeFilterCount > 0 ? 'rgba(255,90,46,0.3)' : 'rgba(255,255,255,0.08)',
+              color: activeFilterCount > 0 ? '#FF5A2E' : '#A7A8B5',
             }}
           >
             <SlidersHorizontal size={14} strokeWidth={2} />
@@ -158,7 +158,7 @@ function SearchPageContent() {
             {activeFilterCount > 0 && (
               <span
                 className="flex h-[17px] w-[17px] flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
-                style={{ background: '#FF2D95' }}
+                style={{ background: '#FF5A2E' }}
               >
                 {activeFilterCount}
               </span>
@@ -221,9 +221,9 @@ function SearchPageContent() {
                   onClick={clearFilters}
                   className="self-start rounded-lg px-4 py-[7px] text-[13px] font-medium transition-all duration-200 active:scale-95"
                   style={{
-                    background: 'rgba(255,138,0,0.1)',
-                    border: '1px solid rgba(255,138,0,0.25)',
-                    color: '#FF8A00',
+                    background: 'rgba(255,90,46,0.1)',
+                    border: '1px solid rgba(255,90,46,0.28)',
+                    color: '#FF5A2E',
                   }}
                 >
                   <X size={12} className="mr-1 inline" strokeWidth={2} />
@@ -237,7 +237,7 @@ function SearchPageContent() {
 
       <div className="flex items-center justify-between border-b px-5 py-[11px]" style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
         <span className="text-[13px]" style={{ color: '#6B6C80' }}>
-          Showing <span style={{ color: '#FF2D95', fontWeight: 600 }}>{filtered.length}</span> parties
+          Showing <span style={{ color: '#FF5A2E', fontWeight: 600 }}>{filtered.length}</span> parties
         </span>
         <select
           value={sortBy}
@@ -265,7 +265,7 @@ function SearchPageContent() {
             <div
               key={i}
               className="animate-pulse overflow-hidden rounded-[20px]"
-              style={{ background: '#171725', border: '1px solid rgba(255,255,255,0.06)' }}
+              style={{ background: '#1A1A1D', border: '1px solid rgba(255,255,255,0.06)' }}
             >
               <div className="h-[200px]" style={{ background: 'rgba(255,255,255,0.04)' }} />
               <div className="p-4">
@@ -279,9 +279,9 @@ function SearchPageContent() {
         <div className="flex flex-col items-center gap-4 px-6 py-[72px] text-center">
           <div
             className="flex h-[72px] w-[72px] items-center justify-center rounded-full"
-            style={{ background: 'rgba(255,138,0,0.08)', border: '1px solid rgba(255,138,0,0.15)' }}
+            style={{ background: 'rgba(255,90,46,0.08)', border: '1px solid rgba(255,90,46,0.18)' }}
           >
-            <AlertTriangle size={32} strokeWidth={1.5} color="#FF8A00" />
+            <AlertTriangle size={32} strokeWidth={1.5} color="#FF5A2E" />
           </div>
           <div className="font-display text-[30px] tracking-[1px]" style={{ color: '#FFFFFF' }}>
             Couldn&apos;t load events
@@ -301,9 +301,9 @@ function SearchPageContent() {
         <div className="flex flex-col items-center gap-4 px-6 py-[72px]">
           <div
             className="flex h-[72px] w-[72px] items-center justify-center rounded-full"
-            style={{ background: 'rgba(255,45,149,0.08)', border: '1px solid rgba(255,45,149,0.15)' }}
+            style={{ background: 'rgba(255,90,46,0.08)', border: '1px solid rgba(255,90,46,0.18)' }}
           >
-            <SearchIcon size={32} strokeWidth={1.5} color="#FF2D95" />
+            <SearchIcon size={32} strokeWidth={1.5} color="#FF5A2E" />
           </div>
           <div className="font-display text-[30px] tracking-[1px]" style={{ color: '#FFFFFF' }}>
             No parties found

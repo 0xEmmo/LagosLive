@@ -17,14 +17,14 @@ export default function Toast() {
       <div
         className="flex items-start gap-3 rounded-2xl p-3.5 backdrop-blur-2xl"
         style={{
-          background: 'rgba(23,23,37,0.97)',
+          background: 'rgba(20,20,23,0.97)',
           border: '1px solid rgba(255,255,255,0.08)',
           boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
         }}
       >
         <div
           className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
-          style={{ background: 'linear-gradient(135deg,#FF2D95,#8A2BE2)' }}
+          style={{ background: 'linear-gradient(135deg,#FF5A2E,#FF7F5C)' }}
         >
           <Bell size={16} color="white" strokeWidth={2.2} />
         </div>

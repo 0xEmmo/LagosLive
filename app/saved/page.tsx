@@ -10,6 +10,7 @@ import { useLagosLiveStore } from '@/lib/store';
 export default function SavedPage() {
   const { parties, loading, error, retry } = useParties();
   const savedParties = useLagosLiveStore((s) => s.savedParties);
+  const user = useLagosLiveStore((s) => s.user);
   const saved = parties.filter((p) => savedParties.includes(p.id));
 
   return (
@@ -35,9 +36,9 @@ export default function SavedPage() {
         <div className="flex flex-col items-center gap-4 px-6 py-[72px] text-center">
           <div
             className="flex h-[72px] w-[72px] items-center justify-center rounded-full"
-            style={{ background: 'rgba(255,138,0,0.08)', border: '1px solid rgba(255,138,0,0.15)' }}
+            style={{ background: 'rgba(255,90,46,0.08)', border: '1px solid rgba(255,90,46,0.18)' }}
           >
-            <AlertTriangle size={32} strokeWidth={1.5} color="#FF8A00" />
+            <AlertTriangle size={32} strokeWidth={1.5} color="#FF5A2E" />
           </div>
           <div className="font-display text-[30px] tracking-[1px]" style={{ color: '#FFFFFF' }}>
             Couldn&apos;t load events
@@ -57,9 +58,9 @@ export default function SavedPage() {
         <div className="flex flex-col items-center gap-4 px-6 py-[72px]">
           <div
             className="flex h-[72px] w-[72px] items-center justify-center rounded-full"
-            style={{ background: 'rgba(255,45,149,0.08)', border: '1px solid rgba(255,45,149,0.15)' }}
+            style={{ background: 'rgba(255,90,46,0.08)', border: '1px solid rgba(255,90,46,0.18)' }}
           >
-            <Heart size={32} strokeWidth={1.5} color="#FF2D95" />
+            <Heart size={32} strokeWidth={1.5} color="#FF5A2E" />
           </div>
           <div className="font-display text-[30px] tracking-[1px]" style={{ color: '#FFFFFF' }}>
             No saved parties yet
@@ -75,14 +76,27 @@ export default function SavedPage() {
           </Link>
         </div>
       ) : (
-        <div
-          className="grid gap-4 px-5 py-4"
-          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', perspective: '1500px' }}
-        >
-          {saved.map((party, i) => (
-            <PartyCard key={party.id} party={party} index={i} />
-          ))}
-        </div>
+        <>
+          {!user && (
+            <div className="px-5 pt-4 pb-1">
+              <div
+                className="rounded-xl px-4 py-3 text-[13px]"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', color: '#6B6C80' }}
+              >
+                Saved parties are stored on this device.{' '}
+                <Link href="/signup" style={{ color: '#FF2D95' }}>Create an account</Link> to save across devices.
+              </div>
+            </div>
+          )}
+          <div
+            className="grid gap-4 px-5 py-4"
+            style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', perspective: '1500px' }}
+          >
+            {saved.map((party, i) => (
+              <PartyCard key={party.id} party={party} index={i} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

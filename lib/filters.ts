@@ -52,9 +52,9 @@ export function filterAndSortParties(
   }
 
   if (filters.price === 'Free') r = r.filter((p) => p.feeNum === 0);
-  else if (filters.price === '₦5k-10k') r = r.filter((p) => p.feeNum > 0 && p.feeNum <= 10000);
-  else if (filters.price === '₦10k-20k') r = r.filter((p) => p.feeNum > 10000 && p.feeNum <= 20000);
-  else if (filters.price === '₦20k+') r = r.filter((p) => p.feeNum > 20000);
+  else if (filters.price === 'Under ₦5K') r = r.filter((p) => p.feeNum > 0 && p.feeNum <= 5000);
+  else if (filters.price === '₦5K - ₦20K') r = r.filter((p) => p.feeNum > 5000 && p.feeNum <= 20000);
+  else if (filters.price === 'Over ₦20K') r = r.filter((p) => p.feeNum > 20000);
 
   if (filters.vibe) r = r.filter((p) => p.vibe === filters.vibe);
 

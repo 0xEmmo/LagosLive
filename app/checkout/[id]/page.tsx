@@ -37,9 +37,9 @@ function Overlay({
     <>
       <div
         className="flex h-16 w-16 items-center justify-center rounded-full"
-        style={{ background: 'rgba(255,45,149,0.08)', border: '1px solid rgba(255,45,149,0.2)' }}
+        style={{ background: 'rgba(255,90,46,0.08)', border: '1px solid rgba(255,90,46,0.25)' }}
       >
-        <Loader2 size={28} color="#FF2D95" strokeWidth={2.5} className="animate-spin" />
+        <Loader2 size={28} color="#FF5A2E" strokeWidth={2.5} className="animate-spin" />
       </div>
       <div className="font-display mt-4 text-[26px] tracking-[0.5px]" style={{ color: '#FFFFFF' }}>
         {payState === 'starting' ? 'Preparing payment' : payState === 'paying' ? 'Complete your payment' : 'Confirming payment'}
@@ -57,12 +57,12 @@ function Overlay({
       <div
         className="flex h-16 w-16 items-center justify-center rounded-full"
         style={{
-          background: payState === 'failed' ? 'rgba(255,138,0,0.08)' : 'rgba(255,255,255,0.05)',
-          border: `1px solid ${payState === 'failed' ? 'rgba(255,138,0,0.2)' : 'rgba(255,255,255,0.1)'}`,
+          background: payState === 'failed' ? 'rgba(255,90,46,0.08)' : 'rgba(255,255,255,0.05)',
+          border: `1px solid ${payState === 'failed' ? 'rgba(255,90,46,0.25)' : 'rgba(255,255,255,0.1)'}`,
         }}
       >
         {payState === 'failed' ? (
-          <AlertTriangle size={28} color="#FF8A00" strokeWidth={2} />
+          <AlertTriangle size={28} color="#FF5A2E" strokeWidth={2} />
         ) : (
           <X size={28} color="#A7A8B5" strokeWidth={2} />
         )}
@@ -125,7 +125,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
       spread: 70,
       startVelocity: 38,
       origin: { y: 0.35 },
-      colors: ['#FF2D95', '#8A2BE2', '#00BFFF', '#00F5D4', '#FFD600'],
+      colors: ['#FF5A2E', '#FF7F5C', '#3ECF8E', '#FFB347'],
     });
   }, [step]);
 
@@ -318,7 +318,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
         </span>
         <div
           className="ml-auto flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
-          style={{ background: 'rgba(0,245,212,0.08)', border: '1px solid rgba(0,245,212,0.2)', color: '#00F5D4' }}
+          style={{ background: 'rgba(62,207,142,0.08)', border: '1px solid rgba(62,207,142,0.22)', color: '#3ECF8E' }}
         >
           <ShieldCheck size={12} strokeWidth={2.5} />
           Secure
@@ -362,14 +362,14 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
                     onClick={() => setSelectedId(opt.id)}
                     className="flex cursor-pointer items-center justify-between rounded-2xl px-4 py-3.5 text-left transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                     style={{
-                      background: active ? 'rgba(255,45,149,0.08)' : 'rgba(255,255,255,0.03)',
+                      background: active ? 'rgba(255,90,46,0.08)' : 'rgba(255,255,255,0.03)',
                       border: '1px solid',
-                      borderColor: active ? 'rgba(255,45,149,0.25)' : 'rgba(255,255,255,0.08)',
+                      borderColor: active ? 'rgba(255,90,46,0.28)' : 'rgba(255,255,255,0.08)',
                     }}
                   >
                     <div className="min-w-0">
                       <div className="text-sm font-semibold" style={{ color: '#FFFFFF' }}>{opt.name}</div>
-                      <div className="mt-0.5 text-xs" style={{ color: optSoldOut ? '#FF8A00' : '#A7A8B5' }}>
+                      <div className="mt-0.5 text-xs" style={{ color: optSoldOut ? '#FF5A2E' : '#A7A8B5' }}>
                         {optSoldOut ? 'Sold out' : `${optRemaining} left`}
                       </div>
                     </div>
@@ -444,7 +444,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
           </div>
 
           {error && (
-            <div className="mt-4 animate-fade-in rounded-[10px] px-3.5 py-2.5 text-[13px]" style={{ background: 'rgba(255,138,0,0.08)', border: '1px solid rgba(255,138,0,0.2)', color: '#FF8A00' }}>
+            <div className="mt-4 animate-fade-in rounded-[10px] px-3.5 py-2.5 text-[13px]" style={{ background: 'rgba(255,90,46,0.08)', border: '1px solid rgba(255,90,46,0.25)', color: '#FF5A2E' }}>
               {error}
             </div>
           )}
@@ -463,9 +463,9 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
         <div className="flex flex-1 flex-col items-center p-5 text-center">
           <div
             className="my-5 flex h-16 w-16 items-center justify-center rounded-full"
-            style={{ background: 'rgba(0,245,212,0.08)', border: '1px solid rgba(0,245,212,0.2)' }}
+            style={{ background: 'rgba(62,207,142,0.08)', border: '1px solid rgba(62,207,142,0.22)' }}
           >
-            <CheckCircle2 size={28} color="#00F5D4" strokeWidth={2.5} />
+            <CheckCircle2 size={28} color="#3ECF8E" strokeWidth={2.5} />
           </div>
           <h1 className="font-display mb-1.5 text-[34px] tracking-[0.5px]" style={{ color: '#FFFFFF' }}>
             {isFree ? "You're On The List!" : "You're In!"}
@@ -483,7 +483,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
           {isGuest && emailSent === false && (
             <div
               className="mb-4 flex w-full max-w-[340px] items-start gap-2.5 rounded-[10px] px-3.5 py-3 text-left text-[13px]"
-              style={{ background: 'rgba(255,138,0,0.08)', border: '1px solid rgba(255,138,0,0.2)', color: '#FF8A00' }}
+              style={{ background: 'rgba(255,90,46,0.08)', border: '1px solid rgba(255,90,46,0.25)', color: '#FF5A2E' }}
             >
               <AlertTriangle size={16} strokeWidth={2} className="mt-0.5 flex-shrink-0" />
               <span>Email delivery failed. Save this link — it&apos;s the only way to reach your ticket.</span>

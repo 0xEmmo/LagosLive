@@ -208,13 +208,18 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
     }
   };
 
-  const verifyPayment = async (reference: string, oid: string) => {
+  // The guest's ticket-access token is passed in explicitly rather than read
+  // from component state. Paystack's callback fires long after the synchronous
+  // block that calls `setTicketToken(...)`, so a closure over that state would
+  // still hold the old (empty) value -> the server would reject the guest order
+  // as "Order not found." even though the payment already succeeded.
+  const verifyPayment = async (reference: string, oid: string, accessToken?: string) => {
     setPayState('verifying');
     try {
       const res = await fetch('/api/paystack/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reference, orderId: oid, token: ticketToken || undefined }),
+        body: JSON.stringify({ reference, orderId: oid, token: accessToken || undefined }),
       });
       const data = (await res.json()) as { status?: string; error?: string; emailSent?: boolean };
       if (data.status === 'confirmed') {
@@ -231,11 +236,11 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
     }
   };
 
-  const cancelPayment = (oid: string) => {
+  const cancelPayment = (oid: string, accessToken?: string) => {
     fetch('/api/paystack/cancel', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderId: oid, token: ticketToken || undefined }),
+      body: JSON.stringify({ orderId: oid, token: accessToken || undefined }),
     }).catch(() => {});
     setPayState('cancelled');
   };
@@ -287,12 +292,13 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
         return;
       }
       setPayState('paying');
+      const accessToken = data.ticketAccessToken;
       await openPaystackInline({
         email: email.trim().toLowerCase(),
         amountKobo: data.amountKobo ?? 0,
         reference: data.reference,
-        callback: () => verifyPayment(data.reference!, data.orderId!),
-        onClose: () => cancelPayment(data.orderId!),
+        callback: () => verifyPayment(data.reference!, data.orderId!, accessToken),
+        onClose: () => cancelPayment(data.orderId!, accessToken),
       });
     } catch (err) {
       setPayState('idle');
@@ -301,7 +307,12 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   };
 
   const headerLabel = step === 'success' ? 'Confirmed' : 'Checkout';
-  const ctaLabel = payState === 'starting' ? 'Preparing…' : isFree ? 'Confirm RSVP' : 'Continue to Payment';
+  const ctaLabel =
+    payState === 'starting' || payState === 'paying' || payState === 'verifying'
+      ? 'Processing…'
+      : isFree
+      ? 'Confirm RSVP'
+      : 'Continue to Payment';
   const ticketHref = orderId ? (ticketToken ? `/ticket/${orderId}?token=${ticketToken}` : `/ticket/${orderId}`) : '/profile';
 
   return (

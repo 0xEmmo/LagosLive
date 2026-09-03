@@ -79,34 +79,67 @@ function ticketEmailHtml(d: TicketConfirmationData): string {
 
 // Best-effort send. Never throws: a payment must not fail because an email
 // couldn't be delivered. Missing key / bad request / network error all just
-// log and return false.
+// log and return false, but with enough detail to diagnose delivery problems.
 export async function sendTicketConfirmation(data: TicketConfirmationData): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
+
+  // Sender is configurable via RESEND_FROM_EMAIL. Falls back to the Resend
+  // onboarding address (guaranteed to exist on every account) so a hardcoded or
+  // unverified domain never silently blocks delivery.
+  const from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+
+  console.log('[resend] starting ticket email send', {
+    to: data.to,
+    subject: `Your ticket for ${data.partyTitle} — Lagos Live`,
+    orderRef: data.orderRef,
+  });
+  console.log('[resend] config', {
+    apiKey: apiKey ? `SET (len ${apiKey.length})` : 'MISSING',
+    from,
+    to: data.to,
+  });
+
   if (!apiKey) {
     console.warn('[resend] RESEND_API_KEY is not configured — skipping ticket email to', data.to);
     return false;
   }
+
   try {
-    const res = await fetch(RESEND_API, {
+    const response = await fetch(RESEND_API, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Lagos Live <tickets@lagoslive.ng>',
+        from,
         to: [data.to],
         subject: `Your ticket for ${data.partyTitle} — Lagos Live`,
         html: ticketEmailHtml(data),
       }),
     });
-    if (!res.ok) {
-      console.warn(`[resend] send failed (${res.status}) for`, data.to, await res.text());
+
+    const bodyText = await response.text();
+    if (!response.ok) {
+      console.error('[resend] send failed', {
+        status: response.status,
+        to: data.to,
+        from,
+        responseBody: bodyText,
+      });
       return false;
     }
+
+    let id: string | undefined;
+    try {
+      id = (JSON.parse(bodyText) as { id?: string }).id;
+    } catch {
+      /* non-JSON success body — fine */
+    }
+    console.log('[resend] send succeeded', { to: data.to, id });
     return true;
   } catch (err) {
-    console.warn('[resend] unexpected error sending to', data.to, err);
+    console.error('[resend] unexpected error sending to', data.to, err);
     return false;
   }
 }

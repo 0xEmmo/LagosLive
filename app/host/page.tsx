@@ -119,6 +119,14 @@ export default function HostDashboardPage() {
             </Link>
           )}
           <Link
+            href="/host/payouts"
+            className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[13px] font-semibold glass glass-hover"
+            style={{ color: '#A7A8B5' }}
+          >
+            <Wallet size={14} strokeWidth={2} />
+            Payouts
+          </Link>
+          <Link
             href="/host/new"
             className="btn-primary flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold"
           >

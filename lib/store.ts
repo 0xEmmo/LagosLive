@@ -10,6 +10,11 @@ export interface User {
   name: string;
   email: string;
   isAdmin: boolean;
+  role: 'viewer' | 'organizer' | 'support' | 'finance' | 'admin' | 'super_admin';
+  accountStatus: 'active' | 'suspended' | 'flagged' | 'banned';
+  phone?: string | null;
+  kycStatus: 'none' | 'pending' | 'approved' | 'rejected';
+  hasBankAccount: boolean;
 }
 
 export interface Toast {
@@ -116,7 +121,17 @@ export const useLagosLiveStore = create<LagosLiveState>()(
         ]);
         set({
           user: profile
-            ? { id: profile.id, name: profile.name, email: profile.email, isAdmin: profile.is_admin }
+            ? {
+                id: profile.id,
+                name: profile.name,
+                email: profile.email,
+                isAdmin: profile.is_admin,
+                role: profile.role as User['role'],
+                accountStatus: profile.account_status as User['accountStatus'],
+                phone: profile.phone,
+                kycStatus: profile.kyc_status as User['kycStatus'],
+                hasBankAccount: !!profile.bank_account_encrypted,
+              }
             : null,
           pushEnabled: profile?.push_enabled ?? true,
           savedParties: (saved ?? []).map((r) => r.party_id),

@@ -16,6 +16,9 @@ export type Database = {
     Tables: {
       orders: {
         Row: {
+          admin_notes: string | null
+          check_in_status: string
+          checked_in_at: string | null
           created_at: string
           customer_email: string | null
           fulfilled_at: string | null
@@ -26,6 +29,9 @@ export type Database = {
           payment_ref: string | null
           payment_status: string
           quantity: number
+          refund_amount: number
+          refund_status: string
+          refunded_at: string | null
           service_fee: number
           status: string
           ticket_access_token: string | null
@@ -36,6 +42,9 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          admin_notes?: string | null
+          check_in_status?: string
+          checked_in_at?: string | null
           created_at?: string
           customer_email?: string | null
           fulfilled_at?: string | null
@@ -46,6 +55,9 @@ export type Database = {
           payment_ref?: string | null
           payment_status?: string
           quantity: number
+          refund_amount?: number
+          refund_status?: string
+          refunded_at?: string | null
           service_fee?: number
           status?: string
           ticket_access_token?: string | null
@@ -56,6 +68,9 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          admin_notes?: string | null
+          check_in_status?: string
+          checked_in_at?: string | null
           created_at?: string
           customer_email?: string | null
           fulfilled_at?: string | null
@@ -66,6 +81,9 @@ export type Database = {
           payment_ref?: string | null
           payment_status?: string
           quantity?: number
+          refund_amount?: number
+          refund_status?: string
+          refunded_at?: string | null
           service_fee?: number
           status?: string
           ticket_access_token?: string | null
@@ -136,7 +154,9 @@ export type Database = {
       parties: {
         Row: {
           address: string
+          admin_notes: string | null
           age_restriction: string
+          banned_words: number
           capacity: number
           created_at: string
           created_by: string | null
@@ -147,6 +167,7 @@ export type Database = {
           ends_at: string
           fee: string
           fee_num: number
+          flagged: boolean
           gradient: string
           id: number
           instagram: string
@@ -155,17 +176,21 @@ export type Database = {
           lng: number
           location: string
           organizer: string
+          page_views: number
           spots_left: number
           starts_at: string
           status: string
           time: string
           title: string
+          unique_visitors: number
           vibe: string
           whatsapp: string
         }
         Insert: {
           address: string
+          admin_notes?: string | null
           age_restriction: string
+          banned_words?: number
           capacity: number
           created_at?: string
           created_by?: string | null
@@ -176,6 +201,7 @@ export type Database = {
           ends_at: string
           fee: string
           fee_num: number
+          flagged?: boolean
           gradient: string
           id?: never
           instagram: string
@@ -184,17 +210,21 @@ export type Database = {
           lng: number
           location: string
           organizer: string
+          page_views?: number
           spots_left: number
           starts_at: string
           status?: string
           time: string
           title: string
+          unique_visitors?: number
           vibe: string
           whatsapp: string
         }
         Update: {
           address?: string
+          admin_notes?: string | null
           age_restriction?: string
+          banned_words?: number
           capacity?: number
           created_at?: string
           created_by?: string | null
@@ -205,6 +235,7 @@ export type Database = {
           ends_at?: string
           fee?: string
           fee_num?: number
+          flagged?: boolean
           gradient?: string
           id?: never
           instagram?: string
@@ -213,11 +244,13 @@ export type Database = {
           lng?: number
           location?: string
           organizer?: string
+          page_views?: number
           spots_left?: number
           starts_at?: string
           status?: string
           time?: string
           title?: string
+          unique_visitors?: number
           vibe?: string
           whatsapp?: string
         }
@@ -225,28 +258,52 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: string
+          bank_account_encrypted: string | null
+          bio: string | null
           created_at: string
           email: string
           id: string
           is_admin: boolean
+          kyc_status: string
+          last_activity_at: string | null
           name: string
+          payout_preferences: Json
+          phone: string | null
           push_enabled: boolean
+          role: string
         }
         Insert: {
+          account_status?: string
+          bank_account_encrypted?: string | null
+          bio?: string | null
           created_at?: string
           email: string
           id: string
           is_admin?: boolean
+          kyc_status?: string
+          last_activity_at?: string | null
           name: string
+          payout_preferences?: Json
+          phone?: string | null
           push_enabled?: boolean
+          role?: string
         }
         Update: {
+          account_status?: string
+          bank_account_encrypted?: string | null
+          bio?: string | null
           created_at?: string
           email?: string
           id?: string
           is_admin?: boolean
+          kyc_status?: string
+          last_activity_at?: string | null
           name?: string
+          payout_preferences?: Json
+          phone?: string | null
           push_enabled?: boolean
+          role?: string
         }
         Relationships: []
       }
@@ -305,6 +362,231 @@ export type Database = {
           },
         ]
       }
+      admin_notes: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: number
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: number
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: number
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          details: Json
+          id: number
+          status: string
+          target_id: string | null
+          target_type: string
+        }
+        Insert: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: number
+          status?: string
+          target_id?: string | null
+          target_type?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: number
+          status?: string
+          target_id?: string | null
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payouts: {
+        Row: {
+          amount: number
+          bank_last4: string | null
+          created_at: string
+          id: number
+          organizer_id: string
+          paid_at: string | null
+          period_end: string
+          period_start: string
+          platform_fee: number
+          revenue: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          bank_last4?: string | null
+          created_at?: string
+          id?: number
+          organizer_id: string
+          paid_at?: string | null
+          period_end: string
+          period_start: string
+          platform_fee?: number
+          revenue?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          bank_last4?: string | null
+          created_at?: string
+          id?: number
+          organizer_id?: string
+          paid_at?: string | null
+          period_end?: string
+          period_start?: string
+          platform_fee?: number
+          revenue?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payouts_organizer_id_fkey"
+            columns: ["organizer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_messages: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string
+          id: number
+          is_internal: boolean
+          ticket_id: number
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string
+          id?: number
+          is_internal?: boolean
+          ticket_id: number
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          id?: number
+          is_internal?: boolean
+          ticket_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          assignee_id: string | null
+          author_id: string | null
+          body: string
+          category: string
+          created_at: string
+          id: number
+          priority: string
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          author_id?: string | null
+          body: string
+          category?: string
+          created_at?: string
+          id?: number
+          priority?: string
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          author_id?: string | null
+          body?: string
+          category?: string
+          created_at?: string
+          id?: number
+          priority?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -316,10 +598,30 @@ export type Database = {
         }
         Returns: undefined
       }
+      current_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      has_role: {
+        Args: {
+          v_roles: string[]
+        }
+        Returns: boolean
+      }
       settle_order_payment: {
         Args: {
           p_order_id: string
           p_payment_status: string
+        }
+        Returns: undefined
+      }
+      write_audit_log: {
+        Args: {
+          p_action: string
+          p_target_type: string
+          p_target_id: string
+          p_details?: Json
+          p_status?: string
         }
         Returns: undefined
       }

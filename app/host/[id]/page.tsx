@@ -177,6 +177,14 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
             <Pencil size={13} strokeWidth={2} />
             Edit
           </Link>
+          <Link
+            href={`/host/${party.id}/check-in`}
+            className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-semibold"
+            style={{ background: 'rgba(0,245,212,0.12)', border: '1px solid rgba(0,245,212,0.3)', color: '#00F5D4' }}
+          >
+            <Ticket size={13} strokeWidth={2} />
+            Check-in
+          </Link>
         </div>
       </div>
 

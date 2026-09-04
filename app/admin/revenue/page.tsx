@@ -1,0 +1,169 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { Wallet, ArrowDownRight, ArrowUpRight, Clock, RotateCcw } from 'lucide-react';
+import AdminShell from '@/components/admin-shell';
+import { StatCard, PageHeader, Badge, TableShell, Cell, LoadingBlock, ErrorBlock, EmptyBlock, useRoleGuard } from '@/components/ui/dashboard-ui';
+import { fetchAllOrders, fetchPayouts, updatePayoutStatus, type AdminOrderJoined, type PayoutRow } from '@/lib/admin-queries';
+import { formatNaira } from '@/lib/filters';
+
+const PAYMENT_BADGE: Record<string, { bg: string; color: string }> = {
+  confirmed: { bg: 'rgba(0,245,212,0.1)', color: '#00F5D4' },
+  pending: { bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
+  failed: { bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
+  cancelled: { bg: 'rgba(107,108,128,0.15)', color: '#6B6C80' },
+};
+
+const PAYOUT_STATUS: Record<string, { bg: string; color: string }> = {
+  pending: { bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
+  processing: { bg: 'rgba(176,106,255,0.12)', color: '#B06AFF' },
+  approved: { bg: 'rgba(0,245,212,0.1)', color: '#00F5D4' },
+  paid: { bg: 'rgba(0,245,212,0.18)', color: '#00F5D4' },
+};
+
+const NEXT_STATUS: Record<string, string> = {
+  pending: 'processing',
+  processing: 'approved',
+  approved: 'paid',
+};
+
+const ACTION_LABEL: Record<string, string> = {
+  pending: 'Process',
+  processing: 'Approve',
+  approved: 'Mark Paid',
+};
+
+export default function RevenuePage() {
+  const { user, ready } = useRoleGuard('finance');
+  const [orders, setOrders] = useState<AdminOrderJoined[]>([]);
+  const [payouts, setPayouts] = useState<PayoutRow[]>([]);
+  const [status, setStatus] = useState<'loading' | 'error' | 'ok'>('loading');
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    if (!ready) return;
+    setStatus('loading');
+    Promise.all([fetchAllOrders(), fetchPayouts()])
+      .then(([o, p]) => {
+        setOrders(o);
+        setPayouts(p);
+        setStatus('ok');
+      })
+      .catch(() => setStatus('error'));
+  }, [ready, attempt]);
+
+  if (!ready || !user) return null;
+
+  const confirmed = orders.filter((o) => o.payment_status === 'confirmed');
+  const totalRevenue = confirmed.reduce((s, o) => s + o.total, 0);
+  const now = new Date();
+  const thisMonth = confirmed.filter((o) => {
+    const d = new Date(o.created_at);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  const thisMonthRevenue = thisMonth.reduce((s, o) => s + o.total, 0);
+  const pendingPayouts = payouts
+    .filter((p) => p.status === 'pending' || p.status === 'processing')
+    .reduce((s, p) => s + p.amount, 0);
+  const refundCount = orders.filter((o) => o.refund_status !== 'none').length;
+
+  const handlePayoutAction = async (payout: PayoutRow) => {
+    const next = NEXT_STATUS[payout.status];
+    if (!next) return;
+    try {
+      await updatePayoutStatus(payout.id, next);
+      setPayouts((prev) => prev.map((p) => (p.id === payout.id ? { ...p, status: next } : p)));
+    } catch {
+      /* silent – RLS may block */
+    }
+  };
+
+  return (
+    <AdminShell>
+      <div className="mx-auto max-w-[980px] p-5">
+        <PageHeader title="Revenue & Payouts" subtitle="Financial overview and payout management" />
+
+        {status === 'loading' ? (
+          <LoadingBlock />
+        ) : status === 'error' ? (
+          <ErrorBlock message="Couldn't load revenue data." onRetry={() => setAttempt((a) => a + 1)} />
+        ) : (
+          <div className="flex flex-col gap-6">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <StatCard label="Total Revenue" value={formatNaira(totalRevenue)} icon={Wallet} color="#00F5D4" sub="confirmed orders" />
+              <StatCard label="This Month" value={formatNaira(thisMonthRevenue)} icon={ArrowUpRight} color="#FF2D95" sub={`${thisMonth.length} orders`} />
+              <StatCard label="Pending Payouts" value={formatNaira(pendingPayouts)} icon={Clock} color="#B06AFF" sub="processing + pending" />
+              <StatCard label="Refunds" value={String(refundCount)} icon={RotateCcw} color="#FF8A00" sub="orders with refunds" />
+            </div>
+
+            <div>
+              <h2 className="mb-3 font-heading text-[15px] font-bold" style={{ color: '#FFFFFF' }}>Recent Transactions</h2>
+              {orders.length === 0 ? (
+                <EmptyBlock title="No transactions" subtitle="Orders will appear here once sales come in." />
+              ) : (
+                <TableShell head={['Date', 'Event', 'Amount', 'Status', 'Refund']}>
+                  {orders.slice(0, 20).map((o) => (
+                    <tr key={o.id}>
+                      <Cell>{new Date(o.created_at).toLocaleDateString()}</Cell>
+                      <Cell>{o.parties?.title ?? '—'}</Cell>
+                      <Cell align="right">{formatNaira(o.total)}</Cell>
+                      <Cell>
+                        <Badge
+                          label={o.payment_status}
+                          bg={PAYMENT_BADGE[o.payment_status]?.bg ?? 'rgba(107,108,128,0.15)'}
+                          color={PAYMENT_BADGE[o.payment_status]?.color ?? '#6B6C80'}
+                        />
+                      </Cell>
+                      <Cell>{o.refund_status !== 'none' ? <Badge label={o.refund_status} bg="rgba(255,138,0,0.1)" color="#FF8A00" /> : '—'}</Cell>
+                    </tr>
+                  ))}
+                </TableShell>
+              )}
+            </div>
+
+            <div>
+              <h2 className="mb-3 font-heading text-[15px] font-bold" style={{ color: '#FFFFFF' }}>Payouts</h2>
+              {payouts.length === 0 ? (
+                <EmptyBlock title="No payouts" subtitle="Payout records will appear here." />
+              ) : (
+                <TableShell head={['Period', 'Revenue', 'Platform Fee', 'Amount', 'Status', 'Bank', 'Action']}>
+                  {payouts.map((p) => (
+                    <tr key={p.id}>
+                      <Cell>
+                        <span className="whitespace-nowrap">
+                          {new Date(p.period_start).toLocaleDateString()} – {new Date(p.period_end).toLocaleDateString()}
+                        </span>
+                      </Cell>
+                      <Cell align="right">{formatNaira(p.revenue)}</Cell>
+                      <Cell align="right">{formatNaira(p.platform_fee)}</Cell>
+                      <Cell align="right">{formatNaira(p.amount)}</Cell>
+                      <Cell>
+                        <Badge
+                          label={p.status}
+                          bg={PAYOUT_STATUS[p.status]?.bg ?? 'rgba(107,108,128,0.15)'}
+                          color={PAYOUT_STATUS[p.status]?.color ?? '#6B6C80'}
+                        />
+                      </Cell>
+                      <Cell>{p.bank_last4 ? `•••• ${p.bank_last4}` : '—'}</Cell>
+                      <Cell>
+                        {ACTION_LABEL[p.status] && (
+                          <button
+                            onClick={() => handlePayoutAction(p)}
+                            className="rounded-lg px-3 py-1.5 text-[11px] font-bold transition-colors"
+                            style={{ background: 'rgba(255,45,149,0.12)', border: '1px solid rgba(255,45,149,0.3)', color: '#FF2D95' }}
+                          >
+                            {ACTION_LABEL[p.status]}
+                          </button>
+                        )}
+                      </Cell>
+                    </tr>
+                  ))}
+                </TableShell>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </AdminShell>
+  );
+}

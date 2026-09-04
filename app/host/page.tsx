@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, CalendarPlus, ShieldCheck, CalendarDays, Clock, Ticket, Wallet, AlertTriangle, RefreshCw, type LucideIcon } from 'lucide-react';
+import { Plus, CalendarPlus, ShieldCheck, CalendarDays, Clock, Ticket, Wallet, Settings, ListOrdered, AlertTriangle, RefreshCw, type LucideIcon } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import PartyPhoto from '@/components/PartyPhoto';
+import { RevenueLineChart, PieChartDisplay, ChartCard } from '@/components/ui/charts';
 import { fetchPartiesByOwner, fetchOrganizerOrderStats, type OrganizerPartyStats } from '@/lib/queries';
+import { fetchHostOrders, type AdminOrderJoined } from '@/lib/admin-queries';
 import { formatNaira } from '@/lib/filters';
 import { partyPhoto } from '@/lib/data';
 import { useLagosLiveStore } from '@/lib/store';
@@ -58,6 +60,8 @@ export default function HostDashboardPage() {
   const authLoading = useLagosLiveStore((s) => s.authLoading);
   const [parties, setParties] = useState<Party[]>([]);
   const [stats, setStats] = useState<Record<number, OrganizerPartyStats>>({});
+  const [recentOrders, setRecentOrders] = useState<AdminOrderJoined[]>([]);
+  const [revenueTrend, setRevenueTrend] = useState<{ label: string; value: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -78,6 +82,26 @@ export default function HostDashboardPage() {
         setParties(data);
         const s = await fetchOrganizerOrderStats(data.map((p) => p.id));
         if (!cancelled) setStats(s);
+        const orders = await fetchHostOrders(user.id);
+        if (!cancelled) setRecentOrders(orders.slice(0, 10));
+        // Build revenue trend from their orders
+        const confirmedOrders = orders.filter((o) => o.payment_status === 'confirmed');
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const buckets = new Map<string, { key: string; label: string; value: number }>();
+        for (let i = 29; i >= 0; i--) {
+          const d = new Date(today.getTime() - i * 86400000);
+          buckets.set(d.toDateString(), {
+            key: d.toDateString(),
+            label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            value: 0,
+          });
+        }
+        for (const o of confirmedOrders) {
+          const b = buckets.get(new Date(o.created_at).toDateString());
+          if (b) b.value += o.total;
+        }
+        if (!cancelled) setRevenueTrend([...buckets.values()]);
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Could not load your dashboard.');
       } finally {
@@ -94,6 +118,21 @@ export default function HostDashboardPage() {
   const totalTicketsSold = Object.values(stats).reduce((sum, s) => sum + s.ticketsSold, 0);
   const totalRevenue = Object.values(stats).reduce((sum, s) => sum + s.revenue, 0);
   const upcomingCount = parties.filter((p) => new Date(p.startsAt).getTime() > Date.now()).length;
+  const activeCount = parties.filter((p) => p.status === 'approved').length;
+
+  // Build sales by event data for pie chart
+  const salesByEvent = parties
+    .map((p) => ({ label: p.title, value: stats[p.id]?.ticketsSold ?? 0 }))
+    .filter((d) => d.value > 0)
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 6);
+
+  const PAYMENT_STYLE: Record<string, { label: string; bg: string; color: string }> = {
+    confirmed: { label: 'Confirmed', bg: 'rgba(0,245,212,0.1)', color: '#00F5D4' },
+    pending: { label: 'Pending', bg: 'rgba(255,214,0,0.12)', color: '#FFD600' },
+    failed: { label: 'Failed', bg: 'rgba(255,138,0,0.1)', color: '#FF8A00' },
+    cancelled: { label: 'Cancelled', bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
+  };
 
   return (
     <div className="mx-auto max-w-[600px] animate-fade-in">
@@ -104,7 +143,7 @@ export default function HostDashboardPage() {
         <div className="flex items-center gap-3">
           <BackButton href="/profile" />
           <span className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>
-            Your Events
+            Dashboard
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -118,6 +157,14 @@ export default function HostDashboardPage() {
               Admin
             </Link>
           )}
+          <Link
+            href="/host/orders"
+            className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[13px] font-semibold glass glass-hover"
+            style={{ color: '#A7A8B5' }}
+          >
+            <ListOrdered size={14} strokeWidth={2} />
+            Orders
+          </Link>
           <Link
             href="/host/payouts"
             className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[13px] font-semibold glass glass-hover"
@@ -177,14 +224,63 @@ export default function HostDashboardPage() {
           </div>
         ) : (
           <>
+            {/* Stats */}
             <div className="grid grid-cols-2 gap-2.5">
               <StatCard label="Total Events" value={String(parties.length)} icon={CalendarDays} color="#FF2D95" />
-              <StatCard label="Upcoming" value={String(upcomingCount)} icon={Clock} color="#FFD600" sub={upcomingCount > 0 ? 'still ahead' : 'none scheduled'} />
-              <StatCard label="Tickets Sold" value={String(totalTicketsSold)} icon={Ticket} color="#00F5D4" sub="confirmed sales" />
+              <StatCard label="Active Events" value={String(activeCount)} icon={Clock} color="#00F5D4" />
+              <StatCard label="Tickets Sold" value={String(totalTicketsSold)} icon={Ticket} color="#00BFFF" sub="confirmed sales" />
               <StatCard label="Revenue" value={formatNaira(totalRevenue)} icon={Wallet} color="#B06AFF" sub="confirmed only" />
+              <StatCard label="Upcoming" value={String(upcomingCount)} icon={CalendarDays} color="#FFD600" sub={upcomingCount > 0 ? 'still ahead' : 'none scheduled'} />
             </div>
 
+            {/* Charts */}
+            {revenueTrend.some((d) => d.value > 0) && (
+              <ChartCard title="30-Day Revenue">
+                <RevenueLineChart data={revenueTrend} />
+              </ChartCard>
+            )}
+
+            {salesByEvent.length > 0 && (
+              <ChartCard title="Sales by Event">
+                <PieChartDisplay data={salesByEvent} />
+              </ChartCard>
+            )}
+
+            {/* Recent Orders */}
+            {recentOrders.length > 0 && (
+              <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-[1px]" style={{ color: '#A7A8B5' }}>Recent Orders</span>
+                  <Link href="/host/orders" className="text-[11px] font-semibold" style={{ color: '#FF2D95' }}>View all →</Link>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {recentOrders.map((o) => {
+                    const st = PAYMENT_STYLE[o.payment_status] ?? PAYMENT_STYLE.pending;
+                    return (
+                      <div key={o.id} className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5" style={{ background: 'rgba(255,255,255,0.02)' }}>
+                        <div className="min-w-0">
+                          <div className="text-[12px] font-semibold truncate" style={{ color: '#FFFFFF' }}>{o.customer_email ?? 'Guest'}</div>
+                          <div className="text-[10.5px]" style={{ color: '#6B6C80' }}>{o.parties?.title ?? '—'} · {o.quantity} ticket{o.quantity === 1 ? '' : 's'}</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[12px] font-semibold" style={{ color: '#FFFFFF' }}>{formatNaira(o.total)}</span>
+                          <span className="shrink-0 rounded-full px-2 py-[2px] text-[9.5px] font-semibold" style={{ background: st.bg, color: st.color }}>
+                            {st.label}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Event List */}
             <div className="flex flex-col gap-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[12px] font-bold" style={{ color: '#FFFFFF' }}>Your Events</span>
+                <Link href="/host/new" className="text-[11px] font-semibold" style={{ color: '#FF2D95' }}>+ Create New</Link>
+              </div>
               {parties.map((p) => {
                 const s = stats[p.id];
                 const statusStyle = STATUS_STYLE[p.status];

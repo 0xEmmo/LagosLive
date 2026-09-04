@@ -247,3 +247,172 @@ export async function deleteAdminNote(noteId: number): Promise<void> {
   const { error } = await supabase.from('admin_notes').delete().eq('id', noteId);
   if (error) throw error;
 }
+
+// ---- Chart data helpers -----------------------------------------------------
+
+function buildDailyRevenueSeries(days: number, orders: { created_at: string; total: number; payment_status: string }[]): { label: string; value: number }[] {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const buckets = new Map<string, { key: string; label: string; value: number }>();
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today.getTime() - i * 86400000);
+    buckets.set(d.toDateString(), {
+      key: d.toDateString(),
+      label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      value: 0,
+    });
+  }
+  for (const row of orders) {
+    if (row.payment_status !== 'confirmed') continue;
+    const b = buckets.get(new Date(row.created_at).toDateString());
+    if (b) b.value += row.total;
+  }
+  return [...buckets.values()];
+}
+
+export async function fetchRevenueTrend(): Promise<{ label: string; value: number }[]> {
+  const { data, error } = await supabase.from('orders').select('created_at, total, payment_status');
+  if (error) throw error;
+  return buildDailyRevenueSeries(30, data ?? []);
+}
+
+export async function fetchEventsByCategory(): Promise<{ label: string; value: number }[]> {
+  const { data, error } = await supabase.from('parties').select('vibe, status');
+  if (error) throw error;
+  const counts: Record<string, number> = {};
+  for (const p of data ?? []) {
+    if (p.status !== 'approved') continue;
+    counts[p.vibe] = (counts[p.vibe] || 0) + 1;
+  }
+  return Object.entries(counts)
+    .map(([label, value]) => ({ label, value }))
+    .sort((a, b) => b.value - a.value);
+}
+
+export async function fetchOrdersByStatus(): Promise<{ label: string; value: number }[]> {
+  const { data, error } = await supabase.from('orders').select('payment_status');
+  if (error) throw error;
+  const counts: Record<string, number> = {};
+  for (const o of data ?? []) {
+    counts[o.payment_status] = (counts[o.payment_status] || 0) + 1;
+  }
+  return Object.entries(counts).map(([label, value]) => ({ label, value }));
+}
+
+export async function fetchRecentOrders(): Promise<AdminOrderJoined[]> {
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*, parties(id, title, date, time, created_by, status), ticket_types(name)')
+    .order('created_at', { ascending: false })
+    .limit(10);
+  if (error) throw error;
+  return (data ?? []) as AdminOrderJoined[];
+}
+
+// ---- Host detail ------------------------------------------------------------
+
+export interface HostDetail extends HostProfile {
+  events?: { id: number; title: string; status: string; starts_at: string; capacity: number; spots_left: number }[];
+  totalEventsCount: number;
+  totalRevenue: number;
+  totalPayouts: number;
+}
+
+export async function fetchHostDetail(userId: string): Promise<HostDetail | null> {
+  const [profileRes, eventsRes, ordersRes, payoutsRes] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
+    supabase.from('parties').select('id, title, status, starts_at, capacity, spots_left').eq('created_by', userId).order('starts_at', { ascending: false }),
+    supabase.from('orders').select('party_id, total, payment_status').eq('party_id', 0).limit(0),
+    supabase.from('payouts').select('*').eq('organizer_id', userId).order('created_at', { ascending: false }),
+  ]);
+
+  const events = (eventsRes.data ?? []) as HostDetail['events'];
+  const eventIds = (events ?? []).map((e) => e.id);
+
+  let ordersData: { party_id: number; total: number; payment_status: string }[] = [];
+  if (eventIds.length > 0) {
+    const { data } = await supabase.from('orders').select('party_id, total, payment_status').in('party_id', eventIds);
+    ordersData = data ?? [];
+  }
+  void ordersRes;
+
+  if (profileRes.error) throw profileRes.error;
+
+  const profile = profileRes.data as HostProfile;
+  const totalRevenue = ordersData.filter((o) => o.payment_status === 'confirmed').reduce((s, o) => s + o.total, 0);
+  const payouts = (payoutsRes.data ?? []) as PayoutRow[];
+  const totalPayouts = payouts.filter((p) => p.status === 'paid').reduce((s, p) => s + p.amount, 0);
+
+  return {
+    ...profile,
+    events,
+    totalEventsCount: events?.length ?? 0,
+    totalRevenue,
+    totalPayouts,
+  };
+}
+
+// ---- Host orders (for a specific organizer) ---------------------------------
+
+export async function fetchHostOrders(userId: string): Promise<AdminOrderJoined[]> {
+  const { data: events, error: eventsError } = await supabase.from('parties').select('id').eq('created_by', userId);
+  if (eventsError) throw eventsError;
+  const eventIds = (events ?? []).map((e) => e.id);
+  if (eventIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*, parties(id, title, date, time, created_by, status), ticket_types(name)')
+    .in('party_id', eventIds)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as AdminOrderJoined[];
+}
+
+// ---- Host profile update (self-service) -------------------------------------
+
+export async function updateHostProfile(userId: string, patch: {
+  name?: string;
+  phone?: string | null;
+  bio?: string | null;
+}): Promise<void> {
+  const { error } = await supabase.from('profiles').update(patch as Database['public']['Tables']['profiles']['Update']).eq('id', userId);
+  if (error) throw error;
+}
+
+// ---- Flag event (admin) -----------------------------------------------------
+
+export async function flagEvent(id: number, flagged: boolean): Promise<void> {
+  const { error } = await supabase.from('parties').update({ flagged }).eq('id', id);
+  if (error) throw error;
+}
+
+export async function updateEventNotes(id: number, adminNotes: string): Promise<void> {
+  const { error } = await supabase.from('parties').update({ admin_notes: adminNotes }).eq('id', id);
+  if (error) throw error;
+}
+
+// ---- Export helpers ----------------------------------------------------------
+
+export function toCsv(rows: Record<string, unknown>[], columns: string[]): string {
+  const header = columns.join(',');
+  const lines = rows.map((row) =>
+    columns.map((col) => {
+      const val = row[col];
+      const str = val === null || val === undefined ? '' : String(val);
+      return str.includes(',') || str.includes('"') || str.includes('\n')
+        ? `"${str.replace(/"/g, '""')}"`
+        : str;
+    }).join(',')
+  );
+  return [header, ...lines].join('\n');
+}
+
+export function downloadCsv(filename: string, csv: string) {
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}

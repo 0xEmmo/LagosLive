@@ -4,6 +4,7 @@ import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/serv
 type Op =
   | { action: 'set_refund'; orderId: string; refundStatus: string; refundAmount: number }
   | { action: 'resend_email'; orderId: string }
+  | { action: 'set_role'; targetUserId: string; role: string }
   | { action: 'audit'; targetType: string; targetId: string; logAction: string; details?: Record<string, unknown> };
 
 // Server route for staff operations that need a service client (RLS for staff
@@ -70,6 +71,32 @@ export async function POST(request: Request) {
         p_target_id: op.targetId,
         p_details: op.details ?? {},
       } as never);
+      return NextResponse.json({ ok: true });
+    }
+
+    if (body.action === 'set_role') {
+      const op = body as Extract<Op, { action: 'set_role' }>;
+      const validRoles = ['viewer', 'organizer', 'support', 'finance', 'admin'];
+      if (!validRoles.includes(op.role)) {
+        return NextResponse.json({ error: 'Invalid role.' }, { status: 400 });
+      }
+      // Only admin and super_admin can promote/demote
+      if (!['admin', 'super_admin'].includes(role)) {
+        return NextResponse.json({ error: 'Only admins can change roles.' }, { status: 403 });
+      }
+      // Cannot demote super_admin via UI
+      const { data: target } = await service
+        .from('profiles')
+        .select('role')
+        .eq('id', op.targetUserId)
+        .maybeSingle();
+      if (target?.role === 'super_admin') {
+        return NextResponse.json({ error: 'Cannot change the platform owner role.' }, { status: 403 });
+      }
+      await (service.rpc as any)('set_user_role', {
+        p_user_id: op.targetUserId,
+        p_role: op.role,
+      });
       return NextResponse.json({ ok: true });
     }
 

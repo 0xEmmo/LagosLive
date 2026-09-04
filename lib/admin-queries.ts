@@ -182,6 +182,19 @@ export async function updateProfileRole(userId: string, role: string): Promise<v
   if (error) throw error;
 }
 
+/** Promote or demote a user's role through the staff-gated API (audit-logged). */
+export async function setUserRole(targetUserId: string, role: string): Promise<void> {
+  const res = await fetch('/api/admin/operations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'set_role', targetUserId, role }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: 'Unknown error' }));
+    throw new Error(body.error || `HTTP ${res.status}`);
+  }
+}
+
 // ---- Check-in ---------------------------------------------------------------
 
 export async function setOrderCheckIn(orderId: string, checkedIn: boolean): Promise<void> {

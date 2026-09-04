@@ -6,6 +6,7 @@ import { useLagosLiveStore } from '@/lib/store';
 import type { User } from '@/lib/store';
 
 const ADMIN_DASHBOARD_ROLES: User['role'][] = ['super_admin', 'admin', 'finance', 'support'];
+const HOST_DASHBOARD_ROLES: User['role'][] = ['organizer', 'admin', 'super_admin'];
 
 type Variant = 'stack' | 'inline';
 
@@ -16,7 +17,7 @@ export default function RoleNavButtons({ variant = 'stack' }: { variant?: Varian
   const role = user.role;
 
   const isAdminUser = ADMIN_DASHBOARD_ROLES.includes(role);
-  const isHost = role === 'organizer';
+  const isHost = HOST_DASHBOARD_ROLES.includes(role);
   if (!isAdminUser && !isHost) return null;
 
   if (variant === 'inline') {

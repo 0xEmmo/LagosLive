@@ -14,6 +14,7 @@ import {
   Settings,
   LifeBuoy,
   ScrollText,
+  Shield,
   ShieldCheck,
   Activity,
 } from 'lucide-react';
@@ -32,6 +33,7 @@ const NAV: AdminNavItem[] = [
   { href: '/admin/events', label: 'Events', icon: CalendarDays, roles: ['admin', 'super_admin'] },
   { href: '/admin/hosts', label: 'Hosts', icon: Users, roles: ['admin', 'super_admin'] },
   { href: '/admin/users', label: 'Users', icon: Users, roles: ['support', 'admin', 'super_admin'] },
+  { href: '/admin/roles', label: 'Roles', icon: Shield, roles: ['admin', 'super_admin'] },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag, roles: ['finance', 'admin', 'super_admin'] },
   { href: '/admin/revenue', label: 'Revenue', icon: Wallet, roles: ['finance', 'admin', 'super_admin'] },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3, roles: ['admin', 'super_admin'] },

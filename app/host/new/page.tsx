@@ -14,7 +14,9 @@ export default function NewEventPage() {
   const user = useLagosLiveStore((s) => s.user);
   const authLoading = useLagosLiveStore((s) => s.authLoading);
   const showToast = useLagosLiveStore((s) => s.showToast);
+  const refreshUser = useLagosLiveStore((s) => s.refreshUser);
   const [submittedTitle, setSubmittedTitle] = useState<string | null>(null);
+  const [wasPromoted, setWasPromoted] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/login?next=%2Fhost%2Fnew');
@@ -29,9 +31,15 @@ export default function NewEventPage() {
   }
 
   const submit = async (input: PartyFormInput) => {
-    await createParty(input, user.id);
+    const { party, promoted } = await createParty(input, user.id);
     setSubmittedTitle(input.title);
-    showToast('Event submitted', 'Your event is pending admin review.');
+    if (promoted) {
+      await refreshUser();
+      setWasPromoted(true);
+      showToast('Welcome to Lagos Live Hosts!', "You're now an organizer. Create and manage events from your host dashboard.");
+    } else {
+      showToast('Event submitted', 'Your event is pending admin review.');
+    }
   };
 
   if (submittedTitle) {
@@ -54,8 +62,19 @@ export default function NewEventPage() {
             <CheckCircle2 size={32} color="#00F5D4" strokeWidth={2.5} />
           </div>
           <h1 className="font-display mb-2 text-[36px] tracking-[1px]" style={{ color: '#FFFFFF' }}>
-            Event Submitted!
+            {wasPromoted ? "You're a Host!" : 'Event Submitted!'}
           </h1>
+          {wasPromoted && (
+            <div
+              className="mb-5 w-full max-w-[340px] rounded-2xl p-4 text-left"
+              style={{ background: 'rgba(255,45,149,0.08)', border: '1px solid rgba(255,45,149,0.2)' }}
+            >
+              <div className="mb-1.5 text-[13px] font-bold" style={{ color: '#FF2D95' }}>Welcome to Lagos Live Hosts!</div>
+              <div className="text-[12px] leading-[1.6]" style={{ color: '#A7A8B5' }}>
+                Your account has been upgraded. You can now create, manage, and track all your events from the host dashboard.
+              </div>
+            </div>
+          )}
           <p className="mb-6 max-w-[320px] text-sm leading-[1.7]" style={{ color: '#A7A8B5' }}>
             <strong style={{ color: '#FFFFFF' }}>{submittedTitle}</strong> is now pending review. It&apos;ll go live on
             Lagos Live as soon as an admin approves it.

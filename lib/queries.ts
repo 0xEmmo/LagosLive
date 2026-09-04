@@ -136,12 +136,15 @@ function toRow(input: PartyFormInput, createdBy: string): PartyInsert {
   };
 }
 
-export async function createParty(input: PartyFormInput, createdBy: string): Promise<Party> {
+export async function createParty(input: PartyFormInput, createdBy: string): Promise<{ party: Party; promoted: boolean }> {
   const { data, error } = await supabase.from('parties').insert(toRow(input, createdBy)).select().single();
   if (error) throw error;
   const party = toParty(data);
   await ensureGeneralTicketType(party.id, input.feeNum, input.capacity);
-  return party;
+  const { data: promotedResult } = await (supabase as any).rpc('auto_promote_creator_to_organizer', {
+    p_party_id: party.id,
+  });
+  return { party, promoted: !!promotedResult };
 }
 
 export async function updateParty(id: number, input: PartyFormInput): Promise<Party> {

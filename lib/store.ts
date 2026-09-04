@@ -39,6 +39,7 @@ interface LagosLiveState {
   logout: () => Promise<void>;
   loadUserData: (userId: string) => Promise<void>;
   clearUserData: () => void;
+  refreshUser: () => Promise<void>;
 
   savedParties: number[];
   toggleSave: (id: number) => void;
@@ -149,6 +150,14 @@ export const useLagosLiveStore = create<LagosLiveState>()(
           pushEnabled: true,
           authLoading: false,
         }),
+
+      // Re-fetch the signed-in user's profile (used after auto-promotion and
+      // other role changes so the client reflects the new role immediately).
+      refreshUser: async () => {
+        const userId = get().user?.id;
+        if (!userId) return;
+        await get().loadUserData(userId);
+      },
 
       savedParties: [],
       toggleSave: (id) => {

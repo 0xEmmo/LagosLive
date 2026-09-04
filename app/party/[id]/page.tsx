@@ -14,6 +14,8 @@ import {
   Ticket,
   MessageCircle,
   Instagram,
+  Phone,
+  Mail,
   Share2,
   Link as LinkIcon,
   AlertTriangle,
@@ -300,26 +302,50 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
             Contact Organizer
           </h3>
           <div className="flex flex-wrap gap-2.5">
-            <a
-              href={`https://wa.me/${party.whatsapp.replace(/\D/g, '')}`}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 rounded-[10px] px-3.5 py-2.5 text-[13px] font-medium transition-all duration-200"
-              style={{ background: 'rgba(0,245,212,0.08)', border: '1px solid rgba(0,245,212,0.2)', color: '#00F5D4' }}
-            >
-              <MessageCircle size={14} />
-              WhatsApp
-            </a>
-            <a
-              href={`https://instagram.com/${party.instagram.replace('@', '')}`}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 rounded-[10px] px-3.5 py-2.5 text-[13px] font-medium transition-all duration-200"
-              style={{ background: 'rgba(255,45,149,0.08)', border: '1px solid rgba(255,45,149,0.2)', color: '#FF2D95' }}
-            >
-              <Instagram size={14} strokeWidth={2} />
-              {party.instagram}
-            </a>
+            {party.whatsapp && (
+              <a
+                href={`https://wa.me/${party.whatsapp.replace(/\D/g, '')}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 rounded-[10px] px-3.5 py-2.5 text-[13px] font-medium transition-all duration-200"
+                style={{ background: 'rgba(0,245,212,0.08)', border: '1px solid rgba(0,245,212,0.2)', color: '#00F5D4' }}
+              >
+                <MessageCircle size={14} />
+                WhatsApp
+              </a>
+            )}
+            {party.instagram && (
+              <a
+                href={`https://instagram.com/${party.instagram.replace('@', '')}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 rounded-[10px] px-3.5 py-2.5 text-[13px] font-medium transition-all duration-200"
+                style={{ background: 'rgba(255,45,149,0.08)', border: '1px solid rgba(255,45,149,0.2)', color: '#FF2D95' }}
+              >
+                <Instagram size={14} strokeWidth={2} />
+                {party.instagram}
+              </a>
+            )}
+            {party.organizerPhone && (
+              <a
+                href={`tel:${party.organizerPhone.replace(/[^+\d]/g, '')}`}
+                className="flex items-center gap-1.5 rounded-[10px] px-3.5 py-2.5 text-[13px] font-medium transition-all duration-200"
+                style={{ background: 'rgba(255,214,0,0.08)', border: '1px solid rgba(255,214,0,0.2)', color: '#FFD600' }}
+              >
+                <Phone size={14} strokeWidth={2} />
+                {party.organizerPhone}
+              </a>
+            )}
+            {party.organizerEmail && (
+              <a
+                href={`mailto:${party.organizerEmail}`}
+                className="flex items-center gap-1.5 rounded-[10px] px-3.5 py-2.5 text-[13px] font-medium transition-all duration-200"
+                style={{ background: 'rgba(176,106,255,0.08)', border: '1px solid rgba(176,106,255,0.2)', color: '#B06AFF' }}
+              >
+                <Mail size={14} strokeWidth={2} />
+                {party.organizerEmail}
+              </a>
+            )}
           </div>
         </div>
 

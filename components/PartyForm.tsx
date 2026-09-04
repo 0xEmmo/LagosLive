@@ -41,6 +41,8 @@ type FieldName =
   | 'fee'
   | 'capacity'
   | 'organizer'
+  | 'organizerPhone'
+  | 'organizerEmail'
   | 'description'
   | 'whatsapp';
 
@@ -100,6 +102,8 @@ export default function PartyForm({ initial, onSubmit, submitLabel }: PartyFormP
   const [ageRestriction, setAgeRestriction] = useState(initial?.ageRestriction ?? '18+');
   const [dressCode, setDressCode] = useState(initial?.dressCode ?? 'Casual');
   const [organizer, setOrganizer] = useState(initial?.organizer ?? '');
+  const [organizerPhone, setOrganizerPhone] = useState(initial?.organizerPhone ?? '');
+  const [organizerEmail, setOrganizerEmail] = useState(initial?.organizerEmail ?? '');
   const [instagram, setInstagram] = useState(initial?.instagram ?? '');
   const [whatsapp, setWhatsapp] = useState(initial?.whatsapp ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
@@ -152,6 +156,17 @@ export default function PartyForm({ initial, onSubmit, submitLabel }: PartyFormP
       e.whatsapp = 'Enter a valid WhatsApp number, e.g. +2348012345678.';
     }
 
+    if (organizerPhone.trim()) {
+      const phoneDigits = organizerPhone.replace(/\D/g, '');
+      if (phoneDigits.length < 7) {
+        e.organizerPhone = 'Enter a valid phone number, e.g. +2349012345678.';
+      }
+    }
+
+    if (organizerEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(organizerEmail.trim())) {
+      e.organizerEmail = 'Enter a valid email address.';
+    }
+
     setErrors(e);
     if (Object.keys(e).length > 0) {
       setError('Please fix the highlighted fields below.');
@@ -186,6 +201,8 @@ export default function PartyForm({ initial, onSubmit, submitLabel }: PartyFormP
         organizer: organizer.trim(),
         instagram: instagram.trim(),
         whatsapp: whatsapp.trim(),
+        organizerPhone: organizerPhone.trim(),
+        organizerEmail: organizerEmail.trim(),
         description: description.trim(),
         gradient: GRADIENTS[vibe],
       });
@@ -379,6 +396,35 @@ export default function PartyForm({ initial, onSubmit, submitLabel }: PartyFormP
           <input value={organizer} onChange={(e) => { setOrganizer(e.target.value); clearError('organizer'); }} placeholder="Flytime Music" style={inputStyle} className="font-heading" />
           <FieldError message={errors.organizer} />
         </Field>
+
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <Field label="Organizer Phone" optional>
+              <input
+                type="tel"
+                value={organizerPhone}
+                onChange={(e) => { setOrganizerPhone(e.target.value); clearError('organizerPhone'); }}
+                placeholder="+234 901 234 5678"
+                style={inputStyle}
+                className="font-heading"
+              />
+              <FieldError message={errors.organizerPhone} />
+            </Field>
+          </div>
+          <div className="flex-1">
+            <Field label="Organizer Email" optional>
+              <input
+                type="email"
+                value={organizerEmail}
+                onChange={(e) => { setOrganizerEmail(e.target.value); clearError('organizerEmail'); }}
+                placeholder="organizer@example.com"
+                style={inputStyle}
+                className="font-heading"
+              />
+              <FieldError message={errors.organizerEmail} />
+            </Field>
+          </div>
+        </div>
 
         <div className="flex gap-3">
           <div className="flex-1">

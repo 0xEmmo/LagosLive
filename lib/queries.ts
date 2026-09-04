@@ -41,6 +41,8 @@ function toParty(row: PartyRow, userLocation?: { lat: number; lng: number } | nu
     organizer: row.organizer,
     instagram: row.instagram,
     whatsapp: row.whatsapp,
+    organizerPhone: row.organizer_phone ?? null,
+    organizerEmail: row.organizer_email ?? null,
     description: row.description,
     gradient: row.gradient,
     isWeekend: row.is_weekend ?? false,
@@ -92,6 +94,8 @@ export interface PartyFormInput {
   organizer: string;
   instagram: string;
   whatsapp: string;
+  organizerPhone: string;
+  organizerEmail: string;
   description: string;
   gradient: string;
 }
@@ -124,6 +128,8 @@ function toRow(input: PartyFormInput, createdBy: string): PartyInsert {
     organizer: input.organizer,
     instagram: input.instagram,
     whatsapp: input.whatsapp,
+    organizer_phone: input.organizerPhone.trim() || null,
+    organizer_email: input.organizerEmail.trim() || null,
     description: input.description,
     gradient: input.gradient,
     created_by: createdBy,
@@ -405,4 +411,10 @@ export async function fetchOrganizerEventAnalytics(partyId: number): Promise<Org
     revenue,
     series: buildDailySeries(14, ordersRes.data ?? []),
   };
+}
+
+// Public URL for an event's guest-facing page. Centralised so the host share
+// QR code, the copyable link and any social share all point at the same place.
+export function partyShareUrl(partyId: number): string {
+  return `https://lagoslive.ng/party/${partyId}`;
 }

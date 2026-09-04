@@ -15,6 +15,8 @@ import {
   XCircle,
   Eye,
   Pencil,
+  Share2,
+  QrCode,
   MapPin,
   TrendingUp,
   type LucideIcon,
@@ -22,7 +24,7 @@ import {
 import BackButton from '@/components/BackButton';
 import PartyPhoto from '@/components/PartyPhoto';
 import SalesChart from '@/components/SalesChart';
-import { fetchOrganizerEventAnalytics, type OrganizerEventAnalytics } from '@/lib/queries';
+import { fetchOrganizerEventAnalytics, partyShareUrl, type OrganizerEventAnalytics } from '@/lib/queries';
 import { formatNaira } from '@/lib/filters';
 import { partyPhoto } from '@/lib/data';
 import { useParty } from '@/lib/hooks/useParty';
@@ -189,6 +191,22 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
       </div>
 
       <div className="flex flex-col gap-4 p-5">
+        {/* Share card */}
+        <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,45,149,0.16)' }}>
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <div className="text-[12px] font-bold" style={{ color: '#FFFFFF' }}>Promote Your Event</div>
+            <Share2 size={14} strokeWidth={2} color="#FF2D95" />
+          </div>
+          <div className="mb-3 truncate text-[11px]" style={{ color: '#A7A8B5' }}>{partyShareUrl(party.id)}</div>
+          <Link
+            href={`/host/${party.id}/share`}
+            className="flex w-full items-center justify-center gap-1.5 rounded-[9px] py-2.5 text-[12px] font-bold transition-all duration-200"
+            style={{ background: 'rgba(255,45,149,0.14)', border: '1px solid rgba(255,45,149,0.4)', color: '#FF2D95' }}
+          >
+            <QrCode size={13} strokeWidth={2.5} /> Get QR Code & Links
+          </Link>
+        </div>
+
         {analyticsLoading ? (
           <PageSkeleton />
         ) : analyticsError ? (

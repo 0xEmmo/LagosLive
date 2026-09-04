@@ -33,6 +33,8 @@ export interface Party {
   organizer: string;
   instagram: string;
   whatsapp: string;
+  organizerPhone: string | null;
+  organizerEmail: string | null;
   description: string;
   gradient: string;
   isWeekend: boolean;

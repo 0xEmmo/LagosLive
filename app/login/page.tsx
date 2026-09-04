@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import BackButton from '@/components/BackButton';
@@ -11,14 +11,29 @@ function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const login = useLagosLiveStore((s) => s.login);
+  const user = useLagosLiveStore((s) => s.user);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const rawNext = searchParams.get('next');
-  const next = rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/profile';
-  const signupHref = next !== '/profile' ? `/signup?next=${encodeURIComponent(next)}` : '/signup';
+  const requestedNext = rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : null;
+  const defaultHome = user?.isAdmin
+    ? '/admin'
+    : user?.role === 'organizer'
+      ? '/host'
+      : '/profile';
+  const next = requestedNext ?? defaultHome;
+  const signupHref = requestedNext ? `/signup?next=${encodeURIComponent(requestedNext)}` : '/signup';
+
+  // If we're already signed in (e.g. the user navigates to /login while
+  // authenticated, or auth is restored after a page reload), bounce them to
+  // their dashboard instead of showing the form again.
+  useEffect(() => {
+    if (user) router.replace(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const submit = async () => {
     if (!email.trim() || !password.trim()) {
@@ -98,39 +113,6 @@ function LoginPageContent() {
         >
           {submitting ? 'Logging in...' : 'Log In'}
         </button>
-
-        <div className="my-[22px] flex items-center gap-3">
-          <div className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.06)' }} />
-          <span className="text-[11px] uppercase tracking-[0.8px]" style={{ color: '#6B6C80' }}>
-            or continue with
-          </span>
-          <div className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.06)' }} />
-        </div>
-
-        <div className="flex gap-2.5">
-          <button
-            disabled
-            title="Coming soon"
-            className="flex flex-1 items-center justify-center gap-2 rounded-[10px] py-[11px] text-[13px] font-medium opacity-50 cursor-not-allowed"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#A7A8B5' }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24">
-              <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.24 1.3-1.7 3.8-5.5 3.8-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.9 1.5l2.7-2.6C16.9 3.1 14.7 2 12 2 6.9 2 2.7 6.1 2.7 11.2S6.9 20.4 12 20.4c6.9 0 9.3-4.8 9.3-7.3 0-.5 0-.9-.1-1.3H12z" />
-            </svg>
-            Google
-          </button>
-          <button
-            disabled
-            title="Coming soon"
-            className="flex flex-1 items-center justify-center gap-2 rounded-[10px] py-[11px] text-[13px] font-medium opacity-50 cursor-not-allowed"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#A7A8B5' }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-2.02 1.59-3.04 1.59-.12 0-.23-.02-.29-.03-.015-.1-.045-.4-.045-.7 0-1.14.564-2.27 1.2-2.98.744-.85 2.06-1.5 3.1-1.54.015.13.03.26.03.38zm4.565 15.71c-.42.94-.62 1.36-1.16 2.19-.75 1.16-1.81 2.6-3.12 2.61-1.16.02-1.46-.75-3.03-.74-1.57.01-1.9.76-3.06.74-1.31-.02-2.31-1.32-3.06-2.48-2.1-3.2-2.32-6.96-1.02-8.96.92-1.42 2.38-2.25 3.75-2.25 1.4 0 2.28.76 3.44.76 1.12 0 1.81-.76 3.44-.76 1.22 0 2.51.66 3.43 1.81-3.02 1.66-2.53 5.97.36 7.08z" />
-            </svg>
-            Apple
-          </button>
-        </div>
 
         <p className="mt-[26px] text-center text-[13px]" style={{ color: '#A7A8B5' }}>
           New to Lagos Live?{' '}

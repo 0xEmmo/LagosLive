@@ -176,6 +176,8 @@ export type Database = {
           lng: number
           location: string
           organizer: string
+          organizer_email: string | null
+          organizer_phone: string | null
           page_views: number
           spots_left: number
           starts_at: string
@@ -210,6 +212,8 @@ export type Database = {
           lng: number
           location: string
           organizer: string
+          organizer_email?: string | null
+          organizer_phone?: string | null
           page_views?: number
           spots_left: number
           starts_at: string
@@ -244,6 +248,8 @@ export type Database = {
           lng?: number
           location?: string
           organizer?: string
+          organizer_email?: string | null
+          organizer_phone?: string | null
           page_views?: number
           spots_left?: number
           starts_at?: string

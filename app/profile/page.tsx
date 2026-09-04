@@ -9,6 +9,7 @@ import { useLagosLiveStore } from '@/lib/store';
 import { fetchMyTickets } from '@/lib/queries';
 import { partyPhoto } from '@/lib/data';
 import PartyPhoto from '@/components/PartyPhoto';
+import RoleNavButtons from '@/components/RoleNavButtons';
 import type { CustomerTicket } from '@/lib/types';
 
 export default function ProfilePage() {
@@ -98,6 +99,8 @@ export default function ProfilePage() {
           </div>
         ))}
       </div>
+
+      <RoleNavButtons variant="stack" />
 
       <div className="mb-2.5 text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: '#A7A8B5' }}>
         My Tickets

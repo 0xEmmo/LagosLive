@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Search, Plus } from 'lucide-react';
 import { SiteLogo } from './Logo';
+import RoleNavButtons from './RoleNavButtons';
 import { useLagosLiveStore } from '@/lib/store';
 
 export default function HomeHeader() {
@@ -16,6 +17,7 @@ export default function HomeHeader() {
       <Link href="/" className="flex items-center">
         <SiteLogo />
       </Link>
+      <RoleNavButtons variant="inline" />
       <div className="flex items-center gap-2">
         <Link
           href="/search"

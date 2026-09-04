@@ -4,7 +4,7 @@ import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/serv
 type Op =
   | { action: 'set_refund'; orderId: string; refundStatus: string; refundAmount: number }
   | { action: 'resend_email'; orderId: string }
-  | { action: 'audit'; targetType: string; targetId: string; logAction: string };
+  | { action: 'audit'; targetType: string; targetId: string; logAction: string; details?: Record<string, unknown> };
 
 // Server route for staff operations that need a service client (RLS for staff
 // already allows most reads/writes, but payment-related transitions and audit
@@ -68,6 +68,7 @@ export async function POST(request: Request) {
         p_action: op.logAction,
         p_target_type: op.targetType,
         p_target_id: op.targetId,
+        p_details: op.details ?? {},
       } as never);
       return NextResponse.json({ ok: true });
     }

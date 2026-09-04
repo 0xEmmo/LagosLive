@@ -6,6 +6,7 @@ import { RefreshCw, Search, Download } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
 import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, Badge, useRoleGuard } from '@/components/ui/dashboard-ui';
 import { fetchAllOrders, type AdminOrderJoined, toCsv, downloadCsv } from '@/lib/admin-queries';
+import { useRealtimeOrders } from '@/lib/hooks/useRealtimeOrders';
 import { formatNaira } from '@/lib/filters';
 import { useLagosLiveStore } from '@/lib/store';
 
@@ -21,32 +22,20 @@ const PAYMENT_STYLE: Record<string, { label: string; bg: string; color: string }
 export default function AdminOrdersPage() {
   const { ready } = useRoleGuard('finance');
   const showToast = useLagosLiveStore((s) => s.showToast);
-  const [orders, setOrders] = useState<AdminOrderJoined[]>([]);
-  const [status, setStatus] = useState<'loading' | 'error' | 'ok'>('loading');
   const [filter, setFilter] = useState<StatusFilter>('all');
-  const [attempt, setAttempt] = useState(0);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
   const PAGE_SIZE = 50;
 
-  const load = async () => {
-    setStatus('loading');
-    try {
-      const data = await fetchAllOrders();
-      setOrders(data);
-      setStatus('ok');
-    } catch {
-      setStatus('error');
-    }
-  };
+  const { data, loading, error, lastLiveAt, refresh } = useRealtimeOrders<AdminOrderJoined>(fetchAllOrders, {
+    enabled: ready,
+  });
+  const orders = data ?? [];
 
   useEffect(() => {
-    if (!ready) return;
     setPage(1);
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, attempt]);
+  }, [filter, search]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -94,11 +83,12 @@ export default function AdminOrdersPage() {
                 <Download size={13} /> Export
               </button>
               <button
-                onClick={() => setAttempt((a) => a + 1)}
+                onClick={() => refresh()}
                 className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12.5px] font-semibold"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#A7A8B5' }}
               >
                 <RefreshCw size={13} strokeWidth={2.5} /> Refresh
+                {lastLiveAt && <span className="ml-1 flex items-center gap-1 text-[10px] font-semibold" style={{ color: '#00F5D4' }}><span className="h-1.5 w-1.5 rounded-full" style={{ background: '#00F5D4' }} />Live</span>}
               </button>
             </div>
           }
@@ -137,10 +127,10 @@ export default function AdminOrdersPage() {
           </div>
         </div>
 
-        {status === 'loading' ? (
+        {loading ? (
           <LoadingBlock />
-        ) : status === 'error' ? (
-          <ErrorBlock message="Couldn't load orders." onRetry={() => setAttempt((a) => a + 1)} />
+        ) : error ? (
+          <ErrorBlock message="Couldn't load orders." onRetry={() => refresh()} />
         ) : filtered.length === 0 ? (
           <EmptyBlock title="No orders" subtitle="No orders match this filter." />
         ) : (

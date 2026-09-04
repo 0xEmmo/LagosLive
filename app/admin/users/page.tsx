@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Ban, RotateCcw, Search } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
 import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, Badge, useRoleGuard } from '@/components/ui/dashboard-ui';
-import { fetchAllProfiles, updateProfileStatus, type HostProfile } from '@/lib/admin-queries';
+import { fetchAllProfiles, updateProfileStatus, logAudit, type HostProfile } from '@/lib/admin-queries';
 import { ACCOUNT_STATUS_LABEL, ACCOUNT_STATUS_COLOR, type AccountStatus } from '@/lib/authz';
 import { useLagosLiveStore } from '@/lib/store';
 
@@ -47,6 +47,7 @@ export default function AdminUsersPage() {
     setProfiles((ps) => ps.map((x) => (x.id === p.id ? { ...x, account_status: next } : x)));
     try {
       await updateProfileStatus(p.id, next);
+      await logAudit(next === 'active' ? 'user_reinstate' : 'user_suspend', 'host', p.id, { name: p.name });
       showToast(next === 'active' ? 'User reinstated' : 'User suspended', `${p.name} updated.`);
     } catch {
       setProfiles((ps) => ps.map((x) => (x.id === p.id ? prev : x)));

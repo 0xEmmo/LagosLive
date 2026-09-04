@@ -5,7 +5,7 @@ import { Wallet, ArrowDownRight, ArrowUpRight, Clock, RotateCcw, RefreshCw } fro
 import AdminShell from '@/components/admin-shell';
 import { StatCard, PageHeader, Badge, TableShell, Cell, LoadingBlock, ErrorBlock, EmptyBlock, useRoleGuard } from '@/components/ui/dashboard-ui';
 import { RevenueLineChart, HorizontalBarChart, ChartCard } from '@/components/ui/charts';
-import { fetchAllOrders, fetchPayouts, fetchRevenueTrend, fetchEventsByCategory, updatePayoutStatus, type AdminOrderJoined, type PayoutRow } from '@/lib/admin-queries';
+import { fetchAllOrders, fetchPayouts, fetchRevenueTrend, fetchEventsByCategory, updatePayoutStatus, logAudit, type AdminOrderJoined, type PayoutRow } from '@/lib/admin-queries';
 import { formatNaira } from '@/lib/filters';
 
 const PAYMENT_BADGE: Record<string, { bg: string; color: string }> = {
@@ -79,7 +79,11 @@ export default function RevenuePage() {
     if (!next) return;
     try {
       await updatePayoutStatus(payout.id, next);
+      await logAudit('payout_status', 'payout', payout.id, { status: next });
       setPayouts((prev) => prev.map((p) => (p.id === payout.id ? { ...p, status: next } : p)));
+      if (next === 'approved' || next === 'paid') {
+        notifyPayout(payout.id, next, payout.bank_last4);
+      }
     } catch {
       /* silent – RLS may block */
     }
@@ -87,12 +91,23 @@ export default function RevenuePage() {
 
   const handlePayoutReject = async (payout: PayoutRow) => {
     if (payout.status !== 'pending') return;
+    if (!confirm(`Reject this payout of ${formatNaira(payout.amount)}? The host will be notified.`)) return;
     try {
       await updatePayoutStatus(payout.id, 'rejected');
+      await logAudit('payout_reject', 'payout', payout.id);
       setPayouts((prev) => prev.map((p) => (p.id === payout.id ? { ...p, status: 'rejected' } : p)));
+      notifyPayout(payout.id, 'rejected', payout.bank_last4);
     } catch {
       /* silent */
     }
+  };
+
+  const notifyPayout = (payoutId: number, status: string, _bankLast4?: string | null) => {
+    fetch('/api/admin/notify-payout-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ payoutId, status }),
+    }).catch((err) => console.error('[payout] notification failed', err));
   };
 
   return (

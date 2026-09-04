@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import { ArrowLeft, Mail, Phone, CalendarDays, Wallet, Ticket, Building2, Shield, Ban, RotateCcw, Trash2 } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
 import { PageHeader, StatCard, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, Badge, useRoleGuard } from '@/components/ui/dashboard-ui';
-import { fetchHostDetail, updateProfileStatus, deleteAdminNote, fetchAdminNotes, createAdminNote, type HostDetail, type NoteRow } from '@/lib/admin-queries';
+import { fetchHostDetail, updateProfileStatus, deleteAdminNote, fetchAdminNotes, createAdminNote, logAudit, type HostDetail, type NoteRow } from '@/lib/admin-queries';
 import { formatNaira } from '@/lib/filters';
 import { useLagosLiveStore } from '@/lib/store';
 import { ROLE_LABEL, ACCOUNT_STATUS_LABEL, ACCOUNT_STATUS_COLOR, type Role, type AccountStatus } from '@/lib/authz';
@@ -56,6 +56,7 @@ export default function AdminHostDetailPage() {
     if (next === 'suspended' && !confirm(`Suspend ${host.name}?`)) return;
     try {
       await updateProfileStatus(host.id, next);
+      await logAudit(next === 'active' ? 'host_reinstate' : 'host_suspend', 'host', host.id, { name: host.name });
       setHost((h) => h ? { ...h, account_status: next } : h);
       showToast(next === 'active' ? 'Host reinstated' : 'Host suspended', `${host.name} updated.`);
     } catch {

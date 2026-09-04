@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Plus, CalendarPlus, ShieldCheck, CalendarDays, Clock, Ticket, Wallet, Settings, ListOrdered, Activity, AlertTriangle, RefreshCw, type LucideIcon } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import PartyPhoto from '@/components/PartyPhoto';
+import HostBottomNav from '@/components/HostBottomNav';
 import { RevenueLineChart, PieChartDisplay, ChartCard } from '@/components/ui/charts';
 import { fetchPartiesByOwner, fetchOrganizerOrderStats, type OrganizerPartyStats } from '@/lib/queries';
 import { fetchHostOrders, type AdminOrderJoined } from '@/lib/admin-queries';
@@ -135,7 +136,7 @@ export default function HostDashboardPage() {
   };
 
   return (
-    <div className="mx-auto max-w-[600px] animate-fade-in">
+    <div className="mx-auto max-w-[600px] animate-fade-in pb-24">
       <div
         className="sticky top-0 z-40 flex items-center justify-between border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150"
         style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}
@@ -331,6 +332,7 @@ export default function HostDashboardPage() {
           </>
         )}
       </div>
+      <HostBottomNav />
     </div>
   );
 }

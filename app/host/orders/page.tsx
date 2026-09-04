@@ -4,8 +4,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle, RefreshCw, Search, Download, CheckCircle, XCircle } from 'lucide-react';
 import BackButton from '@/components/BackButton';
+import HostBottomNav from '@/components/HostBottomNav';
 import { useLagosLiveStore } from '@/lib/store';
 import { fetchHostOrders, setOrderCheckIn, type AdminOrderJoined, toCsv, downloadCsv } from '@/lib/admin-queries';
+import { useRealtimeOrders } from '@/lib/hooks/useRealtimeOrders';
 import { formatNaira } from '@/lib/filters';
 
 const PAYMENT_STYLE: Record<string, { label: string; bg: string; color: string }> = {
@@ -19,9 +21,6 @@ export default function HostOrdersPage() {
   const router = useRouter();
   const user = useLagosLiveStore((s) => s.user);
   const authLoading = useLagosLiveStore((s) => s.authLoading);
-  const [orders, setOrders] = useState<AdminOrderJoined[]>([]);
-  const [status, setStatus] = useState<'loading' | 'error' | 'ok'>('loading');
-  const [attempt, setAttempt] = useState(0);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'confirmed' | 'pending' | 'failed' | 'cancelled'>('all');
 
@@ -29,16 +28,13 @@ export default function HostOrdersPage() {
     if (!authLoading && !user) router.replace('/login?next=%2Fhost%2Forders');
   }, [authLoading, user, router]);
 
-  useEffect(() => {
-    if (!user) return;
-    setStatus('loading');
-    fetchHostOrders(user.id)
-      .then((data) => {
-        setOrders(data);
-        setStatus('ok');
-      })
-      .catch(() => setStatus('error'));
-  }, [user, attempt]);
+  const { data, setData, loading, error, refresh } = useRealtimeOrders<AdminOrderJoined>(
+    () => fetchHostOrders(user!.id),
+    { enabled: !!user }
+  );
+  const orders = data ?? [];
+  const mutateOrders = (fn: (prev: AdminOrderJoined[]) => AdminOrderJoined[]) =>
+    setData((prev) => fn(prev ?? []));
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -50,11 +46,11 @@ export default function HostOrdersPage() {
   const toggleCheckIn = async (order: AdminOrderJoined) => {
     if (order.payment_status !== 'confirmed') return;
     const nextCheckedIn = order.check_in_status !== 'checked_in';
-    setOrders((prev) => prev.map((o) => o.id === order.id ? { ...o, check_in_status: nextCheckedIn ? 'checked_in' : 'unchecked', checked_in_at: nextCheckedIn ? new Date().toISOString() : null } : o));
+    mutateOrders((prev) => prev.map((o) => o.id === order.id ? { ...o, check_in_status: nextCheckedIn ? 'checked_in' : 'unchecked', checked_in_at: nextCheckedIn ? new Date().toISOString() : null } : o));
     try {
       await setOrderCheckIn(order.id, nextCheckedIn);
     } catch {
-      setOrders((prev) => prev.map((o) => o.id === order.id ? { ...o, check_in_status: nextCheckedIn ? 'unchecked' : 'checked_in', checked_in_at: nextCheckedIn ? null : order.checked_in_at } : o));
+      mutateOrders((prev) => prev.map((o) => o.id === order.id ? { ...o, check_in_status: nextCheckedIn ? 'unchecked' : 'checked_in', checked_in_at: nextCheckedIn ? null : order.checked_in_at } : o));
     }
   };
 
@@ -78,7 +74,7 @@ export default function HostOrdersPage() {
   if (!user) return null;
 
   return (
-    <div className="mx-auto max-w-[600px] animate-fade-in">
+    <div className="mx-auto max-w-[600px] animate-fade-in pb-24">
       <div className="sticky top-0 z-40 flex items-center justify-between border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150" style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}>
         <div className="flex items-center gap-3">
           <BackButton href="/host" />
@@ -127,17 +123,17 @@ export default function HostOrdersPage() {
           })}
         </div>
 
-        {status === 'loading' ? (
+        {loading ? (
           <div className="flex flex-col gap-2.5">
             {[0, 1, 2, 3].map((i) => (
               <div key={i} className="h-[72px] animate-pulse rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }} />
             ))}
           </div>
-        ) : status === 'error' ? (
+        ) : error ? (
           <div className="flex flex-col items-center gap-3 rounded-2xl px-6 py-12 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,138,0,0.2)' }}>
             <AlertTriangle size={26} strokeWidth={1.5} color="#FF8A00" />
             <div className="text-sm" style={{ color: '#A7A8B5' }}>Couldn&apos;t load orders.</div>
-            <button onClick={() => setAttempt((a) => a + 1)} className="flex items-center gap-2 rounded-[10px] px-4 py-2 text-[13px] font-semibold" style={{ background: 'rgba(255,138,0,0.12)', border: '1px solid rgba(255,138,0,0.3)', color: '#FF8A00' }}>
+            <button onClick={() => refresh()} className="flex items-center gap-2 rounded-[10px] px-4 py-2 text-[13px] font-semibold" style={{ background: 'rgba(255,138,0,0.12)', border: '1px solid rgba(255,138,0,0.3)', color: '#FF8A00' }}>
               <RefreshCw size={13} strokeWidth={2.5} /> Retry
             </button>
           </div>
@@ -195,6 +191,7 @@ export default function HostOrdersPage() {
           </div>
         )}
       </div>
+      <HostBottomNav />
     </div>
   );
 }

@@ -228,3 +228,72 @@ export async function sendTicketConfirmation(data: TicketConfirmationData): Prom
     return false;
   }
 }
+
+export interface PayoutStatusEmailData {
+  to: string;
+  hostName: string;
+  amount: number; // kobo
+  status: 'pending' | 'processing' | 'approved' | 'paid' | 'rejected';
+  payoutDate?: string;
+}
+
+const PAYOUT_MESSAGES: Record<PayoutStatusEmailData['status'], string> = {
+  pending: 'Your payout request has been received and is awaiting review.',
+  processing: 'Your payout is being processed. You should see it in your bank within 1-2 business days.',
+  approved: 'Your payout has been approved and will be processed soon.',
+  paid: 'Your payout has been completed! Check your bank account.',
+  rejected: 'Your payout request was not approved. Please contact support for details.',
+};
+
+export async function sendPayoutStatusEmail(data: PayoutStatusEmailData): Promise<boolean> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn('[resend] RESEND_API_KEY is not configured — skipping payout email to', data.to);
+    return false;
+  }
+  const from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  const line = `<tr>
+    <td style="padding:8px 0;"><span style="color:#6B6C80;">Amount</span><br/><strong style="color:#FFFFFF;">${formatNaira(data.amount)}</strong></td>
+    <td style="padding:8px 0;"><span style="color:#6B6C80;">Status</span><br/><strong style="color:#00F5D4;text-transform:uppercase;">${data.status}</strong></td>
+  </tr>`;
+  const when = data.payoutDate
+    ? `<tr><td style="padding:8px 0;"><span style="color:#6B6C80;">Processed</span><br/><span style="color:#FFFFFF;">${data.payoutDate}</span></td></tr>`
+    : '';
+  const html = `
+    <div style="background:#07070B;padding:32px;font-family:Arial,sans-serif;">
+      <div style="max-width:480px;margin:0 auto;background:#171725;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:28px;">
+        <div style="font-size:18px;font-weight:800;color:#FF2D95;margin-bottom:20px;">Lagos&nbsp;Live</div>
+        <h2 style="color:#FFFFFF;font-size:20px;margin:0 0 8px;">Payout Update</h2>
+        <p style="color:#D5D6E0;font-size:14px;line-height:1.6;margin:0 0 16px;">Hi ${data.hostName},</p>
+        <p style="color:#D5D6E0;font-size:14px;line-height:1.6;margin:0 0 16px;">${PAYOUT_MESSAGES[data.status]}</p>
+        <table role="presentation" style="width:100%;color:#D5D6E0;font-size:13px;">${line}${when}</table>
+        <p style="color:#A7A8B5;font-size:13px;line-height:1.6;margin:20px 0 0;">Login to your host dashboard to view the full details.</p>
+        <p style="color:#6B6C80;font-size:12px;margin:24px 0 0;">— Lagos Live Team</p>
+      </div>
+    </div>`;
+  try {
+    const response = await fetch(RESEND_API, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from,
+        to: [data.to],
+        subject: `Lagos Live — Payout ${data.status.toUpperCase()}`,
+        html,
+      }),
+    });
+    const bodyText = await response.text();
+    if (!response.ok) {
+      console.error('[resend] payout email send failed', { status: response.status, to: data.to, responseBody: bodyText });
+      return false;
+    }
+    console.log('[resend] payout email send succeeded', { to: data.to, status: data.status });
+    return true;
+  } catch (err) {
+    console.error('[resend] unexpected error sending payout email to', data.to, err);
+    return false;
+  }
+}

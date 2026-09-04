@@ -16,6 +16,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { memo } from 'react';
 import type { TooltipProps } from 'recharts';
 
 const GRID_COLOR = 'rgba(255,255,255,0.05)';
@@ -39,7 +40,7 @@ function formatNairaValue(val: unknown) {
   return `₦${n.toLocaleString()}`;
 }
 
-export function RevenueLineChart({ data }: { data: DataPoint[] }) {
+export const RevenueLineChart = memo(function RevenueLineChart({ data }: { data: DataPoint[] }) {
   if (data.length === 0) return <EmptyChart />;
   return (
     <ResponsiveContainer width="100%" height={220}>
@@ -61,9 +62,9 @@ export function RevenueLineChart({ data }: { data: DataPoint[] }) {
       </AreaChart>
     </ResponsiveContainer>
   );
-}
+});
 
-export function TicketsLineChart({ data }: { data: DataPoint[] }) {
+export const TicketsLineChart = memo(function TicketsLineChart({ data }: { data: DataPoint[] }) {
   if (data.length === 0) return <EmptyChart />;
   return (
     <ResponsiveContainer width="100%" height={220}>
@@ -82,9 +83,9 @@ export function TicketsLineChart({ data }: { data: DataPoint[] }) {
       </AreaChart>
     </ResponsiveContainer>
   );
-}
+});
 
-export function HorizontalBarChart({ data }: { data: DataPoint[] }) {
+export const HorizontalBarChart = memo(function HorizontalBarChart({ data }: { data: DataPoint[] }) {
   if (data.length === 0) return <EmptyChart />;
   return (
     <ResponsiveContainer width="100%" height={Math.max(160, data.length * 40)}>
@@ -101,9 +102,9 @@ export function HorizontalBarChart({ data }: { data: DataPoint[] }) {
       </BarChart>
     </ResponsiveContainer>
   );
-}
+});
 
-export function VerticalBarChart({ data }: { data: DataPoint[] }) {
+export const VerticalBarChart = memo(function VerticalBarChart({ data }: { data: DataPoint[] }) {
   if (data.length === 0) return <EmptyChart />;
   return (
     <ResponsiveContainer width="100%" height={220}>
@@ -120,9 +121,9 @@ export function VerticalBarChart({ data }: { data: DataPoint[] }) {
       </BarChart>
     </ResponsiveContainer>
   );
-}
+});
 
-export function PieChartDisplay({ data }: { data: DataPoint[] }) {
+export const PieChartDisplay = memo(function PieChartDisplay({ data }: { data: DataPoint[] }) {
   if (data.length === 0) return <EmptyChart />;
   const total = data.reduce((s, d) => s + d.value, 0);
   return (
@@ -148,7 +149,7 @@ export function PieChartDisplay({ data }: { data: DataPoint[] }) {
       </div>
     </div>
   );
-}
+});
 
 function EmptyChart() {
   return (

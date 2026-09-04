@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import { ArrowLeft, Check, X, Ban, RotateCcw, Flag, Download, Trash2, MapPin, Clock, Ticket } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
 import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, useRoleGuard, Badge, StatCard } from '@/components/ui/dashboard-ui';
-import { fetchAdminEvent, fetchEventOrders, flagEvent, updateEventNotes, fetchAdminNotes, createAdminNote, deleteAdminNote, type AdminEventJoined, type AdminOrderJoined, type NoteRow, toCsv, downloadCsv } from '@/lib/admin-queries';
+import { fetchAdminEvent, fetchEventOrders, flagEvent, updateEventNotes, fetchAdminNotes, createAdminNote, deleteAdminNote, logAudit, type AdminEventJoined, type AdminOrderJoined, type NoteRow, toCsv, downloadCsv } from '@/lib/admin-queries';
 import { updatePartyStatus } from '@/lib/queries';
 import { useLagosLiveStore } from '@/lib/store';
 import { formatNaira } from '@/lib/filters';
@@ -61,6 +61,7 @@ export default function AdminEventDetailPage() {
     if ((next === 'rejected' || next === 'suspended') && !confirm(`${next === 'suspended' ? 'Suspend' : 'Reject'} "${event.title}"?`)) return;
     try {
       await updatePartyStatus(event.id, next as never);
+      await logAudit('event_status', 'event', event.id, { title: event.title, status: next });
       setEvent((e) => (e ? { ...e, status: next } : e));
       showToast('Event updated', next);
     } catch {
@@ -74,6 +75,7 @@ export default function AdminEventDetailPage() {
     setEvent((e) => e ? { ...e, flagged: next } : e);
     try {
       await flagEvent(event.id, next);
+      await logAudit(next ? 'event_flag' : 'event_unflag', 'event', event.id, { title: event.title });
       showToast(next ? 'Event flagged' : 'Flag removed', `"${event.title}" ${next ? 'flagged for review' : 'flag removed'}.`);
     } catch {
       setEvent((e) => e ? { ...e, flagged: !next } : e);

@@ -220,6 +220,26 @@ export async function fetchAuditLogs(): Promise<AuditRow[]> {
   return (data ?? []) as AuditRow[];
 }
 
+// Best-effort audit trail. Routes through the staff-gated /api/admin/operations
+// endpoint which records the action (with the acting user) via write_audit_log.
+// Never throws — the underlying admin action must not fail if logging is down.
+export async function logAudit(
+  action: string,
+  targetType: string,
+  targetId: string | number | null,
+  details?: Record<string, unknown>
+): Promise<void> {
+  try {
+    await fetch('/api/admin/operations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'audit', logAction: action, targetType, targetId: String(targetId ?? ''), details }),
+    });
+  } catch (err) {
+    console.error('[audit] failed to log', action, err);
+  }
+}
+
 // ---- Support tickets --------------------------------------------------------
 
 export async function fetchSupportTickets(): Promise<TicketRow[]> {

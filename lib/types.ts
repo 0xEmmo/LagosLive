@@ -41,6 +41,7 @@ export interface Party {
   isThisWeek: boolean;
   createdBy: string | null;
   status: PartyStatus;
+  coverUrl: string | null;
 }
 
 export type DateFilter = 'Tonight' | 'This Week' | 'This Weekend' | 'Next Week';

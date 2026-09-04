@@ -303,7 +303,7 @@ export default function HostDashboardPage() {
                     style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
                   >
                     <div className="relative h-[68px] w-[68px] flex-shrink-0 overflow-hidden rounded-[12px]" style={{ background: p.gradient }}>
-                      <PartyPhoto src={partyPhoto(p.id)} alt={p.title} gradient={p.gradient} sizes="68px" />
+                      <PartyPhoto src={partyPhoto(p.id, p.coverUrl)} alt={p.title} gradient={p.gradient} sizes="68px" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">

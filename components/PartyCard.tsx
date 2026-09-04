@@ -71,7 +71,7 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 20
       <div className="relative overflow-hidden" style={{ height: imageHeight, background: party.gradient }}>
         <div className={`transition-transform duration-700 ease-out ${hovered ? 'scale-110' : 'scale-100'}`}>
           <PartyPhoto
-            src={partyPhoto(party.id)}
+            src={partyPhoto(party.id, party.coverUrl)}
             alt={party.title}
             gradient={party.gradient}
             sizes="(max-width: 768px) 100vw, 33vw"

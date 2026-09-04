@@ -160,6 +160,7 @@ export type Database = {
           capacity: number
           created_at: string
           created_by: string | null
+          cover_url: string | null
           date: string
           description: string
           distance: number
@@ -194,8 +195,9 @@ export type Database = {
           age_restriction: string
           banned_words?: number
           capacity: number
-          created_at?: string
+           created_at?: string
           created_by?: string | null
+          cover_url?: string | null
           date: string
           description: string
           distance: number
@@ -232,6 +234,7 @@ export type Database = {
           capacity?: number
           created_at?: string
           created_by?: string | null
+          cover_url?: string | null
           date?: string
           description?: string
           distance?: number

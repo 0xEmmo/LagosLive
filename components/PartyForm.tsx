@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Ticket } from 'lucide-react';
+import { useState, useRef, useCallback } from 'react';
+import { Ticket, ImagePlus, X } from 'lucide-react';
 import { ALL_VIBES, GRADIENTS } from '@/lib/data';
 import { formatNaira } from '@/lib/filters';
 import type { PartyFormInput } from '@/lib/queries';
@@ -110,8 +110,45 @@ export default function PartyForm({ initial, onSubmit, submitLabel }: PartyFormP
   const [errors, setErrors] = useState<Partial<Record<FieldName, string>>>({});
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [imageError, setImageError] = useState('');
+  const [dragOver, setDragOver] = useState(false);
+  const imageRef = useRef<HTMLInputElement>(null);
 
   const clearError = (key: FieldName) => setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e));
+
+  const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+  const MAX_SIZE = 5 * 1024 * 1024;
+
+  const handleImageSelect = useCallback((file: File) => {
+    setImageError('');
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      setImageError('Please upload a JPEG, PNG, or WebP image.');
+      return;
+    }
+    if (file.size > MAX_SIZE) {
+      setImageError('Image must be under 5 MB.');
+      return;
+    }
+    setCoverImage(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  }, []);
+
+  const handleImageDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleImageSelect(file);
+  }, [handleImageSelect]);
+
+  const handleImageRemove = useCallback(() => {
+    setCoverImage(null);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setImageError('');
+    if (imageRef.current) imageRef.current.value = '';
+  }, [previewUrl]);
 
   const validate = (): boolean => {
     const e: Partial<Record<FieldName, string>> = {};
@@ -205,6 +242,7 @@ export default function PartyForm({ initial, onSubmit, submitLabel }: PartyFormP
         organizerEmail: organizerEmail.trim(),
         description: description.trim(),
         gradient: GRADIENTS[vibe],
+        coverImage,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
@@ -451,6 +489,58 @@ export default function PartyForm({ initial, onSubmit, submitLabel }: PartyFormP
               <input value={dressCode} onChange={(e) => setDressCode(e.target.value)} placeholder="Smart Casual" style={inputStyle} className="font-heading" />
             </Field>
           </div>
+        </div>
+      </Section>
+
+      {/* 5. Cover image */}
+      <Section step={5} title="Cover Image" hint="Make your event stand out (optional)">
+        {previewUrl ? (
+          <div className="relative overflow-hidden rounded-xl" style={{ aspectRatio: '16/9' }}>
+            <img src={previewUrl} alt="Cover preview" className="h-full w-full object-cover" />
+            <button
+              type="button"
+              onClick={handleImageRemove}
+              className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full transition-all active:scale-90"
+              style={{ background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.2)' }}
+            >
+              <X size={14} strokeWidth={2.5} color="#FFFFFF" />
+            </button>
+            <div className="absolute bottom-2 left-2 rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: 'rgba(0,0,0,0.5)' , color: '#A7A8B5' }}>
+              {coverImage ? `${(coverImage.size / 1024 / 1024).toFixed(1)} MB` : ''}
+            </div>
+          </div>
+        ) : (
+          <div
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleImageDrop}
+            onClick={() => imageRef.current?.click()}
+            className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed py-8 transition-all duration-200"
+            style={{
+              borderColor: dragOver ? 'rgba(255,45,149,0.5)' : 'rgba(255,255,255,0.1)',
+              background: dragOver ? 'rgba(255,45,149,0.04)' : 'transparent',
+            }}
+          >
+            <ImagePlus size={24} strokeWidth={1.5} color={dragOver ? '#FF2D95' : '#6B6C80'} />
+            <div className="text-[12px] font-semibold" style={{ color: dragOver ? '#FF2D95' : '#A7A8B5' }}>
+              {dragOver ? 'Drop image here' : 'Tap to upload or drag an image'}
+            </div>
+            <div className="text-[10.5px]" style={{ color: '#6B6C80' }}>JPEG, PNG or WebP · Max 5 MB</div>
+          </div>
+        )}
+        <input
+          ref={imageRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleImageSelect(file);
+          }}
+        />
+        <FieldError message={imageError} />
+        <div className="text-[11px]" style={{ color: '#6B6C80' }}>
+          If you don&apos;t upload an image, your event will use an auto-generated gradient card.
         </div>
       </Section>
 

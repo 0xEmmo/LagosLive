@@ -96,7 +96,7 @@ function ConfirmedTicket({ ticket }: { ticket: CustomerTicket }) {
         <div className="overflow-hidden rounded-[26.5px]" style={{ background: '#161619' }}>
           {/* Event image header */}
           <div className="relative" style={{ height: 170, background: party.gradient }}>
-            <PartyPhoto src={partyPhoto(party.id)} alt={party.title} gradient={party.gradient} sizes="380px" />
+            <PartyPhoto src={partyPhoto(party.id, party.coverUrl)} alt={party.title} gradient={party.gradient} sizes="380px" />
             <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(to top, #161619 0%, transparent 55%)' }} />
             <div className="absolute left-4 top-4 flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-[8px]" style={{ background: 'rgba(7,7,11,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.12)' }}>

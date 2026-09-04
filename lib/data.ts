@@ -59,10 +59,12 @@ export function distanceBorder(d: number) {
   return d < 5 ? 'rgba(0,245,212,0.3)' : d < 10 ? 'rgba(255,214,0,0.3)' : 'rgba(255,138,0,0.3)';
 }
 
-export function partyPhoto(id: number) {
+export function partyPhoto(id: number, coverUrl?: string | null) {
+  if (coverUrl) return coverUrl;
   return `https://picsum.photos/seed/lagoslive-party-${id}/900/700`;
 }
 
-export function partyDetailPhoto(id: number, suffix: string) {
+export function partyDetailPhoto(id: number, suffix: string, coverUrl?: string | null) {
+  if (suffix === 'b' && coverUrl) return coverUrl;
   return `https://picsum.photos/seed/lagoslive-detail-${id}-${suffix}/900/700`;
 }

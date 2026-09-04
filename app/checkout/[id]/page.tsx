@@ -347,7 +347,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
             style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
           >
             <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-[10px]" style={{ background: party.gradient }}>
-              <PartyPhoto src={partyPhoto(party.id)} alt={party.title} gradient={party.gradient} sizes="64px" />
+              <PartyPhoto src={partyPhoto(party.id, party.coverUrl)} alt={party.title} gradient={party.gradient} sizes="64px" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="mb-1 truncate font-heading text-sm font-bold" style={{ color: '#FFFFFF' }}>{party.title}</div>

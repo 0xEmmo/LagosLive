@@ -90,7 +90,7 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
     } catch {}
   };
 
-  const images = [partyPhoto(party.id), partyDetailPhoto(party.id, 'b'), partyDetailPhoto(party.id, 'c')];
+  const images = [partyPhoto(party.id, party.coverUrl), partyDetailPhoto(party.id, 'b', party.coverUrl), partyDetailPhoto(party.id, 'c')];
   const capPct = Math.min(100, Math.round(((party.capacity - party.spotsLeft) / party.capacity) * 100));
   const spotsUrgent = party.spotsLeft < 100;
   const soldOut = party.spotsLeft <= 0;
@@ -395,7 +395,7 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
                   style={{ background: '#171725', border: '1px solid rgba(255,255,255,0.08)' }}
                 >
                   <div className="relative h-[108px]" style={{ background: sp2.gradient }}>
-                    <PartyPhoto src={partyPhoto(sp2.id)} alt={sp2.title} gradient={sp2.gradient} sizes="195px" />
+                    <PartyPhoto src={partyPhoto(sp2.id, sp2.coverUrl)} alt={sp2.title} gradient={sp2.gradient} sizes="195px" />
                     <div className="pointer-events-none absolute inset-0 z-[1]" style={{ background: 'linear-gradient(to top, rgba(7,7,11,0.6), transparent 60%)' }} />
                     <div className="absolute bottom-[7px] left-2 z-[2]">
                       <span className="rounded-full px-2 py-[3px] text-[11px] font-semibold" style={{ background: VCB[sp2.vibe], color: VCT[sp2.vibe] }}>

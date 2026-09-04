@@ -229,7 +229,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
             {/* Event header */}
             <div className="overflow-hidden rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <div className="relative" style={{ height: 150, background: party.gradient }}>
-                <PartyPhoto src={partyPhoto(party.id)} alt={party.title} gradient={party.gradient} sizes="600px" />
+                <PartyPhoto src={partyPhoto(party.id, party.coverUrl)} alt={party.title} gradient={party.gradient} sizes="600px" />
                 <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(7,7,11,0.92) 0%, rgba(7,7,11,0.15) 70%)' }} />
                 <span className="absolute right-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: statusStyle.bg, color: statusStyle.color, backdropFilter: 'blur(8px)' }}>
                   {statusStyle.label}

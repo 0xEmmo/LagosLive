@@ -49,6 +49,7 @@ function toParty(row: PartyRow, userLocation?: { lat: number; lng: number } | nu
     isThisWeek: startsAt.getTime() - Date.now() < ONE_WEEK_MS && startsAt.getTime() > Date.now() - 24 * 60 * 60 * 1000,
     createdBy: row.created_by,
     status: row.status as PartyStatus,
+    coverUrl: row.cover_url ?? null,
   };
 }
 
@@ -98,6 +99,7 @@ export interface PartyFormInput {
   organizerEmail: string;
   description: string;
   gradient: string;
+  coverImage?: File | null;
 }
 
 function formatClock(d: Date) {
@@ -132,6 +134,7 @@ function toRow(input: PartyFormInput, createdBy: string): PartyInsert {
     organizer_email: input.organizerEmail.trim() || null,
     description: input.description,
     gradient: input.gradient,
+    cover_url: null,
     created_by: createdBy,
   };
 }
@@ -144,22 +147,83 @@ export async function createParty(input: PartyFormInput, createdBy: string): Pro
   const { data: promotedResult } = await (supabase as any).rpc('auto_promote_creator_to_organizer', {
     p_party_id: party.id,
   });
+  if (input.coverImage) {
+    const coverUrl = await uploadCoverImage(party.id, input.coverImage);
+    if (coverUrl) {
+      await supabase.from('parties').update({ cover_url: coverUrl }).eq('id', party.id);
+      party.coverUrl = coverUrl;
+    }
+  }
   return { party, promoted: !!promotedResult };
 }
 
+async function uploadCoverImage(partyId: number, file: File): Promise<string | null> {
+  try {
+    const resized = await resizeImage(file, 1200);
+    const ext = file.type === 'image/png' ? 'png' : 'jpg';
+    const path = `events/${partyId}/cover.${ext}`;
+    const { error } = await supabase.storage.from('event-images').upload(path, resized, {
+      upsert: true,
+      contentType: file.type,
+    });
+    if (error) {
+      console.error('Cover upload failed:', error.message);
+      return null;
+    }
+    const { data } = supabase.storage.from('event-images').getPublicUrl(path);
+    return data?.publicUrl ?? null;
+  } catch (err) {
+    console.error('Cover image processing failed:', err);
+    return null;
+  }
+}
+
+function resizeImage(file: File, maxPx: number): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > maxPx || height > maxPx) {
+        if (width > height) {
+          height = Math.round((height / width) * maxPx);
+          width = maxPx;
+        } else {
+          width = Math.round((width / height) * maxPx);
+          height = maxPx;
+        }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { reject(new Error('Canvas not supported')); return; }
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('toBlob failed')), file.type, 0.85);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Failed to load image')); };
+    img.src = url;
+  });
+}
+
 export async function updateParty(id: number, input: PartyFormInput): Promise<Party> {
-  // toRow needs a createdBy to satisfy PartyInsert's type, but an edit must never
-  // reassign ownership (an admin editing someone else's event would otherwise
-  // silently transfer it to themselves) — spots_left and created_by are both
-  // stripped from the actual update payload below.
   const row = toRow(input, '');
-  const { spots_left, created_by, ...updateFields } = row;
+  const { spots_left, created_by, cover_url, ...updateFields } = row;
   void spots_left;
   void created_by;
+  void cover_url;
   const { data, error } = await supabase.from('parties').update(updateFields).eq('id', id).select().single();
   if (error) throw error;
   await ensureGeneralTicketType(id, input.feeNum, input.capacity);
-  return toParty(data);
+  if (input.coverImage) {
+    const coverUrl = await uploadCoverImage(id, input.coverImage);
+    if (coverUrl) {
+      await supabase.from('parties').update({ cover_url: coverUrl }).eq('id', id);
+    }
+  }
+  const updated = await fetchPartyById(id);
+  return updated ?? toParty(data);
 }
 
 // Every organizer-created event gets one real purchasable ticket type

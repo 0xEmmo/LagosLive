@@ -162,7 +162,7 @@ export default function FolderReveal() {
                   }}
                 >
                   <div className="relative h-full w-full" style={{ background: p.gradient }}>
-                    <PartyPhoto src={partyPhoto(p.id)} alt={p.title} gradient={p.gradient} sizes="108px" />
+                    <PartyPhoto src={partyPhoto(p.id, p.coverUrl)} alt={p.title} gradient={p.gradient} sizes="108px" />
                     <div
                       className="pointer-events-none absolute inset-0"
                       style={{ background: 'linear-gradient(to top, rgba(7,7,11,0.85) 0%, rgba(7,7,11,0.15) 55%, transparent 75%)' }}

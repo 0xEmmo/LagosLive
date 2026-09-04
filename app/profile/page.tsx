@@ -147,7 +147,7 @@ export default function ProfilePage() {
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
             >
               <div className="relative h-[68px] w-[68px] flex-shrink-0 overflow-hidden rounded-[12px]" style={{ background: t.party.gradient }}>
-                <PartyPhoto src={partyPhoto(t.party.id)} alt={t.party.title} gradient={t.party.gradient} sizes="68px" />
+                <PartyPhoto src={partyPhoto(t.party.id, t.party.coverUrl)} alt={t.party.title} gradient={t.party.gradient} sizes="68px" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="truncate font-heading text-[13px] font-bold" style={{ color: '#FFFFFF' }}>{t.party.title}</div>

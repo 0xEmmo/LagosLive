@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, RefreshCw, Wallet, Landmark, CalendarDays, XCircle } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Wallet, Landmark, CalendarDays, XCircle, Plus } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import { useLagosLiveStore } from '@/lib/store';
-import { fetchPayouts, type PayoutRow } from '@/lib/admin-queries';
+import { fetchPayouts, fetchHostOrders, requestPayout, type PayoutRow, type AdminOrderJoined } from '@/lib/admin-queries';
 import { formatNaira } from '@/lib/filters';
 
 const STATUS_BADGE: Record<string, { label: string; bg: string; color: string }> = {
@@ -13,7 +13,10 @@ const STATUS_BADGE: Record<string, { label: string; bg: string; color: string }>
   processing: { label: 'Processing', bg: 'rgba(176,106,255,0.1)', color: '#B06AFF' },
   approved: { label: 'Approved', bg: 'rgba(0,191,255,0.1)', color: '#00BFFF' },
   paid: { label: 'Paid', bg: 'rgba(0,245,212,0.08)', color: '#00F5D4' },
+  rejected: { label: 'Rejected', bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
 };
+
+const MIN_PAYOUT = 500000; // ₦5,000 in kobo
 
 function fmtDate(iso: string | null, fallback = '—') {
   if (!iso) return fallback;
@@ -27,8 +30,12 @@ export default function HostPayoutsPage() {
   const user = useLagosLiveStore((s) => s.user);
   const authLoading = useLagosLiveStore((s) => s.authLoading);
   const [payouts, setPayouts] = useState<PayoutRow[]>([]);
+  const [orders, setOrders] = useState<AdminOrderJoined[]>([]);
   const [status, setStatus] = useState<'loading' | 'error' | 'ok'>('loading');
   const [attempt, setAttempt] = useState(0);
+  const [requesting, setRequesting] = useState(false);
+  const [requestMsg, setRequestMsg] = useState('');
+  const [showRequestForm, setShowRequestForm] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/login?next=%2Fhost%2Fpayouts');
@@ -37,9 +44,10 @@ export default function HostPayoutsPage() {
   useEffect(() => {
     if (!user) return;
     setStatus('loading');
-    fetchPayouts()
-      .then((p) => {
+    Promise.all([fetchPayouts(), fetchHostOrders(user.id)])
+      .then(([p, o]) => {
         setPayouts(p);
+        setOrders(o);
         setStatus('ok');
       })
       .catch(() => setStatus('error'));
@@ -50,6 +58,33 @@ export default function HostPayoutsPage() {
   const paid = payouts.filter((p) => p.status === 'paid').reduce((s, p) => s + p.amount, 0);
   const pending = payouts.filter((p) => p.status === 'pending' || p.status === 'processing' || p.status === 'approved').reduce((s, p) => s + p.amount, 0);
 
+  const confirmed = orders.filter((o) => o.payment_status === 'confirmed');
+  const totalRevenue = confirmed.reduce((s, o) => s + o.total, 0);
+  const paidOut = payouts.filter((p) => p.status === 'paid' || p.status === 'approved' || p.status === 'processing' || p.status === 'pending').reduce((s, p) => s + p.amount, 0);
+  const available = Math.max(0, totalRevenue - paidOut);
+  const canRequest = available >= MIN_PAYOUT;
+
+  const handleRequestPayout = async () => {
+    if (!user || !canRequest) return;
+    setRequesting(true);
+    setRequestMsg('');
+    try {
+      const now = new Date();
+      const periodStart = new Date(now.getTime() - 30 * 86400000).toISOString().split('T')[0];
+      const periodEnd = now.toISOString().split('T')[0];
+      const platformFee = Math.round(available * 0.15);
+      const payoutAmount = available - platformFee;
+      await requestPayout(user.id, payoutAmount, periodStart, periodEnd, available, platformFee, null);
+      setRequestMsg('Payout request submitted! It will be reviewed by our team.');
+      setShowRequestForm(false);
+      setAttempt((a) => a + 1);
+    } catch {
+      setRequestMsg('Failed to submit payout request. Please try again.');
+    } finally {
+      setRequesting(false);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-[600px] animate-fade-in">
       <div className="sticky top-0 z-40 flex items-center gap-3 border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150" style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}>
@@ -58,9 +93,10 @@ export default function HostPayoutsPage() {
       </div>
 
       <div className="flex flex-col gap-4 p-5">
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-3 gap-2.5">
           <Stat label="Paid Out" value={formatNaira(paid)} color="#00F5D4" icon={<Landmark size={14} strokeWidth={2} color="#00F5D4" />} />
           <Stat label="Pending" value={formatNaira(pending)} color="#FFD600" icon={<Wallet size={14} strokeWidth={2} color="#FFD600" />} />
+          <Stat label="Available" value={formatNaira(available)} color="#B06AFF" icon={<Wallet size={14} strokeWidth={2} color="#B06AFF" />} />
         </div>
 
         <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -68,6 +104,64 @@ export default function HostPayoutsPage() {
             Your revenue is settled to your bank after each payout cycle. Once a payout is <span className="font-semibold" style={{ color: '#00F5D4' }}>Paid</span>, funds should reach your account within a few business days.
           </div>
         </div>
+
+        {/* Request payout */}
+        <div className="rounded-2xl p-4" style={{ background: 'rgba(255,45,149,0.04)', border: '1px solid rgba(255,45,149,0.15)' }}>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[13px] font-semibold" style={{ color: '#FFFFFF' }}>Request Payout</div>
+              <div className="text-[11px]" style={{ color: '#A7A8B5' }}>
+                {canRequest
+                  ? `Available: ${formatNaira(available)} (min. ${formatNaira(MIN_PAYOUT)})`
+                  : `Minimum payout: ${formatNaira(MIN_PAYOUT)}. Available: ${formatNaira(available)}`}
+              </div>
+            </div>
+            <button
+              onClick={() => setShowRequestForm(!showRequestForm)}
+              disabled={!canRequest}
+              className="flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-[12px] font-bold transition-all disabled:opacity-40"
+              style={{ background: canRequest ? 'linear-gradient(135deg, #FF2D95, #8A2BE2)' : 'rgba(255,255,255,0.06)', color: '#FFFFFF' }}
+            >
+              <Plus size={14} strokeWidth={2.5} />
+              {canRequest ? 'Request' : 'Unavailable'}
+            </button>
+          </div>
+
+          {showRequestForm && canRequest && (
+            <div className="mt-3 border-t pt-3" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+              <div className="rounded-xl p-3 text-[12px]" style={{ background: 'rgba(255,255,255,0.03)', color: '#A7A8B5' }}>
+                <div className="mb-2 font-semibold" style={{ color: '#FFFFFF' }}>Payout Summary</div>
+                <div className="flex justify-between"><span>Gross revenue</span><span style={{ color: '#FFFFFF' }}>{formatNaira(available)}</span></div>
+                <div className="flex justify-between"><span>Platform fee (15%)</span><span style={{ color: '#FFFFFF' }}>-{formatNaira(Math.round(available * 0.15))}</span></div>
+                <div className="mt-1 flex justify-between border-t pt-1 font-bold" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+                  <span style={{ color: '#00F5D4' }}>You receive</span>
+                  <span style={{ color: '#00F5D4' }}>{formatNaira(available - Math.round(available * 0.15))}</span>
+                </div>
+              </div>
+              <button
+                onClick={handleRequestPayout}
+                disabled={requesting}
+                className="mt-3 w-full rounded-xl py-2.5 text-[13px] font-bold transition-all disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, #FF2D95, #8A2BE2)', color: '#FFFFFF' }}
+              >
+                {requesting ? 'Submitting...' : 'Confirm Payout Request'}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {requestMsg && (
+          <div
+            className="rounded-xl px-4 py-3 text-[12px]"
+            style={{
+              background: requestMsg.includes('Failed') ? 'rgba(255,45,149,0.1)' : 'rgba(0,245,212,0.08)',
+              border: `1px solid ${requestMsg.includes('Failed') ? 'rgba(255,45,149,0.25)' : 'rgba(0,245,212,0.2)'}`,
+              color: requestMsg.includes('Failed') ? '#FF2D95' : '#00F5D4',
+            }}
+          >
+            {requestMsg}
+          </div>
+        )}
 
         {status === 'loading' ? (
           <div className="flex flex-col gap-2.5">

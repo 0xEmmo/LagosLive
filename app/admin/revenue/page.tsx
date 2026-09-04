@@ -20,6 +20,7 @@ const PAYOUT_STATUS: Record<string, { bg: string; color: string }> = {
   processing: { bg: 'rgba(176,106,255,0.12)', color: '#B06AFF' },
   approved: { bg: 'rgba(0,245,212,0.1)', color: '#00F5D4' },
   paid: { bg: 'rgba(0,245,212,0.18)', color: '#00F5D4' },
+  rejected: { bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
 };
 
 const NEXT_STATUS: Record<string, string> = {
@@ -81,6 +82,16 @@ export default function RevenuePage() {
       setPayouts((prev) => prev.map((p) => (p.id === payout.id ? { ...p, status: next } : p)));
     } catch {
       /* silent – RLS may block */
+    }
+  };
+
+  const handlePayoutReject = async (payout: PayoutRow) => {
+    if (payout.status !== 'pending') return;
+    try {
+      await updatePayoutStatus(payout.id, 'rejected');
+      setPayouts((prev) => prev.map((p) => (p.id === payout.id ? { ...p, status: 'rejected' } : p)));
+    } catch {
+      /* silent */
     }
   };
 
@@ -179,15 +190,26 @@ export default function RevenuePage() {
                           />
                         </Cell>
                         <Cell>{p.bank_last4 ? `•••• ${p.bank_last4}` : '—'}</Cell>
-                        <Cell>
+                         <Cell>
                           {ACTION_LABEL[p.status] && (
-                            <button
-                              onClick={() => handlePayoutAction(p)}
-                              className="rounded-lg px-3 py-1.5 text-[11px] font-bold transition-colors"
-                              style={{ background: 'rgba(255,45,149,0.12)', border: '1px solid rgba(255,45,149,0.3)', color: '#FF2D95' }}
-                            >
-                              {ACTION_LABEL[p.status]}
-                            </button>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => handlePayoutAction(p)}
+                                className="rounded-lg px-3 py-1.5 text-[11px] font-bold transition-colors"
+                                style={{ background: 'rgba(255,45,149,0.12)', border: '1px solid rgba(255,45,149,0.3)', color: '#FF2D95' }}
+                              >
+                                {ACTION_LABEL[p.status]}
+                              </button>
+                              {p.status === 'pending' && (
+                                <button
+                                  onClick={() => handlePayoutReject(p)}
+                                  className="rounded-lg px-3 py-1.5 text-[11px] font-bold transition-colors"
+                                  style={{ background: 'rgba(255,45,149,0.06)', border: '1px solid rgba(255,45,149,0.2)', color: '#FF8A00' }}
+                                >
+                                  Reject
+                                </button>
+                              )}
+                            </div>
                           )}
                         </Cell>
                       </tr>

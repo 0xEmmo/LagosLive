@@ -15,6 +15,7 @@ import {
   LifeBuoy,
   ScrollText,
   ShieldCheck,
+  Activity,
 } from 'lucide-react';
 import { useLagosLiveStore } from '@/lib/store';
 import { isAdmin, type Role } from '@/lib/authz';

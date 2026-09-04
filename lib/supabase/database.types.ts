@@ -587,6 +587,54 @@ export type Database = {
           },
         ]
       }
+      canned_responses: {
+        Row: {
+          body: string
+          created_at: string
+          id: number
+          label: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: number
+          label: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: number
+          label?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      faqs: {
+        Row: {
+          answer: string
+          created_at: string
+          id: number
+          question: string
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: number
+          question: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: number
+          question?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

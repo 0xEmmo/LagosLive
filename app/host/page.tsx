@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, CalendarPlus, ShieldCheck, CalendarDays, Clock, Ticket, Wallet, Settings, ListOrdered, AlertTriangle, RefreshCw, type LucideIcon } from 'lucide-react';
+import { Plus, CalendarPlus, ShieldCheck, CalendarDays, Clock, Ticket, Wallet, Settings, ListOrdered, Activity, AlertTriangle, RefreshCw, type LucideIcon } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import PartyPhoto from '@/components/PartyPhoto';
 import { RevenueLineChart, PieChartDisplay, ChartCard } from '@/components/ui/charts';
@@ -172,6 +172,14 @@ export default function HostDashboardPage() {
           >
             <Wallet size={14} strokeWidth={2} />
             Payouts
+          </Link>
+          <Link
+            href="/host/analytics"
+            className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[13px] font-semibold glass glass-hover"
+            style={{ color: '#A7A8B5' }}
+          >
+            <Activity size={14} strokeWidth={2} />
+            Analytics
           </Link>
           <Link
             href="/host/new"

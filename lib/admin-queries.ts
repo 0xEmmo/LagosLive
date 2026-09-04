@@ -14,6 +14,24 @@ export type AuditRow = Database['public']['Tables']['audit_logs']['Row'];
 export type TicketRow = Database['public']['Tables']['support_tickets']['Row'];
 export type NoteRow = Database['public']['Tables']['admin_notes']['Row'];
 
+// canned_responses + faqs are defined in migration 00014; explicit interfaces
+// so we don't depend on regenerated DB types.
+export interface CannedRow {
+  id: number;
+  label: string;
+  body: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FaqRow {
+  id: number;
+  question: string;
+  answer: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AdminOrderJoined extends OrderRow {
   parties?: {
     id: number;
@@ -389,6 +407,182 @@ export async function flagEvent(id: number, flagged: boolean): Promise<void> {
 export async function updateEventNotes(id: number, adminNotes: string): Promise<void> {
   const { error } = await supabase.from('parties').update({ admin_notes: adminNotes }).eq('id', id);
   if (error) throw error;
+}
+
+// ---- Support messages --------------------------------------------------------
+
+export type SupportMessageRow = Database['public']['Tables']['support_messages']['Row'];
+
+export async function fetchSupportMessages(ticketId: number): Promise<SupportMessageRow[]> {
+  const { data, error } = await supabase
+    .from('support_messages')
+    .select('*')
+    .eq('ticket_id', ticketId)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as SupportMessageRow[];
+}
+
+export async function createSupportMessage(ticketId: number, body: string, isInternal = false): Promise<void> {
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData.user) throw new Error('Not authenticated');
+  const { error } = await supabase
+    .from('support_messages')
+    .insert({ ticket_id: ticketId, author_id: authData.user.id, body, is_internal: isInternal });
+  if (error) throw error;
+  // Update ticket updated_at
+  await supabase.from('support_tickets').update({ updated_at: new Date().toISOString() }).eq('id', ticketId);
+}
+
+// ---- Support settings (canned responses + FAQs) ----------------------------
+
+export async function fetchCannedResponses(): Promise<CannedRow[]> {
+  const { data, error } = await supabase.from('canned_responses').select('*').order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as CannedRow[];
+}
+
+export async function fetchFaqs(): Promise<FaqRow[]> {
+  const { data, error } = await supabase.from('faqs').select('*').order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as FaqRow[];
+}
+
+export async function upsertCannedResponses(items: { id?: number; label: string; body: string }[]): Promise<void> {
+  const rows = items
+    .filter((c) => c.label.trim() && c.body.trim())
+    .map((c) => ({
+      ...(c.id ? { id: c.id } : {}),
+      label: c.label.trim(),
+      body: c.body.trim(),
+      updated_at: new Date().toISOString(),
+    }));
+  if (rows.length === 0) return;
+  const { error } = await supabase.from('canned_responses').upsert(rows);
+  if (error) throw error;
+}
+
+export async function upsertFaqs(items: { id?: number; question: string; answer: string }[]): Promise<void> {
+  const rows = items
+    .filter((f) => f.question.trim() && f.answer.trim())
+    .map((f) => ({
+      ...(f.id ? { id: f.id } : {}),
+      question: f.question.trim(),
+      answer: f.answer.trim(),
+      updated_at: new Date().toISOString(),
+    }));
+  if (rows.length === 0) return;
+  const { error } = await supabase.from('faqs').upsert(rows);
+  if (error) throw error;
+}
+
+// ---- Host analytics ---------------------------------------------------------
+
+export interface HostAnalyticsSummary {
+  totalRevenue: number;
+  totalTicketsSold: number;
+  totalOrders: number;
+  avgOrderValue: number;
+  eventsCount: number;
+  pendingOrders: number;
+  failedOrders: number;
+}
+
+export async function fetchHostAnalytics(userId: string): Promise<HostAnalyticsSummary> {
+  const { data: events, error: eventsError } = await supabase
+    .from('parties')
+    .select('id')
+    .eq('created_by', userId);
+  if (eventsError) throw eventsError;
+  const eventIds = (events ?? []).map((e) => e.id);
+  if (eventIds.length === 0) {
+    return { totalRevenue: 0, totalTicketsSold: 0, totalOrders: 0, avgOrderValue: 0, eventsCount: 0, pendingOrders: 0, failedOrders: 0 };
+  }
+  const { data: orders, error: ordersError } = await supabase
+    .from('orders')
+    .select('quantity, total, payment_status')
+    .in('party_id', eventIds);
+  if (ordersError) throw ordersError;
+
+  let totalRevenue = 0;
+  let totalTicketsSold = 0;
+  let totalConfirmed = 0;
+  let pendingOrders = 0;
+  let failedOrders = 0;
+  for (const o of orders ?? []) {
+    if (o.payment_status === 'confirmed') {
+      totalRevenue += o.total;
+      totalTicketsSold += o.quantity;
+      totalConfirmed += 1;
+    } else if (o.payment_status === 'pending') {
+      pendingOrders += 1;
+    } else if (o.payment_status === 'failed') {
+      failedOrders += 1;
+    }
+  }
+  return {
+    totalRevenue,
+    totalTicketsSold,
+    totalOrders: (orders ?? []).length,
+    avgOrderValue: totalConfirmed > 0 ? totalRevenue / totalConfirmed : 0,
+    eventsCount: eventIds.length,
+    pendingOrders,
+    failedOrders,
+  };
+}
+
+export async function fetchHostRevenueTrend(userId: string, days: number): Promise<{ label: string; value: number }[]> {
+  const { data: events } = await supabase.from('parties').select('id').eq('created_by', userId);
+  const eventIds = (events ?? []).map((e) => e.id);
+  if (eventIds.length === 0) return buildDailyRevenueSeries(days, []);
+  const { data } = await supabase
+    .from('orders')
+    .select('created_at, total, payment_status')
+    .in('party_id', eventIds);
+  return buildDailyRevenueSeries(days, data ?? []);
+}
+
+export async function fetchHostEventsByCategory(userId: string): Promise<{ label: string; value: number }[]> {
+  const { data } = await supabase.from('parties').select('vibe, status').eq('created_by', userId);
+  const counts: Record<string, number> = {};
+  for (const p of data ?? []) {
+    if (p.status !== 'approved') continue;
+    counts[p.vibe] = (counts[p.vibe] || 0) + 1;
+  }
+  return Object.entries(counts)
+    .map(([label, value]) => ({ label, value }))
+    .sort((a, b) => b.value - a.value);
+}
+
+// ---- Payout request (host self-service) ------------------------------------
+
+export async function requestPayout(
+  organizerId: string,
+  amount: number,
+  periodStart: string,
+  periodEnd: string,
+  revenue: number,
+  platformFee: number,
+  bankLast4: string | null
+): Promise<void> {
+  const { error } = await supabase.from('payouts').insert({
+    organizer_id: organizerId,
+    period_start: periodStart,
+    period_end: periodEnd,
+    revenue,
+    platform_fee: platformFee,
+    amount,
+    bank_last4: bankLast4,
+  });
+  if (error) throw error;
+}
+
+// ---- Analytics time range ---------------------------------------------------
+
+export function filterOrdersByDays(orders: AdminOrderJoined[], days: number): AdminOrderJoined[] {
+  if (days <= 0) return orders;
+  const cutoff = Date.now() - days * 86400000;
+  return orders.filter((o) => new Date(o.created_at).getTime() >= cutoff);
 }
 
 // ---- Export helpers ----------------------------------------------------------

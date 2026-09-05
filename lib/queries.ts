@@ -1,6 +1,6 @@
 import { supabase } from './supabase/client';
 import type { Database } from './supabase/database.types';
-import type { CustomerTicket, Party, PartyStatus, TicketType, Vibe } from './types';
+import type { CustomerTicket, Party, PartyStatus, Review, TicketType, Vibe } from './types';
 import { haversineKm } from './geo';
 
 type PartyRow = Database['public']['Tables']['parties']['Row'];
@@ -50,6 +50,10 @@ function toParty(row: PartyRow, userLocation?: { lat: number; lng: number } | nu
     createdBy: row.created_by,
     status: row.status as PartyStatus,
     coverUrl: row.cover_url ?? null,
+    cancelledAt: row.cancelled_at ?? null,
+    cancellationReason: row.cancellation_reason ?? null,
+    reviewCount: row.review_count ?? 0,
+    avgRating: Number(row.avg_rating ?? 0),
   };
 }
 
@@ -76,6 +80,69 @@ export async function fetchPartiesByOwner(userId: string): Promise<Party[]> {
     .order('starts_at', { ascending: false });
   if (error) throw error;
   return data.map((row) => toParty(row));
+}
+
+// ---------------------------------------------------------------------------
+// Batch 18 — search + reviews.
+// ---------------------------------------------------------------------------
+
+export type EventSearchSort = 'trending' | 'newest' | 'price' | 'rating';
+
+export interface EventSearchInput {
+  query?: string;
+  sortBy?: EventSearchSort;
+}
+
+// Simplified search (Batch 18): free-text match on title / description /
+// location / organizer, restricted to non-cancelled, approved, upcoming events
+// and sorted server-side. Mirrors the "smart defaults" the /explore page relies
+// on — the client never has to remember filters.
+export async function searchUpcomingEvents(
+  input: EventSearchInput,
+  userLocation?: { lat: number; lng: number } | null
+): Promise<Party[]> {
+  const clean = (input.query ?? '').trim().replace(/,/g, ' ');
+  let query = supabase
+    .from('parties')
+    .select('*')
+    .eq('status', 'approved')
+    .is('cancelled_at', null)
+    .gte('starts_at', new Date().toISOString());
+
+  if (clean) {
+    const like = `%${clean}%`;
+    query = query.or(`title.ilike.${like},description.ilike.${like},location.ilike.${like},organizer.ilike.${like}`);
+  }
+
+  if (input.sortBy === 'newest') query = query.order('created_at', { ascending: false });
+  else if (input.sortBy === 'price') query = query.order('fee_num', { ascending: true });
+  else if (input.sortBy === 'rating') query = query.order('avg_rating', { ascending: false });
+  else query = query.order('page_views', { ascending: false });
+
+  const { data, error } = await query.limit(50);
+  if (error) throw error;
+  return (data ?? []).map((row) => toParty(row, userLocation));
+}
+
+// Public reviews for an event, newest first. Reviews carry a denormalised
+// guest_name so no join to the profile-restricted profiles table is needed.
+export async function fetchEventReviews(partyId: number): Promise<Review[]> {
+  const { data, error } = await supabase
+    .from('reviews')
+    .select('*')
+    .eq('party_id', partyId)
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    partyId: row.party_id,
+    guestId: row.guest_id,
+    guestName: row.guest_name,
+    rating: row.rating,
+    reviewText: row.review_text,
+    createdAt: row.created_at,
+  }));
 }
 
 export interface PartyFormInput {
@@ -287,6 +354,8 @@ function toCustomerTicket(row: OrderRow): CustomerTicket | null {
     total: row.total,
     orderRef: row.order_ref,
     paymentStatus: row.payment_status as CustomerTicket['paymentStatus'],
+    refundStatus: row.refund_status ?? null,
+    refundAmount: row.refund_amount ?? 0,
     createdAt: row.created_at,
   };
 }

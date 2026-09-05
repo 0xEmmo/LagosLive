@@ -4,6 +4,7 @@ import './globals.css';
 import ThemeEffect from '@/components/ThemeEffect';
 import AuthListener from '@/components/AuthListener';
 import ReminderScheduler from '@/components/ReminderScheduler';
+import NewsletterModal from '@/components/NewsletterModal';
 import Toast from '@/components/Toast';
 import BottomNav from '@/components/BottomNav';
 
@@ -69,6 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthListener />
         <ReminderScheduler />
         <Toast />
+        <NewsletterModal />
         {children}
         <BottomNav />
       </body>

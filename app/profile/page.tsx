@@ -139,31 +139,43 @@ export default function ProfilePage() {
         </div>
       ) : (
         <div className="mb-5 flex flex-col gap-2.5">
-          {tickets.map((t) => (
-            <Link
-              key={t.id}
-              href={`/ticket/${t.id}`}
-              className="flex items-center gap-3 rounded-2xl p-2.5 transition-all duration-200 active:scale-[0.98]"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
-            >
-              <div className="relative h-[68px] w-[68px] flex-shrink-0 overflow-hidden rounded-[12px]" style={{ background: t.party.gradient }}>
-                <PartyPhoto src={partyPhoto(t.party.id, t.party.coverUrl)} alt={t.party.title} gradient={t.party.gradient} sizes="68px" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="truncate font-heading text-[13px] font-bold" style={{ color: '#FFFFFF' }}>{t.party.title}</div>
-                <div className="mt-0.5 truncate text-[11px]" style={{ color: '#A7A8B5' }}>{t.party.date} · {t.party.time}</div>
-                <div className="mt-1 flex items-center gap-1.5">
-                  <span className="rounded-full px-2 py-[2px] text-[10px] font-semibold" style={{ background: 'rgba(255,90,46,0.12)', border: '1px solid rgba(255,90,46,0.25)', color: '#FF7F5C' }}>
-                    {t.ticketTypeName} × {t.quantity}
-                  </span>
-                  <span className="truncate text-[10px]" style={{ color: '#6B6C80' }}>{t.orderRef}</span>
+          {tickets.map((t) => {
+            const cancelled = !!t.party.cancelledAt || t.refundStatus === 'completed';
+            return (
+              <Link
+                key={t.id}
+                href={`/ticket/${t.id}`}
+                className="flex items-center gap-3 rounded-2xl p-2.5 transition-all duration-200 active:scale-[0.98]"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', opacity: cancelled ? 0.6 : 1 }}
+              >
+                <div className="relative h-[68px] w-[68px] flex-shrink-0 overflow-hidden rounded-[12px]" style={{ background: t.party.gradient }}>
+                  <PartyPhoto src={partyPhoto(t.party.id, t.party.coverUrl)} alt={t.party.title} gradient={t.party.gradient} sizes="68px" />
+                  {cancelled && <div className="absolute inset-0 bg-black/40" />}
                 </div>
-              </div>
-              <span className="flex-shrink-0 rounded-full px-2 py-[3px] text-[10px] font-bold uppercase tracking-[0.5px]" style={{ background: 'rgba(62,207,142,0.1)', border: '1px solid rgba(62,207,142,0.25)', color: '#3ECF8E' }}>
-                Confirmed
-              </span>
-            </Link>
-          ))}
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-heading text-[13px] font-bold" style={{ color: cancelled ? '#A7A8B5' : '#FFFFFF', textDecoration: cancelled ? 'line-through' : 'none' }}>
+                    {t.party.title}
+                  </div>
+                  <div className="mt-0.5 truncate text-[11px]" style={{ color: '#A7A8B5' }}>{t.party.date} · {t.party.time}</div>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <span className="rounded-full px-2 py-[2px] text-[10px] font-semibold" style={{ background: 'rgba(255,90,46,0.12)', border: '1px solid rgba(255,90,46,0.25)', color: '#FF7F5C' }}>
+                      {t.ticketTypeName} × {t.quantity}
+                    </span>
+                    <span className="truncate text-[10px]" style={{ color: '#6B6C80' }}>{t.orderRef}</span>
+                  </div>
+                </div>
+                {cancelled ? (
+                  <span className="flex-shrink-0 rounded-full px-2 py-[3px] text-[10px] font-bold uppercase tracking-[0.5px]" style={{ background: 'rgba(255,45,149,0.12)', border: '1px solid rgba(255,45,149,0.3)', color: '#FF2D95' }}>
+                    Refunded
+                  </span>
+                ) : (
+                  <span className="flex-shrink-0 rounded-full px-2 py-[3px] text-[10px] font-bold uppercase tracking-[0.5px]" style={{ background: 'rgba(62,207,142,0.1)', border: '1px solid rgba(62,207,142,0.25)', color: '#3ECF8E' }}>
+                    Confirmed
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </div>
       )}
 

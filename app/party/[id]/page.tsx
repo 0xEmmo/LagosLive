@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
@@ -20,6 +20,8 @@ import {
   Link as LinkIcon,
   AlertTriangle,
   RefreshCw,
+  Star,
+  PenLine,
 } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import PartyCard from '@/components/PartyCard';
@@ -31,11 +33,27 @@ import { partyPhoto, partyDetailPhoto, VCB, VCT, distanceColor } from '@/lib/dat
 import { useParty } from '@/lib/hooks/useParty';
 import { useParties } from '@/lib/hooks/useParties';
 import { useLagosLiveStore } from '@/lib/store';
+import { fetchEventReviews } from '@/lib/queries';
+import type { Review } from '@/lib/types';
 
 export default function PartyDetailPage({ params }: { params: { id: string } }) {
   const { party, loading, error, retry } = useParty(Number(params.id));
   const { parties } = useParties();
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setReviewsLoading(true);
+    fetchEventReviews(Number(params.id))
+      .then((rows) => !cancelled && setReviews(rows))
+      .catch((err) => console.error('[party] reviews load error', err))
+      .finally(() => !cancelled && setReviewsLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [params.id]);
 
   const saved = useLagosLiveStore((s) => (party ? s.savedParties.includes(party.id) : false));
   const reminded = useLagosLiveStore((s) => (party ? s.reminders.includes(party.id) : false));
@@ -379,6 +397,83 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
               Copy Link
             </button>
           </div>
+        </div>
+
+        {/* Reviews */}
+        <div className="mb-6">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-[11px] font-bold uppercase tracking-[1.5px]" style={{ color: '#A7A8B5' }}>
+              Reviews
+            </h3>
+            {party.avgRating > 0 && (
+              <span className="flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: '#FFFFFF' }}>
+                <Star size={14} strokeWidth={2} fill="#FFD600" color="#FFD600" />
+                {party.avgRating.toFixed(1)}
+                <span style={{ color: '#6B6C80', fontWeight: 400 }}>
+                  ({party.reviewCount} {party.reviewCount === 1 ? 'review' : 'reviews'})
+                </span>
+              </span>
+            )}
+          </div>
+
+          {new Date(party.startsAt).getTime() < Date.now() && !party.cancelledAt && (
+            <Link
+              href={`/review/${party.id}`}
+              className="mb-3 flex items-center justify-center gap-2 rounded-[12px] py-3 text-[13px] font-bold transition-all duration-200 active:scale-[0.98]"
+              style={{ background: 'rgba(255,214,0,0.08)', border: '1px solid rgba(255,214,0,0.25)', color: '#FFD600' }}
+            >
+              <PenLine size={14} strokeWidth={2} />
+              {party.reviewCount > 0 ? 'Update your review' : 'Review this event'}
+            </Link>
+          )}
+
+          {reviewsLoading ? (
+            <div className="space-y-2.5">
+              {[0, 1].map((i) => (
+                <div key={i} className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div className="mb-2 h-3 w-24 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                  <div className="h-3 w-full rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                </div>
+              ))}
+            </div>
+          ) : reviews.length === 0 ? (
+            <div className="rounded-2xl px-4 py-6 text-center" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="text-[13px]" style={{ color: '#6B6C80' }}>
+                No reviews yet. Be the first to tell everyone about the vibe.
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2.5">
+              {reviews.map((r) => (
+                <div key={r.id} className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="text-[13px] font-semibold" style={{ color: '#FFFFFF' }}>
+                      {r.guestName}
+                    </span>
+                    <span className="flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          size={11}
+                          strokeWidth={2}
+                          fill={star <= r.rating ? '#FFD600' : 'none'}
+                          color={star <= r.rating ? '#FFD600' : '#3A3A4D'}
+                        />
+                      ))}
+                    </span>
+                  </div>
+                  {r.reviewText && (
+                    <p className="text-[13px] leading-[1.6]" style={{ color: '#A7A8B5' }}>
+                      {r.reviewText}
+                    </p>
+                  )}
+                  <div className="mt-1.5 text-[10px]" style={{ color: '#6B6C80' }}>
+                    {new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {similarParties.length > 0 && (

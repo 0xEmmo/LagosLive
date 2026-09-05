@@ -19,6 +19,7 @@ export type Database = {
           admin_notes: string | null
           check_in_status: string
           checked_in_at: string | null
+          cancellation_reason: string | null
           created_at: string
           customer_email: string | null
           fulfilled_at: string | null
@@ -32,6 +33,7 @@ export type Database = {
           refund_amount: number
           refund_status: string
           refunded_at: string | null
+          review_emailed_at: string | null
           service_fee: number
           status: string
           ticket_access_token: string | null
@@ -45,6 +47,7 @@ export type Database = {
           admin_notes?: string | null
           check_in_status?: string
           checked_in_at?: string | null
+          cancellation_reason?: string | null
           created_at?: string
           customer_email?: string | null
           fulfilled_at?: string | null
@@ -71,6 +74,7 @@ export type Database = {
           admin_notes?: string | null
           check_in_status?: string
           checked_in_at?: string | null
+          cancellation_reason?: string | null
           created_at?: string
           customer_email?: string | null
           fulfilled_at?: string | null
@@ -84,6 +88,7 @@ export type Database = {
           refund_amount?: number
           refund_status?: string
           refunded_at?: string | null
+          review_emailed_at?: string | null
           service_fee?: number
           status?: string
           ticket_access_token?: string | null
@@ -158,6 +163,10 @@ export type Database = {
           age_restriction: string
           banned_words: number
           capacity: number
+          cancelled_at: string | null
+          cancellation_reason: string | null
+          avg_rating: number
+          review_count: number
           created_at: string
           created_by: string | null
           cover_url: string | null
@@ -195,6 +204,10 @@ export type Database = {
           age_restriction: string
           banned_words?: number
           capacity: number
+          cancelled_at?: string | null
+          cancellation_reason?: string | null
+          avg_rating?: number
+          review_count?: number
            created_at?: string
           created_by?: string | null
           cover_url?: string | null
@@ -232,6 +245,10 @@ export type Database = {
           age_restriction?: string
           banned_words?: number
           capacity?: number
+          cancelled_at?: string | null
+          cancellation_reason?: string | null
+          avg_rating?: number
+          review_count?: number
           created_at?: string
           created_by?: string | null
           cover_url?: string | null
@@ -644,11 +661,159 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          id: string
+          party_id: number
+          guest_id: string
+          guest_name: string
+          rating: number
+          review_text: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          party_id: number
+          guest_id: string
+          guest_name?: string
+          rating: number
+          review_text?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          party_id?: number
+          guest_id?: string
+          guest_name?: string
+          rating?: number
+          review_text?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      newsletter_subscribers: {
+        Row: {
+          id: string
+          email: string
+          first_name: string | null
+          last_name: string | null
+          subscribed_at: string
+          unsubscribe_token: string | null
+          verified: boolean
+        }
+        Insert: {
+          id?: string
+          email: string
+          first_name?: string | null
+          last_name?: string | null
+          subscribed_at?: string
+          unsubscribe_token?: string | null
+          verified?: boolean
+        }
+        Update: {
+          id?: string
+          email?: string
+          first_name?: string | null
+          last_name?: string | null
+          subscribed_at?: string
+          unsubscribe_token?: string | null
+          verified?: boolean
+        }
+        Relationships: []
+      }
+      email_campaigns: {
+        Row: {
+          id: string
+          title: string
+          subject: string
+          html_content: string
+          sent_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          subject: string
+          html_content: string
+          sent_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          subject?: string
+          html_content?: string
+          sent_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      campaign_sends: {
+        Row: {
+          id: string
+          campaign_id: string
+          subscriber_email: string | null
+          sent_at: string
+          opened_at: string | null
+          clicked_at: string | null
+        }
+        Insert: {
+          id?: string
+          campaign_id: string
+          subscriber_email?: string | null
+          sent_at?: string
+          opened_at?: string | null
+          clicked_at?: string | null
+        }
+        Update: {
+          id?: string
+          campaign_id?: string
+          subscriber_email?: string | null
+          sent_at?: string
+          opened_at?: string | null
+          clicked_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_sends_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "email_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      add_event_review: {
+        Args: {
+          p_party_id: number
+          p_rating: number
+          p_review_text: string
+        }
+        Returns: undefined
+      }
       confirm_order_payment: {
         Args: {
           p_order_id: string

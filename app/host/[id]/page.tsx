@@ -19,17 +19,18 @@ import {
   QrCode,
   MapPin,
   TrendingUp,
+  Star,
   type LucideIcon,
 } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import PartyPhoto from '@/components/PartyPhoto';
 import SalesChart from '@/components/SalesChart';
-import { fetchOrganizerEventAnalytics, partyShareUrl, type OrganizerEventAnalytics } from '@/lib/queries';
+import { fetchOrganizerEventAnalytics, partyShareUrl, fetchEventReviews, type OrganizerEventAnalytics } from '@/lib/queries';
 import { formatNaira } from '@/lib/filters';
 import { partyPhoto } from '@/lib/data';
 import { useParty } from '@/lib/hooks/useParty';
 import { useLagosLiveStore } from '@/lib/store';
-import type { PartyStatus } from '@/lib/types';
+import type { PartyStatus, Review } from '@/lib/types';
 
 const STATUS_STYLE: Record<PartyStatus, { label: string; bg: string; color: string }> = {
   pending: { label: 'Pending Review', bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
@@ -82,6 +83,21 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!party) return;
+    let cancelled = false;
+    setReviewsLoading(true);
+    fetchEventReviews(party.id)
+      .then((rows) => !cancelled && setReviews(rows))
+      .catch((err) => console.error('[host] reviews load error', err))
+      .finally(() => !cancelled && setReviewsLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [party]);
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/login?next=' + encodeURIComponent(`/host/${params.id}`));
@@ -179,6 +195,16 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
             <Pencil size={13} strokeWidth={2} />
             Edit
           </Link>
+          {!party.cancelledAt && (
+            <Link
+              href={`/host/${party.id}/cancel`}
+              className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-bold"
+              style={{ background: 'rgba(255,45,149,0.12)', border: '1px solid rgba(255,45,149,0.35)', color: '#FF2D95' }}
+            >
+              <XCircle size={13} strokeWidth={2} />
+              Cancel
+            </Link>
+          )}
           <Link
             href={`/host/${party.id}/check-in`}
             className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-semibold"
@@ -191,6 +217,22 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
       </div>
 
       <div className="flex flex-col gap-4 p-5">
+        {party.cancelledAt && (
+          <div className="rounded-2xl p-4" style={{ background: 'rgba(255,45,149,0.08)', border: '1px solid rgba(255,45,149,0.28)' }}>
+            <div className="flex items-center gap-2.5">
+              <XCircle size={16} strokeWidth={2} color="#FF2D95" className="flex-shrink-0" />
+              <div>
+                <div className="text-[13px] font-bold uppercase tracking-[0.5px]" style={{ color: '#FF2D95' }}>
+                  Event Cancelled
+                </div>
+                <div className="mt-0.5 text-[12px]" style={{ color: '#F2A5C9' }}>
+                  All guests were refunded. {party.cancellationReason ? `Reason: ${party.cancellationReason}` : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Share card */}
         <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,45,149,0.16)' }}>
           <div className="mb-1.5 flex items-center justify-between gap-2">
@@ -307,6 +349,66 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
                       </div>
                       <div className="text-[10px] uppercase tracking-[0.6px]" style={{ color: '#6B6C80' }}>
                         {tt.total} total · {tt.price === 0 ? 'Free' : formatNaira(tt.price)} each
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Reviews */}
+            <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-[1px]" style={{ color: '#A7A8B5' }}>
+                  Guest Reviews
+                </span>
+                {party.avgRating > 0 ? (
+                  <span className="flex items-center gap-1 text-[12px] font-semibold" style={{ color: '#FFFFFF' }}>
+                    <Star size={13} strokeWidth={2} fill="#FFD600" color="#FFD600" />
+                    {party.avgRating.toFixed(1)}
+                    <span style={{ color: '#6B6C80', fontWeight: 400 }}>({party.reviewCount})</span>
+                  </span>
+                ) : (
+                  <span className="text-[11px]" style={{ color: '#6B6C80' }}>No ratings yet</span>
+                )}
+              </div>
+
+              {reviewsLoading ? (
+                <div className="space-y-2.5">
+                  {[0, 1].map((i) => (
+                    <div key={i} className="rounded-xl p-3.5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div className="mb-2 h-2.5 w-20 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                      <div className="h-2.5 w-full rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                    </div>
+                  ))}
+                </div>
+              ) : reviews.length === 0 ? (
+                <div className="text-[12px]" style={{ color: '#6B6C80' }}>
+                  No reviews yet — they appear here once guests rate the event.
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2.5">
+                  {reviews.map((r) => (
+                    <div key={r.id} className="rounded-xl p-3.5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <span className="text-[12px] font-semibold" style={{ color: '#FFFFFF' }}>{r.guestName}</span>
+                        <span className="flex gap-0.5">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              size={10}
+                              strokeWidth={2}
+                              fill={star <= r.rating ? '#FFD600' : 'none'}
+                              color={star <= r.rating ? '#FFD600' : '#3A3A4D'}
+                            />
+                          ))}
+                        </span>
+                      </div>
+                      {r.reviewText && (
+                        <p className="text-[12px] leading-[1.6]" style={{ color: '#A7A8B5' }}>{r.reviewText}</p>
+                      )}
+                      <div className="mt-1 text-[10px]" style={{ color: '#6B6C80' }}>
+                        {new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </div>
                     </div>
                   ))}

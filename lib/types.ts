@@ -42,6 +42,20 @@ export interface Party {
   createdBy: string | null;
   status: PartyStatus;
   coverUrl: string | null;
+  cancelledAt: string | null;
+  cancellationReason: string | null;
+  reviewCount: number;
+  avgRating: number;
+}
+
+export interface Review {
+  id: string;
+  partyId: number;
+  guestId: string;
+  guestName: string;
+  rating: number;
+  reviewText: string | null;
+  createdAt: string;
 }
 
 export type DateFilter = 'Tonight' | 'This Week' | 'This Weekend' | 'Next Week';
@@ -71,5 +85,7 @@ export interface CustomerTicket {
   total: number;
   orderRef: string;
   paymentStatus: OrderPaymentStatus;
+  refundStatus: string | null;
+  refundAmount: number;
   createdAt: string;
 }

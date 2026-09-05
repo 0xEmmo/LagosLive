@@ -297,3 +297,179 @@ export async function sendPayoutStatusEmail(data: PayoutStatusEmailData): Promis
     return false;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Batch 18 — transactional emails (best-effort, same pattern as the others).
+// ---------------------------------------------------------------------------
+
+interface SendHtmlEmailArgs {
+  to: string;
+  subject: string;
+  html: string;
+  scheduledAt?: string;
+}
+
+// Shared best-effort sender for the Batch 18 emails. Never throws: every
+// delivery problem is logged and the caller gets a boolean back.
+async function sendHtmlEmail({ to, subject, html, scheduledAt }: SendHtmlEmailArgs): Promise<boolean> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn('[resend] RESEND_API_KEY is not configured — skipping email to', to);
+    return false;
+  }
+  const from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  try {
+    const response = await fetch(RESEND_API, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from,
+        to: [to],
+        subject,
+        html,
+        ...(scheduledAt ? { scheduled_at: scheduledAt } : {}),
+      }),
+    });
+    const bodyText = await response.text();
+    if (!response.ok) {
+      console.error('[resend] send failed', { status: response.status, to, subject, responseBody: bodyText });
+      return false;
+    }
+    console.log('[resend] send succeeded', { to, subject });
+    return true;
+  } catch (err) {
+    console.error('[resend] unexpected error sending to', to, err);
+    return false;
+  }
+}
+
+export interface EventCancellationEmailData {
+  to: string;
+  guestName: string;
+  partyTitle: string;
+  reason: string;
+  amountNaira: number;
+}
+
+// Sent to every guest of a cancelled event, right after the refund is issued.
+export async function sendEventCancellationEmail(data: EventCancellationEmailData): Promise<boolean> {
+  const amountLabel = data.amountNaira >= 0 ? escapeHtml(formatNaira(data.amountNaira)) : '';
+  const payoutCopy = data.amountNaira > 0
+    ? `<div style="margin-top:14px;background:rgba(50,205,150,0.10);border:1px solid rgba(50,205,150,0.25);border-radius:12px;padding:14px 16px;">
+         <span style="font-size:12px;font-weight:800;color:#5DE0B1;text-transform:uppercase;letter-spacing:1px;">\u2713 Full refund processed</span>
+         <div style="font-size:13px;color:#FFFFFF;margin-top:4px;">${amountLabel} is on its way back to your original payment method.</div>
+       </div>`
+    : '';
+  const html = `
+    <div style="background-color:#0B0B10;margin:0;padding:32px 12px;font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+      <div style="max-width:520px;margin:0 auto;background-color:#12121C;border-radius:24px;overflow:hidden;border:1px solid #26263A;">
+        <div style="padding:34px 30px 24px 30px;background:linear-gradient(135deg,#2E0B14 0%,#12121C 60%);border-bottom:1px solid rgba(255,45,149,0.22);">
+          <div style="font-size:11px;font-weight:800;letter-spacing:3px;color:#FF2D95;text-transform:uppercase;">Lagos&nbsp;Live</div>
+          <div style="font-size:28px;font-weight:900;color:#FFFFFF;margin-top:12px;line-height:34px;">Event Cancelled</div>
+          <div style="display:inline-block;margin-top:16px;background:rgba(255,45,149,0.12);border:1px solid rgba(255,45,149,0.28);border-radius:999px;padding:6px 13px;">
+            <span style="font-size:10px;font-weight:800;letter-spacing:1px;color:#FF2D95;text-transform:uppercase;">\u2716 Cancelled</span>
+          </div>
+        </div>
+        <div style="padding:26px 30px 30px 30px;">
+          <p style="font-size:14px;line-height:22px;color:#D5D6E0;margin:0 0 8px;">Hi ${escapeHtml(data.guestName)},</p>
+          <p style="font-size:14px;line-height:22px;color:#D5D6E0;margin:0;">We're sorry to share that <strong style="color:#FFFFFF;">${escapeHtml(data.partyTitle)}</strong> has been cancelled.</p>
+          <div style="margin-top:16px;background:#0B0B10;border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px;">
+            <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:#6B6C80;text-transform:uppercase;margin-bottom:6px;">Reason</div>
+            <div style="font-size:14px;color:#FFFFFF;">${escapeHtml(data.reason)}</div>
+          </div>
+          ${payoutCopy}
+          <p style="font-size:13px;color:#A7A8B5;line-height:20px;margin:18px 0 0;">Refunds typically appear within 1-2 business days. If you don't see it, email <a href="mailto:support@lagoslive.ng" style="color:#FF2D95;text-decoration:none;font-weight:700;">support@lagoslive.ng</a>.</p>
+          <p style="font-size:12px;color:#6B6C80;margin:22px 0 0;line-height:18px;">— Lagos Live Team</p>
+        </div>
+      </div>
+    </div>`;
+  return sendHtmlEmail({
+    to: data.to,
+    subject: `Event Cancelled — Refund on the way · ${data.partyTitle}`,
+    html,
+  });
+}
+
+export interface ReviewRequestEmailData {
+  to: string;
+  guestName: string;
+  partyTitle: string;
+  reviewUrl: string;
+  scheduledAt?: string;
+}
+
+// Sent ~1 day after an event so attendees can rate & review. Uses scheduled_at
+// so the cron simply queues it and Resend delivers at the right moment.
+export async function sendReviewRequestEmail(data: ReviewRequestEmailData): Promise<boolean> {
+  const html = `
+    <div style="background-color:#0B0B10;margin:0;padding:32px 12px;font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+      <div style="max-width:520px;margin:0 auto;background-color:#12121C;border-radius:24px;overflow:hidden;border:1px solid #26263A;">
+        <div style="padding:34px 30px 24px 30px;background:linear-gradient(135deg,#1A0B16 0%,#12121C 60%);border-bottom:1px solid rgba(255,45,149,0.22);">
+          <div style="font-size:11px;font-weight:800;letter-spacing:3px;color:#FF2D95;text-transform:uppercase;">Lagos&nbsp;Live</div>
+          <div style="font-size:26px;font-weight:900;color:#FFFFFF;margin-top:12px;line-height:32px;">How was it?</div>
+        </div>
+        <div style="padding:26px 30px 30px 30px;">
+          <p style="font-size:14px;line-height:22px;color:#D5D6E0;margin:0 0 8px;">Hi ${escapeHtml(data.guestName)},</p>
+          <p style="font-size:14px;line-height:22px;color:#D5D6E0;margin:0;">Thanks for attending <strong style="color:#FFFFFF;">${escapeHtml(data.partyTitle)}</strong>. Help others find their next favourite night — rate the vibe, the music, the venue.</p>
+          <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="border-collapse:collapse;margin-top:22px;">
+            <tr>
+              <td align="center" style="border-radius:11px;background:linear-gradient(135deg,#FF2D95,#8A2BE2);">
+                <a href="${escapeHtml(data.reviewUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:14px 26px;border-radius:11px;color:#FFFFFF;font-size:14px;font-weight:800;text-decoration:none;">Rate &amp; Review</a>
+              </td>
+            </tr>
+          </table>
+          <p style="font-size:12px;color:#6B6C80;margin:24px 0 0;line-height:18px;">— Lagos Live</p>
+        </div>
+      </div>
+    </div>`;
+  return sendHtmlEmail({
+    to: data.to,
+    subject: `How was ${data.partyTitle}? Share your review`,
+    html,
+    scheduledAt: data.scheduledAt,
+  });
+}
+
+export interface NewsletterCampaignEmailData {
+  to: string;
+  firstName: string | null;
+  eventListHtml: string;
+  exploreUrl: string;
+}
+
+// The weekly "what's hot in Lagos" campaign (Batch 19), built from the top
+// trending events of the week by the cron job.
+export async function sendNewsletterCampaignEmail(data: NewsletterCampaignEmailData): Promise<boolean> {
+  const html = `
+    <div style="background-color:#0B0B10;margin:0;padding:32px 12px;font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+      <div style="max-width:520px;margin:0 auto;background-color:#12121C;border-radius:24px;overflow:hidden;border:1px solid #26263A;">
+        <div style="padding:34px 30px 24px 30px;background:linear-gradient(135deg,#1A0B16 0%,#12121C 60%);border-bottom:1px solid rgba(255,45,149,0.22);">
+          <div style="font-size:11px;font-weight:800;letter-spacing:3px;color:#FF2D95;text-transform:uppercase;">Lagos&nbsp;Live</div>
+          <div style="font-size:26px;font-weight:900;color:#FFFFFF;margin-top:12px;line-height:32px;">What's on this week \ud83c\udf89</div>
+        </div>
+        <div style="padding:26px 30px 30px 30px;">
+          <p style="font-size:14px;line-height:22px;color:#D5D6E0;margin:0 0 16px;">Hey ${escapeHtml(data.firstName || 'there')}, here are the hottest events happening around Lagos right now.</p>
+          <ul style="margin:0;padding-left:0;list-style:none;">${data.eventListHtml}</ul>
+          <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="border-collapse:collapse;margin-top:22px;">
+            <tr>
+              <td align="center" style="border-radius:11px;background:linear-gradient(135deg,#FF2D95,#8A2BE2);">
+                <a href="${escapeHtml(data.exploreUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:14px 26px;border-radius:11px;color:#FFFFFF;font-size:14px;font-weight:800;text-decoration:none;">Explore All Events</a>
+              </td>
+            </tr>
+          </table>
+          <p style="font-size:11px;color:#6B6C80;margin:24px 0 0;line-height:18px;">
+            You're receiving this because you joined the Lagos Live community. No longer interested?
+            <a href="${escapeHtml(data.exploreUrl)}" style="color:#6B6C80;text-decoration:underline;">Unsubscribe</a>
+          </p>
+        </div>
+      </div>
+    </div>`;
+  return sendHtmlEmail({
+    to: data.to,
+    subject: `This Week's Hottest Lagos Events`,
+    html,
+  });
+}

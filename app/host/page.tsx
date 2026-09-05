@@ -118,8 +118,8 @@ export default function HostDashboardPage() {
 
   const totalTicketsSold = Object.values(stats).reduce((sum, s) => sum + s.ticketsSold, 0);
   const totalRevenue = Object.values(stats).reduce((sum, s) => sum + s.revenue, 0);
-  const upcomingCount = parties.filter((p) => new Date(p.startsAt).getTime() > Date.now()).length;
-  const activeCount = parties.filter((p) => p.status === 'approved').length;
+  const upcomingCount = parties.filter((p) => !p.cancelledAt && new Date(p.startsAt).getTime() > Date.now()).length;
+  const activeCount = parties.filter((p) => p.status === 'approved' && !p.cancelledAt).length;
 
   // Build sales by event data for pie chart
   const salesByEvent = parties
@@ -295,35 +295,52 @@ export default function HostDashboardPage() {
                 const statusStyle = STATUS_STYLE[p.status];
                 const sold = s?.ticketsSold ?? 0;
                 const remaining = Math.max(0, p.capacity - sold);
+                const cancelled = !!p.cancelledAt;
                 return (
                   <Link
                     key={p.id}
                     href={`/host/${p.id}`}
                     className="flex items-center gap-3 rounded-xl p-2.5 transition-all duration-200 active:scale-[0.98]"
-                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', opacity: cancelled ? 0.5 : 1 }}
                   >
                     <div className="relative h-[68px] w-[68px] flex-shrink-0 overflow-hidden rounded-[12px]" style={{ background: p.gradient }}>
                       <PartyPhoto src={partyPhoto(p.id, p.coverUrl)} alt={p.title} gradient={p.gradient} sizes="68px" />
+                      {cancelled && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                          <span className="text-[9px] font-bold uppercase tracking-[0.5px]" style={{ color: '#FFFFFF' }}>Cancelled</span>
+                        </div>
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <div className="truncate font-heading text-[13px] font-bold" style={{ color: '#FFFFFF' }}>{p.title}</div>
+                          <div className="truncate font-heading text-[13px] font-bold" style={{ color: cancelled ? '#A7A8B5' : '#FFFFFF', textDecoration: cancelled ? 'line-through' : 'none' }}>{p.title}</div>
                           <div className="mt-0.5 text-[11px]" style={{ color: '#A7A8B5' }}>{p.date} · {p.time}</div>
                         </div>
-                        <span
-                          className="flex-shrink-0 rounded-full px-2 py-[3px] text-[10px] font-semibold"
-                          style={{ background: statusStyle.bg, color: statusStyle.color }}
-                        >
-                          {statusStyle.label}
-                        </span>
+                        {cancelled ? (
+                          <span
+                            className="flex-shrink-0 rounded-full px-2 py-[3px] text-[10px] font-semibold uppercase tracking-[0.5px]"
+                            style={{ background: 'rgba(255,45,149,0.14)', color: '#FF2D95', border: '1px solid rgba(255,45,149,0.3)' }}
+                          >
+                            Cancelled
+                          </span>
+                        ) : (
+                          <span
+                            className="flex-shrink-0 rounded-full px-2 py-[3px] text-[10px] font-semibold"
+                            style={{ background: statusStyle.bg, color: statusStyle.color }}
+                          >
+                            {statusStyle.label}
+                          </span>
+                        )}
                       </div>
-                      <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px]" style={{ color: '#A7A8B5' }}>
-                        <span>
-                          <span className="font-bold" style={{ color: '#00F5D4' }}>{sold}</span> sold · <span className="font-semibold" style={{ color: '#FFFFFF' }}>{remaining}</span> left
-                        </span>
-                        <span className="font-semibold gradient-text">{formatNaira(s?.revenue ?? 0)}</span>
-                      </div>
+                      {!cancelled && (
+                        <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px]" style={{ color: '#A7A8B5' }}>
+                          <span>
+                            <span className="font-bold" style={{ color: '#00F5D4' }}>{sold}</span> sold · <span className="font-semibold" style={{ color: '#FFFFFF' }}>{remaining}</span> left
+                          </span>
+                          <span className="font-semibold gradient-text">{formatNaira(s?.revenue ?? 0)}</span>
+                        </div>
+                      )}
                     </div>
                   </Link>
                 );

@@ -6,6 +6,7 @@ import { MapPin, Search, Loader2, AlertTriangle, RefreshCw, Map as MapIcon, Mega
 import HomeHeader from '@/components/HomeHeader';
 import PartyCard from '@/components/PartyCard';
 import Marquee from '@/components/Marquee';
+import HomeSearchBar from '@/components/HomeSearchBar';
 import { VC } from '@/lib/data';
 import { useParties } from '@/lib/hooks/useParties';
 import { useLagosLiveStore } from '@/lib/store';
@@ -127,28 +128,8 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Search bar — prominent */}
-      <Link href="/search" className="block px-5 pb-4">
-        <div
-          className="flex items-center gap-2.5 rounded-xl px-4 py-[12px] transition-all duration-200 hover:border-[rgba(255,45,149,0.2)]"
-          style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            backdropFilter: 'blur(12px)',
-          }}
-        >
-          <Search size={17} strokeWidth={2} style={{ color: '#6B6C80' }} />
-          <span className="text-[15px]" style={{ color: '#6B6C80' }}>
-            Search events, venues, artists...
-          </span>
-          <div
-            className="ml-auto rounded-[6px] px-[9px] py-0.5 text-[11px] font-semibold"
-            style={{ background: 'rgba(255,45,149,0.1)', border: '1px solid rgba(255,45,149,0.2)', color: '#FF2D95' }}
-          >
-            Filter
-          </div>
-        </div>
-      </Link>
+      {/* Search bar — one box, smart defaults */}
+      <HomeSearchBar />
 
       {/* List your event CTA */}
       <Link href="/host/new" className="block px-5 pb-4">
@@ -265,7 +246,7 @@ export default function HomePage() {
             Trending Tonight
           </h2>
         </div>
-        <Link href="/search" className="text-[13px] font-medium transition-colors" style={{ color: '#FF2D95' }}>
+        <Link href="/explore" className="text-[13px] font-medium transition-colors" style={{ color: '#FF2D95' }}>
           See all →
         </Link>
       </div>

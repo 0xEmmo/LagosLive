@@ -17,6 +17,7 @@ import {
   Users,
   ChevronDown,
   ChevronUp,
+  Upload as UploadIcon,
 } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import { useParty } from '@/lib/hooks/useParty';
@@ -24,7 +25,7 @@ import { useLagosLiveStore } from '@/lib/store';
 import { fetchCheckInStats, fetchCheckInActivity, type CheckInStats, type CheckInActivityItem } from '@/lib/queries';
 import { performCheckIn, normalizeOrderRef, type CheckInResult } from '@/lib/check-in/sync';
 import { ci, buzz, chime, guestNameFromEmail, formatClock } from '@/lib/check-in/ui';
-import type { Html5Qrcode as Html5QrcodeClass, Html5QrcodeCameraScanConfig, CameraDevice } from 'html5-qrcode';
+import jsQR from 'jsqr';
 
 const STAFF_ROLES = ['finance', 'admin', 'super_admin'];
 const GATE_STORAGE = 'll_checkin_gate';
@@ -33,18 +34,12 @@ const RESUME_OK_MS = 2600;
 const RESUME_ERROR_MS = 1400;
 const DEDUPE_WINDOW_MS = 3500;
 
-// Deliberately no aspectRatio here: html5-qrcode calls
-// track.applyConstraints({ aspectRatio }) on the live feed, which freezes the
-// stream black on many phone cameras (iOS virtual rear lenses especially). The
-// .ci-qr-host CSS already crops the feed into the square viewfinder box.
-const SCAN_DEFAULT: Html5QrcodeCameraScanConfig = { fps: 10, qrbox: { width: 230, height: 230 } };
-
 type CameraErrorKind = 'permission-denied' | 'no-camera' | 'in-use' | 'unsupported' | 'security' | 'unknown';
 
 const CAMERA_ERROR_COPY: Record<CameraErrorKind, { title: string; body: string }> = {
   'permission-denied': {
-    title: 'Camera access required',
-    body: 'Camera permission denied. Allow camera access in your browser settings and try again.',
+    title: 'Camera access blocked',
+    body: 'Camera access is blocked. Allow camera access in your browser settings, then try again.',
   },
   'no-camera': {
     title: 'No camera detected',
@@ -60,11 +55,11 @@ const CAMERA_ERROR_COPY: Record<CameraErrorKind, { title: string; body: string }
   },
   security: {
     title: 'Secure connection needed',
-    body: 'Camera access requires a secure connection. Open this page over HTTPS.',
+    body: 'Camera scanning requires a secure connection (HTTPS).',
   },
   unknown: {
-    title: 'Camera access required',
-    body: 'Allow camera access when your browser asks, or enable it in site settings. In Safari/Chrome: tap the icon in the address bar → Camera → Allow.',
+    title: 'Camera could not be started',
+    body: 'Your camera could not be started. Please allow camera access in your browser settings, then try again.',
   },
 };
 
@@ -81,127 +76,6 @@ function mapCameraError(err: unknown): CameraErrorKind {
   if (/not supported|unsupported|mediaDevices not supported|streaming not supported/i.test(hay)) return 'unsupported';
   if (/insecure|secure context|SecurityError/i.test(hay)) return 'security';
   return 'unknown';
-}
-
-// Please pass the MAIN rear (wide) lens first: a phone exposes one video
-// output per "virtual" lens group, so iOS devices list "Back Triple Camera",
-// "Back Dual Wide Camera", "Back Dual Camera", and even the front as separate
-// entries. Only the plain "Back Camera" (wide) is useable for reading a QR code
-// held up to a scanner — the multi-lens virtual cameras stream a dark/blank
-// frame. ranking() puts the plain "back"/"rear"/"environment" wide camera first
-// and demotes front and multi-lens/virtual entries behind it.
-function cameraRank(label: string): number {
-  const l = label.toLowerCase();
-  if (l.includes('front') || l.includes('selfie') || l.includes('user')) return 6;
-  if (/triple|ultra|wide|dual/i.test(l)) return 3;
-  if (/rear|back|environment/i.test(l)) return 1;
-  return 5;
-}
-
-function pickRearCamera(cams: CameraDevice[]): CameraDevice {
-  const ranked = [...cams].sort((a, b) => cameraRank(a.label) - cameraRank(b.label));
-  return ranked[0] ?? cams[0];
-}
-
-// Filters the "select a lens" row down to real back cameras only (drop front,
-// selfie, and the multi-lens virtual "triple/dual/ultra-wide" entries), so staff
-// never see confusing options and can only pick a lens that can actually scan.
-function isBackCamera(cam: CameraDevice): boolean {
-  return cameraRank(cam.label) === 1;
-}
-
-// Chromium on Android notoriously starts the camera before the page/DOM is fully
-// settled, which yields a black feed (NotReadableError: Could not start video
-// source) that only appears when paired with the requested device id. Waiting a
-// couple of animation frames before requesting media avoids the race.
-function settleStart(): Promise<void> {
-  return new Promise((resolve) => {
-    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-  });
-}
-
-// A camera that "opens" but never delivers sensor data renders a decodable but
-// pure-black frame (extra/virtual rear lenses and some multi-cam groups). Distil
-// the decoded picture and treat all-black output as "this lens is not usable".
-function frameIsBlack(video: HTMLVideoElement): boolean {
-  try {
-    const size = 48;
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) return false;
-    ctx.drawImage(video, 0, 0, size, size);
-    const { data } = ctx.getImageData(0, 0, size, size);
-    let sum = 0;
-    for (let i = 0; i < data.length; i += 4) {
-      sum += data[i] + data[i + 1] + data[i + 2];
-    }
-    return sum / (size * size * 3) < 22;
-  } catch {
-    return false;
-  }
-}
-
-// Open a candidate camera and verify it really delivers live, non-black frames
-// before trusting it as the QR lens. Used when the device enumerates several
-// rear options that share a label, so we never pick the blank one by mistake.
-async function probeCameraLive(deviceId: string): Promise<boolean> {
-  let stream: MediaStream | null = null;
-  let video: HTMLVideoElement | null = null;
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      audio: false,
-      video: { deviceId: { exact: deviceId }, facingMode: 'environment' },
-    });
-    const track = stream.getVideoTracks()[0];
-    if (!track) {
-      stream.getTracks().forEach((t) => t.stop());
-      return false;
-    }
-    const v = document.createElement('video');
-    video = v;
-    v.setAttribute('playsinline', 'true');
-    v.muted = true;
-    v.srcObject = stream;
-    v.style.position = 'absolute';
-    v.style.left = '-10000px';
-    v.style.width = '2px';
-    v.style.height = '2px';
-    document.body.appendChild(v);
-    await v.play().catch(() => {});
-
-    return await new Promise<boolean>((resolve) => {
-      const timeout = window.setTimeout(() => resolve(false), 1200);
-      const check = () => {
-        if (v.readyState >= 2 && (v.videoWidth || 0) > 0) {
-          requestAnimationFrame(() => {
-            window.clearTimeout(timeout);
-            resolve(!frameIsBlack(v));
-          });
-        } else {
-          requestAnimationFrame(check);
-        }
-      };
-      check();
-    });
-  } catch {
-    return false;
-  } finally {
-    if (stream) stream.getTracks().forEach((t) => t.stop());
-    if (video) video.remove();
-  }
-}
-
-// null = enumeration itself failed (so the original getUserMedia error is the
-// real reason to report); [] = enumerated but truly no video input device.
-async function listCameras(Ctor: typeof Html5QrcodeClass): Promise<CameraDevice[] | null> {
-  try {
-    const cams = await Ctor.getCameras();
-    return (cams ?? []).filter((c) => !!c.id);
-  } catch {
-    return null;
-  }
 }
 
 type ScannerState = 'starting' | 'scanning' | 'denied';
@@ -341,8 +215,7 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
   const [busy, setBusy] = useState(false);
   const [cameraAttempt, setCameraAttempt] = useState(0);
   const [cameraError, setCameraError] = useState<CameraErrorKind | null>(null);
-  const [availableCameras, setAvailableCameras] = useState<CameraDevice[]>([]);
-  const [activeCameraId, setActiveCameraId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const [gate, setGate] = useState<string>('Main');
   useEffect(() => {
@@ -354,15 +227,16 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
   const gateRef = useRef(gate);
   gateRef.current = gate;
 
-  const controlsRef = useRef<{ pause: () => Promise<void>; resume: () => Promise<void> } | null>(null);
-  const instanceRef = useRef<Html5QrcodeClass | null>(null);
-  const activeTargetRef = useRef<string | MediaTrackConstraints | null>(null);
-  const cameraOverrideRef = useRef<string | null>(null);
-  const resumingRef = useRef(false);
-  const pausingRef = useRef(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const busyRef = useRef(false);
   const lastScan = useRef<{ ref: string; at: number }>({ ref: '', at: 0 });
   const feedbackShownAt = useRef<number | null>(null);
+  const scanStateRef = useRef<ScannerState>('starting');
+  scanStateRef.current = scanner;
 
   // Access: owner of the event, or finance/admin/super_admin.
   useEffect(() => {
@@ -398,32 +272,86 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
     return () => window.removeEventListener('focus', onFocus);
   }, [party, loadStats]);
 
-  // Camera lifecycle. html5-qrcode is imported at runtime only (it touches the
-  // DOM at import time, so the scanner bundle stays out of SSR and mixed pages).
-  // The #qr-reader host must ALREADY be in the DOM (see the JSX branch below)
-  // before the instance is constructed — otherwise html5-qrcode throws "element
-  // not found" on the very first boot and the camera is never requested.
+  // Camera lifecycle. We drive getUserMedia + our own <video> element + an
+  // off-screen canvas + jsQR directly instead of html5-qrcode. That library's
+  // video overlay has no reliable fix for a blank/black feed across iOS Safari
+  // (auto-fullscreen + a virtual "Back Triple/Dual" lens streaming nothing) and
+  // Samsung Chrome (BarcodeDetector chain failure), and it decodes from the
+  // displayed box size rather than the native frame — so any viewfinder CSS
+  // override can silently break detection. Our loop always decodes the full
+  // native frame, independent of how the preview is styled.
   useEffect(() => {
     if (!authorized || !party) return;
     let disposed = false;
 
-    const stopSafe = async (instance: Html5QrcodeClass | null) => {
-      if (!instance) return;
+    const stopStream = () => {
+      if (rafRef.current != null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      const stream = streamRef.current;
+      streamRef.current = null;
+      if (stream) stream.getTracks().forEach((t) => t.stop());
+      const video = videoRef.current;
+      if (video) {
+        video.srcObject = null;
+        video.removeAttribute('src');
+      }
+    };
+
+    const attach = async (constraints: MediaTrackConstraints): Promise<MediaStream> => {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: constraints });
+      if (disposed) {
+        stream.getTracks().forEach((t) => t.stop());
+        throw new DOMException('disposed', 'AbortError');
+      }
+      const video = videoRef.current;
+      if (!video) {
+        stream.getTracks().forEach((t) => t.stop());
+        throw new DOMException('no video element', 'AbortError');
+      }
+      streamRef.current = stream;
+      video.srcObject = stream;
+      video.autoplay = true;
+      video.muted = true;
+      video.playsInline = true;
+      video.setAttribute('autoplay', '');
+      video.setAttribute('muted', '');
+      video.setAttribute('playsinline', '');
       try {
-        await instance.stop();
-      } catch {}
-      try {
-        instance.clear();
-      } catch {}
+        await video.play();
+      } catch (err) {
+        console.warn('[check-in] video play() rejected', err);
+      }
+      return stream;
+    };
+
+    const MAX_DECODE_MS = 110;
+    const decodeFrame = (): string | null => {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      if (!video || !canvas || video.readyState < 2 || !video.videoWidth || !video.videoHeight) return null;
+      const MAX_WIDTH = 640;
+      const scale = Math.min(1, MAX_WIDTH / video.videoWidth);
+      const w = Math.max(64, Math.round(video.videoWidth * scale));
+      const h = Math.max(64, Math.round(video.videoHeight * scale));
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+      }
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) return null;
+      ctx.drawImage(video, 0, 0, w, h);
+      const image = ctx.getImageData(0, 0, w, h);
+      const code = jsQR(image.data, image.width, image.height, { inversionAttempts: 'attemptBoth' });
+      return code?.data ?? null;
     };
 
     const boot = async () => {
-      controlsRef.current = null;
       setScanner('starting');
       setCameraError(null);
 
-      // Pre-flight guards — run before importing the scanner or touching a
-      // stream so users never see a blank box.
+      // Pre-flight guards — never show a blank box.
       if (typeof window !== 'undefined' && !window.isSecureContext) {
         setCameraError('security');
         setScanner('denied');
@@ -435,193 +363,72 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
         return;
       }
 
-      let instance: Html5QrcodeClass | null = null;
-      try {
-        const mod = await import('html5-qrcode');
-        if (disposed) return;
-        const Html5QrcodeCtor = mod.Html5Qrcode;
-        await stopSafe(instanceRef.current);
-
-        instance = new Html5QrcodeCtor('qr-reader', { verbose: false });
-        instanceRef.current = instance;
-
-        const onScan = (text: string) => {
-          const orderRef = normalizeOrderRef(text);
-          if (!orderRef) return;
-          const now = Date.now();
-          if (now - lastScan.current.at < DEDUPE_WINDOW_MS && lastScan.current.ref === orderRef) return;
-          lastScan.current = { ref: orderRef, at: now };
-          if (busyRef.current || pausingRef.current || now - (feedbackShownAt.current ?? 0) < 900) return;
-          // Pause the stream + decode loop before validating so the same QR
-          // can never fire twice during a check-in, then let staff scan next.
-          pausingRef.current = true;
-          void (async () => {
-            try {
-              await controlsRef.current?.pause();
-            } catch {}
-            pausingRef.current = false;
-            void handleScanResult(orderRef);
-          })();
-        };
-
-        const startWith = async (target: string | MediaTrackConstraints) => {
-          await instance!.start(target, SCAN_DEFAULT, (t) => onScan(t), () => {});
-          activeTargetRef.current = target;
-        };
-
-        const pauseScan = async () => {
+      // Prefer the rear camera (a phone resolves facingMode 'environment' to a
+      // real rear lens — no device-id guessing). Fall back to any camera only
+      // for non-fatal failures; permission/security issues are final.
+      let lastErr: unknown = null;
+      const attempts: MediaTrackConstraints[] = [{ facingMode: { ideal: 'environment' } }, {}];
+      for (const constraints of attempts) {
+        try {
+          await attach(constraints);
+          lastErr = null;
+          break;
+        } catch (err) {
+          lastErr = err;
+          const kind = mapCameraError(err);
+          if (kind === 'permission-denied' || kind === 'security' || kind === 'unsupported') break;
           if (disposed) return;
-          try {
-            await instance!.stop();
-          } catch {}
-          try {
-            instance!.clear();
-          } catch {}
-        };
-
-        const resumeScan = async () => {
-          if (disposed || resumingRef.current) return;
-          const target = activeTargetRef.current;
-          const inst = instance;
-          if (!target || !inst) return;
-          if (inst.isScanning) return;
-          resumingRef.current = true;
-          try {
-            // The #qr-reader host is unmounted while a result is showing; give
-            // React a moment to commit it before html5-qrcode re-attaches.
-            for (let i = 0; i < 8 && !document.getElementById('qr-reader'); i++) {
-              await new Promise((r) => window.setTimeout(r, 40));
-            }
-            if (disposed || !document.getElementById('qr-reader')) return;
-            setScanner('starting');
-            await startWith(target);
-            if (disposed) {
-              await stopSafe(inst);
-              return;
-            }
-            setScanner('scanning');
-          } catch (err) {
-            console.error('[check-in] camera resume failed', err);
-            if (disposed) return;
-            setCameraError(mapCameraError(err));
-            setScanner('denied');
-          } finally {
-            resumingRef.current = false;
-          }
-        };
-
-        controlsRef.current = { pause: pauseScan, resume: resumeScan };
-
-        // ---- Acquire the first stream ----
-        // Settle an extra frame first: on Chromium/Android the camera must be
-        // requested after DOM settle, otherwise the feed starts black.
-        await settleStart();
-        const cams = cameraOverrideRef.current ? null : await listCameras(Html5QrcodeCtor);
-        const candidates = cams ? [...cams].sort((a, b) => cameraRank(a.label) - cameraRank(b.label)) : [];
-
-        // facingMode: 'environment' stays only as a last resort (desktop
-        // webcams); explicit device ids are used for phones because iOS/Safari
-        // maps facingMode onto a virtual lens that streams a blank frame.
-        const startEnvFallback = async () => {
-          try {
-            await startWith({ facingMode: 'environment' });
-          } catch (err) {
-            const kind = mapCameraError(err);
-            if (kind === 'permission-denied' || kind === 'security' || kind === 'unsupported') throw err;
-            if (candidates.length === 0) throw err;
-            await startWith({ deviceId: { exact: candidates[0].id } });
-          }
-        };
-
-        if (cameraOverrideRef.current) {
-          await startWith({ deviceId: { exact: cameraOverrideRef.current } });
-        } else if (candidates.length === 0) {
-          await startEnvFallback();
-        } else {
-          const back = candidates.filter((c) => cameraRank(c.label) !== 6);
-          let picked: string | null = null;
-          if (back.length >= 2) {
-            // Several rear entries exist (identical "Back camera" labels or the
-            // multi-lens virtual ones): only one of them delivers real frames for
-            // QR scanning, so disclose which actually works before selecting it.
-            for (const cam of back.slice(0, 3)) {
-              if (disposed) return;
-              if (await probeCameraLive(cam.id)) {
-                picked = cam.id;
-                break;
-              }
-            }
-          } else {
-            picked = back[0]?.id ?? (candidates[0] ? candidates[0].id : null);
-          }
-          if (!picked) {
-            await startEnvFallback();
-          } else {
-            try {
-              await startWith({ deviceId: { exact: picked } });
-            } catch (err) {
-              const kind = mapCameraError(err);
-              if (kind === 'permission-denied' || kind === 'security' || kind === 'unsupported') throw err;
-              await startEnvFallback();
-            }
-          }
         }
+      }
+      if (disposed) return;
+      if (lastErr) {
+        setCameraError(mapCameraError(lastErr));
+        setScanner('denied');
+        return;
+      }
+      setScanner('scanning');
 
-        if (disposed) {
-          await stopSafe(instance);
-          controlsRef.current = null;
-          instanceRef.current = null;
+      // Continuous decode loop. The <video> stays mounted for the whole session
+      // (only hidden while a result panel is up, via busyRef), so resuming after
+      // a scan needs no stream restart — the loop just decodes again.
+      let lastDecodeAt = 0;
+      const loop = (now: number) => {
+        if (disposed) return;
+        rafRef.current = requestAnimationFrame(loop);
+        if (scanStateRef.current !== 'scanning' || busyRef.current) {
+          lastDecodeAt = now;
           return;
         }
-
-        // Labels only appear once permission was granted — refresh the picker.
-        const refreshed = (await listCameras(Html5QrcodeCtor)) ?? [];
-        if (!disposed) {
-          setAvailableCameras(refreshed);
-          const target = activeTargetRef.current;
-          let devId: string | null = null;
-          if (target && typeof target === 'object') {
-            const deviceId = (target as MediaTrackConstraints).deviceId;
-            if (deviceId && typeof deviceId === 'object' && 'exact' in deviceId) devId = String(deviceId.exact);
-          }
-          setActiveCameraId(devId ?? pickRearCamera(refreshed)?.id ?? refreshed[0]?.id ?? null);
-        }
-        setScanner('scanning');
-      } catch (err) {
-        console.error('[check-in] camera start failed', err);
-        if (disposed) return;
-        setCameraError(mapCameraError(err));
-        setScanner('denied');
-      }
+        if (now - lastDecodeAt < MAX_DECODE_MS) return;
+        lastDecodeAt = now;
+        const text = decodeFrame();
+        if (!text) return;
+        const orderRef = normalizeOrderRef(text);
+        if (!orderRef) return;
+        const at = Date.now();
+        if (at - lastScan.current.at < DEDUPE_WINDOW_MS && lastScan.current.ref === orderRef) return;
+        lastScan.current = { ref: orderRef, at };
+        if (at - (feedbackShownAt.current ?? 0) < 900) return;
+        void handleScanResult(orderRef);
+      };
+      rafRef.current = requestAnimationFrame(loop);
     };
 
     void boot();
     return () => {
       disposed = true;
-      controlsRef.current = null;
-      const latest = instanceRef.current;
-      instanceRef.current = null;
-      void stopSafe(latest);
+      stopStream();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authorized, party?.id, cameraAttempt]);
-
-  const switchCamera = (id: string) => {
-    cameraOverrideRef.current = id;
-    setScanner('starting');
-    setCameraAttempt((a) => a + 1);
-  };
 
   const scheduleResume = (ms: number) => {
     window.setTimeout(() => {
       setFeed(null);
       setBusy(false);
       busyRef.current = false;
-      // Bring the camera back only once the result panel has unmounted and the
-      // #qr-reader host is back in the DOM (resumeScan waits for that).
-      requestAnimationFrame(() => {
-        controlsRef.current?.resume().catch(() => {});
-      });
+      // The decode loop runs the whole session and is only gated by busyRef —
+      // clearing it is all it takes to resume scanning.
     }, ms);
   };
 
@@ -675,6 +482,53 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
     void handleScanResult(ref);
   };
 
+  // Fallback when no camera is usable: read the ticket QR from an uploaded
+  // photo/screenshot, decode it with the same jsQR pipeline, and run it
+  // through the exact same server check-in path.
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new window.Image();
+      img.onload = async () => {
+        setUploading(true);
+        try {
+          const canvas = document.createElement('canvas');
+          const MAX = 1024;
+          const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+          canvas.width = Math.max(64, Math.round(img.width * scale));
+          canvas.height = Math.max(64, Math.round(img.height * scale));
+          const ctx = canvas.getContext('2d', { willReadFrequently: true });
+          if (!ctx) throw new Error('canvas unsupported');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(data.data, data.width, data.height, { inversionAttempts: 'attemptBoth' });
+          if (code?.data) {
+            void handleScanResult(code.data);
+          } else {
+            setFeed({ result: { code: 'invalid' } });
+          }
+        } catch (err) {
+          console.error('[check-in] upload decode error', err);
+          setFeed({ result: { code: 'invalid' } });
+        } finally {
+          setUploading(false);
+        }
+      };
+      img.onerror = () => {
+        setUploading(false);
+        setFeed({ result: { code: 'invalid' } });
+      };
+      img.src = String(reader.result);
+    };
+    reader.onerror = () => {
+      setFeed({ result: { code: 'invalid' } });
+    };
+    reader.readAsDataURL(file);
+  };
+
   if (!user) {
     if (authLoading) {
       return (
@@ -715,19 +569,6 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
   }
 
   const remaining = stats ? Math.max(0, stats.sold - stats.checkedIn) : 0;
-
-  // Rear lenses worth offering as switchable buttons, one per distinct label.
-  // Devices can enumerate two entries both named "Back camera" — dedupe those
-  // so staff never see two identical options (and never a selectable front).
-  const pickerCameras = (() => {
-    const seen = new Set<string>();
-    return availableCameras.filter(isBackCamera).filter((c) => {
-      const key = (c.label || '').replace(/\s*\([^)]*\)\s*$/g, '').trim().toLowerCase();
-      if (!key || seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  })();
 
   return (
     <div className="mx-auto min-h-screen max-w-[520px] animate-fade-in" style={{ background: ci.surface }}>
@@ -789,81 +630,82 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
             </div>
           </div>
 
-          {feed ? (
+          <div className={`ci-viewfinder mx-4 mb-4 ${feed ? 'hidden' : ''}`}>
+            {/* The <video> + decode canvas stay mounted for the whole session so
+                the camera stream is never restarted. While a result panel is up
+                the box is simply hidden and the decode loop is gated by
+                busyRef — that is all "pausing" takes now. */}
+            <video ref={videoRef} className="ci-qr-video" autoPlay muted playsInline />
+            <canvas ref={canvasRef} className="hidden" />
+
+            {scanner === 'starting' && (
+              <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center gap-3" style={{ background: '#0A0A0C' }}>
+                <Loader2 size={26} strokeWidth={2} color={ci.accent} className="animate-spin" />
+                <span className="text-[12px]" style={{ color: ci.dim }}>
+                  Starting camera…
+                </span>
+              </div>
+            )}
+
+            {scanner === 'denied' && (
+              <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center gap-3 px-6 text-center" style={{ background: '#0A0A0C' }}>
+                <div className="flex h-14 w-14 items-center justify-center rounded-full" style={{ background: ci.warnSoft }}>
+                  <CameraOff size={24} strokeWidth={1.5} color={ci.gold} />
+                </div>
+                <div className="font-heading text-[16px] font-bold" style={{ color: ci.text }}>
+                  {CAMERA_ERROR_COPY[cameraError ?? 'unknown'].title}
+                </div>
+                <p className="max-w-[300px] text-[13px] leading-relaxed" style={{ color: ci.muted }}>
+                  {CAMERA_ERROR_COPY[cameraError ?? 'unknown'].body}
+                </p>
+                <button
+                  onClick={() => {
+                    setScanner('starting');
+                    setCameraAttempt((a) => a + 1);
+                  }}
+                  className="mt-1 flex items-center gap-2 rounded-[12px] px-5 py-3 text-[13px] font-bold"
+                  style={{ background: ci.gradient, color: '#FFFFFF', boxShadow: ci.buttonShadow }}
+                >
+                  <RefreshCw size={14} strokeWidth={2.5} />
+                  Try again
+                </button>
+                <button onClick={() => setManualOpen((o) => !o)} className="flex items-center gap-1.5 text-[12px] font-semibold" style={{ color: ci.accent }}>
+                  <Keyboard size={13} strokeWidth={2} />
+                  {manualOpen ? 'Hide' : 'Enter ticket code instead'}
+                </button>
+              </div>
+            )}
+
+            {scanner === 'scanning' && (
+              <>
+                <div className="pointer-events-none absolute inset-0 z-[1] rounded-2xl border-[3px] ci-corners" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] pb-4 text-center">
+                  <span className="rounded-full px-3 py-1 text-[11px] font-semibold" style={{ background: 'rgba(10,10,12,0.8)', color: ci.muted, backdropFilter: 'blur(6px)' }}>
+                    Point at the ticket QR code
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+
+          {feed && (
             <div className="p-4">
               <FeedbackView feedback={feed} eventTitle={party.title} onNext={() => scheduleResume(0)} />
             </div>
-          ) : scanner === 'denied' ? (
-            <div className="flex h-[300px] flex-col items-center justify-center gap-3 px-6 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full" style={{ background: ci.warnSoft }}>
-                <CameraOff size={24} strokeWidth={1.5} color={ci.gold} />
-              </div>
-              <div className="font-heading text-[16px] font-bold" style={{ color: ci.text }}>
-                {CAMERA_ERROR_COPY[cameraError ?? 'unknown'].title}
-              </div>
-              <p className="max-w-[300px] text-[13px] leading-relaxed" style={{ color: ci.muted }}>
-                {CAMERA_ERROR_COPY[cameraError ?? 'unknown'].body}
-              </p>
-              <button
-                onClick={() => {
-                  cameraOverrideRef.current = null;
-                  setScanner('starting');
-                  setCameraAttempt((a) => a + 1);
-                }}
-                className="mt-1 flex items-center gap-2 rounded-[12px] px-5 py-3 text-[13px] font-bold"
-                style={{ background: ci.gradient, color: '#FFFFFF', boxShadow: ci.buttonShadow }}
-              >
-                <RefreshCw size={14} strokeWidth={2.5} />
-                Try again
-              </button>
-              <button onClick={() => setManualOpen((o) => !o)} className="flex items-center gap-1.5 text-[12px] font-semibold" style={{ color: ci.accent }}>
-                <Keyboard size={13} strokeWidth={2} />
-                {manualOpen ? 'Hide' : 'Enter ticket code instead'}
-              </button>
-            </div>
-          ) : (
+          )}
+
+          {!feed && (
             <>
-              <div className="relative mx-4 mb-4 overflow-hidden rounded-2xl" style={{ background: '#000' }}>
-                {/* Keep the host mounted from 'starting' onward so html5-qrcode
-                    can attach the stream before the first frame commits. */}
-                <div id="qr-reader" className="ci-qr-host" />
-                {scanner === 'starting' && (
-                  <div className="absolute inset-0 z-[3] flex flex-col items-center justify-center gap-3" style={{ background: '#0A0A0C' }}>
-                    <Loader2 size={26} strokeWidth={2} color={ci.accent} className="animate-spin" />
-                    <span className="text-[12px]" style={{ color: ci.dim }}>
-                      Starting camera…
-                    </span>
-                  </div>
-                )}
-                {scanner === 'scanning' && (
-                  <>
-                    <div className="pointer-events-none absolute inset-0 z-[1] rounded-2xl border-[3px] ci-corners" />
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] pb-4 text-center">
-                      <span className="rounded-full px-3 py-1 text-[11px] font-semibold" style={{ background: 'rgba(10,10,12,0.8)', color: ci.muted, backdropFilter: 'blur(6px)' }}>
-                        Point at the ticket QR code
-                      </span>
-                    </div>
-                  </>
-                )}
-              </div>
-              {scanner === 'scanning' && pickerCameras.length >= 2 && (
-                <div className="flex flex-wrap items-center justify-center gap-1.5 px-4 pb-3">
-                  {pickerCameras.map((c, i) => (
-                    <button
-                      key={c.id}
-                      onClick={() => switchCamera(c.id)}
-                      className="flex-shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold transition-all active:scale-95"
-                      style={
-                        activeCameraId === c.id
-                          ? { background: ci.gradient, color: '#FFFFFF', boxShadow: ci.buttonShadow }
-                          : { background: ci.raised, border: `1px solid ${ci.line}`, color: ci.muted }
-                      }
-                    >
-                      {(c.label || '').replace(/\s*\([^)]*\)\s*$/g, '').trim() || `Camera ${i + 1}`}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <button
+                onClick={() => uploadInputRef.current?.click()}
+                disabled={uploading}
+                className="mx-4 mb-4 flex w-[calc(100%-2rem)] items-center justify-center gap-2 rounded-[12px] py-3 text-[13px] font-semibold"
+                style={{ background: ci.raised, border: `1px solid ${ci.line}`, color: ci.muted, opacity: uploading ? 0.6 : 1 }}
+              >
+                {uploading ? <Loader2 size={14} strokeWidth={2} className="animate-spin" /> : <UploadIcon size={14} strokeWidth={2} />}
+                {uploading ? 'Reading image…' : 'Upload QR code image'}
+              </button>
+              <input ref={uploadInputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
             </>
           )}
         </div>

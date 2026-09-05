@@ -200,29 +200,23 @@ select option {
 }
 
 /* --- Phase 2 check-in QR scanner ---
-   html5-qrcode injects its own video/canvas into the host div; these
-   overrides force it to fill the round box on any screen and keep the
-   decorative finder corners above the stream. */
-.ci-qr-host {
+   The scanner renders its own <video> into a fixed-height viewfinder box;
+   the feed fills the box edge-to-edge and the decorative finder corners sit
+   above the stream. The decode <canvas> is kept off-screen (it is never part
+   of the document layout). */
+.ci-viewfinder {
   position: relative;
-  width: 100%;
   height: 300px;
-  background: #000;
   overflow: hidden;
+  border-radius: 16px;
+  background: #000;
 }
-.ci-qr-host video {
+.ci-qr-video {
   position: absolute;
   inset: 0;
-  width: 100% !important;
-  height: 100% !important;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-}
-.ci-qr-host canvas {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  max-width: 100%;
 }
 .ci-corners::before,
 .ci-corners::after {

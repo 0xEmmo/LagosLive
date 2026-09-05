@@ -642,3 +642,34 @@ export function downloadCsv(filename: string, csv: string) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+// ---- Reviews moderation (Phase 5) ---------------------------------------------
+
+export type ReviewRow = Database['public']['Tables']['reviews']['Row'] & {
+  parties?: { id: number; title: string } | null;
+};
+
+export type ReviewModStatus = 'visible' | 'hidden' | 'removed';
+
+export async function fetchAllReviews(): Promise<ReviewRow[]> {
+  const { data, error } = await supabase
+    .from('reviews')
+    .select('*, parties(id, title)')
+    .order('created_at', { ascending: false })
+    .limit(500);
+  if (error) throw error;
+  return (data ?? []) as ReviewRow[];
+}
+
+export async function moderateReview(reviewId: string, status: ReviewModStatus, reason: string): Promise<void> {
+  const { error } = await supabase.rpc('moderate_review', {
+    p_review_id: reviewId,
+    p_status: status,
+    p_reason: reason || null,
+  });
+  if (error) {
+    const message = error.message || 'moderation failed';
+    // Surface the human-readable RPC rejection for reasons that can be fixed.
+    throw new Error(message.includes('Reason') ? message : `Couldn't ${status} this review.`);
+  }
+}

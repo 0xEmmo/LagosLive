@@ -16,6 +16,7 @@ import {
   ScrollText,
   Shield,
   ShieldCheck,
+  MessageSquareQuote,
   Activity,
 } from 'lucide-react';
 import { useLagosLiveStore } from '@/lib/store';
@@ -35,6 +36,7 @@ const NAV: AdminNavItem[] = [
   { href: '/admin/users', label: 'Users', icon: Users, roles: ['support', 'admin', 'super_admin'] },
   { href: '/admin/roles', label: 'Roles', icon: Shield, roles: ['admin', 'super_admin'] },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag, roles: ['finance', 'admin', 'super_admin'] },
+  { href: '/admin/reviews', label: 'Reviews', icon: MessageSquareQuote, roles: ['support', 'admin', 'super_admin'] },
   { href: '/admin/revenue', label: 'Revenue', icon: Wallet, roles: ['finance', 'admin', 'super_admin'] },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3, roles: ['admin', 'super_admin'] },
   { href: '/admin/support', label: 'Support', icon: LifeBuoy, roles: ['support', 'admin', 'super_admin'] },

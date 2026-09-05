@@ -34,7 +34,7 @@ import { partyPhoto, partyDetailPhoto, VCB, VCT, distanceColor } from '@/lib/dat
 import { useParty } from '@/lib/hooks/useParty';
 import { useParties } from '@/lib/hooks/useParties';
 import { useLagosLiveStore } from '@/lib/store';
-import { fetchEventReviews, fetchPartyHostVerified } from '@/lib/queries';
+import { fetchEventReviews, fetchPartyHostVerified, fetchOrganizerReputation, type OrganizerReputation } from '@/lib/queries';
 import type { Review } from '@/lib/types';
 
 export default function PartyDetailPage({ params }: { params: { id: string } }) {
@@ -44,6 +44,7 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [hostVerified, setHostVerified] = useState(false);
+  const [reputation, setReputation] = useState<OrganizerReputation | null>(null);
 
   useEffect(() => {
     if (!party || party.createdBy === null) return;
@@ -51,6 +52,17 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
     fetchPartyHostVerified(party.id)
       .then((ok) => !cancelled && setHostVerified(ok))
       .catch(() => !cancelled && setHostVerified(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [party]);
+
+  useEffect(() => {
+    if (!party || party.createdBy === null) return;
+    let cancelled = false;
+    fetchOrganizerReputation(party.createdBy)
+      .then((rep) => !cancelled && setReputation(rep))
+      .catch(() => !cancelled && setReputation(null));
     return () => {
       cancelled = true;
     };
@@ -70,9 +82,18 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
 
   const saved = useLagosLiveStore((s) => (party ? s.savedParties.includes(party.id) : false));
   const reminded = useLagosLiveStore((s) => (party ? s.reminders.includes(party.id) : false));
+  const user = useLagosLiveStore((s) => s.user);
   const toggleSave = useLagosLiveStore((s) => s.toggleSave);
   const toggleReminder = useLagosLiveStore((s) => s.toggleReminder);
   const showToast = useLagosLiveStore((s) => s.showToast);
+
+  const handleSave = () => {
+    const wasSaved = saved;
+    toggleSave(party!.id);
+    if (!user && !wasSaved) {
+      showToast('Saved on this device', 'Create an account to keep it saved across devices.');
+    }
+  };
 
   if (loading) {
     return <EventDetailSkeleton />;
@@ -150,7 +171,7 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
             <Bell size={17} fill={reminded ? '#FFD600' : 'none'} strokeWidth={2} />
           </button>
           <button
-            onClick={() => toggleSave(party.id)}
+            onClick={handleSave}
             className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] transition-all duration-200 active:scale-90 glass glass-hover"
             style={{ color: saved ? '#FF2D95' : '#A7A8B5' }}
           >
@@ -330,6 +351,19 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
                 </span>
               )}
             </div>
+            {reputation && reputation.completedEvents > 0 && reputation.reviewCount > 0 && (
+              <div className="mt-2 flex items-center gap-2.5">
+                <span className="inline-flex items-center gap-0.5 text-[12px] font-bold" style={{ color: '#FFB347' }}>
+                  <Star size={11} fill="#FFB347" strokeWidth={0} />
+                  {reputation.avgRating.toFixed(1)}
+                </span>
+                <span className="text-[11px]" style={{ color: '#6B6C80' }}>{reputation.reviewCount} review{reputation.reviewCount === 1 ? '' : 's'}</span>
+                <span className="h-3 w-px" style={{ background: 'rgba(255,255,255,0.12)' }} />
+                <span className="text-[11px]" style={{ color: '#6B6C80' }}>
+                  {reputation.completedEvents} event{reputation.completedEvents === 1 ? '' : 's'} · {reputation.ticketsSold.toLocaleString()} ticket{reputation.ticketsSold === 1 ? '' : 's'} sold
+                </span>
+              </div>
+            )}
           </div>
           <div className="glass rounded-xl p-3.5" style={{ background: 'rgba(255,255,255,0.03)' }}>
             <div className="mb-[5px] text-[10px] uppercase tracking-[0.7px]" style={{ color: '#6B6C80' }}>Distance</div>
@@ -470,8 +504,16 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
               {reviews.map((r) => (
                 <div key={r.id} className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
                   <div className="mb-1 flex items-center justify-between gap-2">
-                    <span className="text-[13px] font-semibold" style={{ color: '#FFFFFF' }}>
-                      {r.guestName}
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <span className="truncate text-[13px] font-semibold" style={{ color: '#FFFFFF' }}>
+                        {r.guestName}
+                      </span>
+                      <span
+                        className="flex flex-shrink-0 items-center gap-0.5 rounded-full px-1.5 py-[2px] text-[9px] font-bold uppercase tracking-[0.5px]"
+                        style={{ background: 'rgba(255,155,62,0.12)', border: '1px solid rgba(255,155,62,0.28)', color: '#FFB347' }}
+                      >
+                        <ShieldCheck size={8.5} strokeWidth={2.5} /> Verified attendee
+                      </span>
                     </span>
                     <span className="flex gap-0.5">
                       {[1, 2, 3, 4, 5].map((star) => (

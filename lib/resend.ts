@@ -540,3 +540,169 @@ export async function sendNewsletterCampaignEmail(data: NewsletterCampaignEmailD
     html,
   });
 }
+
+// ---------------------------------------------------------------------------
+// Batch 22 — retention notifications (best-effort, same pattern as the others).
+// Shared shell in the gold/orange identity; each sender assembles its copy.
+// ---------------------------------------------------------------------------
+
+interface NotificationShell {
+  badge: string;
+  heading: string;
+  greeting: string;
+  paragraphs: string[];
+  details?: { label: string; value: string }[];
+  bullets?: string[];
+  ctaUrl?: string;
+  ctaLabel?: string;
+  note?: string;
+}
+
+function notificationShellHtml(s: NotificationShell): string {
+  const details = (s.details ?? [])
+    .map(
+      (d) => `
+      <tr>
+        <td width="34%" valign="top" style="padding:9px 16px 9px 0;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:#6B6C80;text-transform:uppercase;">${escapeHtml(d.label)}</div>
+        </td>
+        <td valign="top" style="padding:9px 0;">
+          <div style="font-size:13px;font-weight:700;color:#FFFFFF;line-height:19px;">${escapeHtml(d.value)}</div>
+        </td>
+      </tr>`
+    )
+    .join('');
+  const bullets =
+    s.bullets && s.bullets.length > 0
+      ? `<ul style="margin:0;padding:0;list-style:none;">
+          ${s.bullets
+            .map(
+              (b) => `<li style="font-size:13px;line-height:20px;color:#FFFFFF;padding:7px 0 7px 22px;background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="%23FF9B3E" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>') left center no-repeat;">${escapeHtml(b)}</li>`
+            )
+            .join('')}
+        </ul>`
+      : '';
+  const cta =
+    s.ctaUrl && s.ctaLabel
+      ? `<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="border-collapse:collapse;margin-top:24px;">
+          <tr><td align="center" style="border-radius:12px;background:linear-gradient(135deg,#FF9B3E,#FF6A00);">
+            <a href="${escapeHtml(s.ctaUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:15px 30px;border-radius:12px;color:#FFFFFF;font-size:14px;font-weight:800;text-decoration:none;letter-spacing:0.1px;">${escapeHtml(s.ctaLabel)}</a>
+          </td></tr>
+        </table>`
+      : '';
+  const note = s.note
+    ? `<p style="font-size:11px;color:#6B6C80;margin:22px 0 0;line-height:18px;">${escapeHtml(s.note)}</p>`
+    : '';
+  return `
+    <div style="background-color:#0B0B10;margin:0;padding:32px 12px;font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+      <div style="max-width:520px;margin:0 auto;background-color:#12121C;border-radius:24px;overflow:hidden;border:1px solid #26263A;">
+        <div style="padding:34px 30px 24px 30px;background:linear-gradient(135deg,#2A1606 0%,#12121C 60%);border-bottom:1px solid rgba(255,154,62,0.22);">
+          <div style="font-size:11px;font-weight:800;letter-spacing:3px;color:#FF9B3E;text-transform:uppercase;">Lagos&nbsp;Live</div>
+          <div style="font-size:26px;font-weight:900;color:#FFFFFF;margin-top:12px;line-height:32px;">${escapeHtml(s.heading)}</div>
+          <div style="display:inline-block;margin-top:16px;background:rgba(255,154,62,0.12);border:1px solid rgba(255,154,62,0.3);border-radius:999px;padding:6px 13px;">
+            <span style="font-size:10px;font-weight:800;letter-spacing:1px;color:#FFB347;text-transform:uppercase;">${escapeHtml(s.badge)}</span>
+          </div>
+        </div>
+        <div style="padding:26px 30px 30px 30px;">
+          <p style="font-size:14px;line-height:22px;color:#D5D6E0;margin:0 0 8px;">${escapeHtml(s.greeting)}</p>
+          ${s.paragraphs.map((p) => `<p style="font-size:14px;line-height:22px;color:#D5D6E0;margin:14px 0 0;">${escapeHtml(p)}</p>`).join('')}
+          ${s.details && s.details.length > 0 ? `<div style="margin-top:18px;background:#0B0B10;border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:13px 16px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">${details}</table></div>` : ''}
+          ${bullets ? `<div style="margin-top:18px;background:#0B0B10;border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:13px 16px;">${bullets}</div>` : ''}
+          ${cta}
+          ${note}
+          <p style="font-size:12px;color:#6B6C80;margin:24px 0 0;line-height:18px;">— Lagos Live Team · <a href="mailto:support@lagoslive.ng" style="color:#6B6C80;text-decoration:none;">support@lagoslive.ng</a></p>
+        </div>
+      </div>
+    </div>`;
+}
+
+export interface EventReminderEmailData {
+  to: string;
+  guestName: string;
+  partyTitle: string;
+  partyDate: string;
+  partyTime: string;
+  partyLocation: string;
+  ticketUrl: string;
+}
+
+// Sent by the reminders cron ~24h before an event the guest is attending.
+export async function sendEventReminderEmail(data: EventReminderEmailData): Promise<boolean> {
+  const html = notificationShellHtml({
+    badge: 'Happening soon',
+    heading: `${data.partyTitle} is happening soon`,
+    greeting: `Hi ${data.guestName},`,
+    paragraphs: ["Here's your reminder — you're on the list. Keep your ticket handy at the door."],
+    details: [
+      { label: 'Event', value: data.partyTitle },
+      { label: 'Date', value: data.partyDate },
+      { label: 'Time', value: data.partyTime },
+      { label: 'Location', value: data.partyLocation },
+    ],
+    ctaUrl: data.ticketUrl,
+    ctaLabel: 'View My Ticket',
+  });
+  return sendHtmlEmail({
+    to: data.to,
+    subject: `Reminder · ${data.partyTitle} is happening soon`,
+    html,
+  });
+}
+
+export interface EventChangeEmailData {
+  to: string;
+  guestName: string;
+  partyTitle: string;
+  changes: string[];
+  partyUrl: string;
+}
+
+// Sent by the host event editor after a venue/date/time edit for an approved,
+// upcoming event — to buyers, savers and reminder-set users.
+export async function sendEventChangeEmail(data: EventChangeEmailData): Promise<boolean> {
+  const html = notificationShellHtml({
+    badge: 'Details updated',
+    heading: `Update on ${data.partyTitle}`,
+    greeting: `Hi ${data.guestName},`,
+    paragraphs: ['The organiser just updated the details for an event you care about. Here is what changed:'],
+    bullets: data.changes,
+    ctaUrl: data.partyUrl,
+    ctaLabel: 'View Event Page',
+  });
+  return sendHtmlEmail({
+    to: data.to,
+    subject: `Update · ${data.partyTitle} details changed`,
+    html,
+  });
+}
+
+export interface AlmostSoldOutEmailData {
+  to: string;
+  guestName: string;
+  partyTitle: string;
+  partyDate: string;
+  partyTime: string;
+  partyUrl: string;
+}
+
+// Sent by the saved-updates cron to savers of an event that is about to sell out.
+export async function sendAlmostSoldOutEmail(data: AlmostSoldOutEmailData): Promise<boolean> {
+  const html = notificationShellHtml({
+    badge: 'Almost sold out',
+    heading: `${data.partyTitle} is almost sold out`,
+    greeting: `Hi ${data.guestName},`,
+    paragraphs: ['You saved this event and it is on track to sell out. Grab your tickets now so you don\u2019t miss it.'],
+    details: [
+      { label: 'Event', value: data.partyTitle },
+      { label: 'Date', value: data.partyDate },
+      { label: 'Time', value: data.partyTime },
+    ],
+    ctaUrl: data.partyUrl,
+    ctaLabel: 'Get Your Ticket',
+  });
+  return sendHtmlEmail({
+    to: data.to,
+    subject: `Hurry · ${data.partyTitle} is almost sold out`,
+    html,
+  });
+}

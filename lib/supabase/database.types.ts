@@ -418,6 +418,66 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          user_id: string
+          email_enabled: boolean
+          reminders_enabled: boolean
+          event_changes_enabled: boolean
+          saved_updates_enabled: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          email_enabled?: boolean
+          reminders_enabled?: boolean
+          event_changes_enabled?: boolean
+          saved_updates_enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          email_enabled?: boolean
+          reminders_enabled?: boolean
+          event_changes_enabled?: boolean
+          saved_updates_enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notification_sends: {
+        Row: {
+          id: number
+          user_id: string | null
+          recipient_email: string
+          channel: string
+          type: string
+          ref_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          user_id?: string | null
+          recipient_email: string
+          channel?: string
+          type: string
+          ref_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          user_id?: string | null
+          recipient_email?: string
+          channel?: string
+          type?: string
+          ref_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       admin_notes: {
         Row: {
           author_id: string
@@ -699,6 +759,10 @@ export type Database = {
           guest_name: string
           rating: number
           review_text: string | null
+          moderation_status: string
+          moderated_at: string | null
+          moderated_by: string | null
+          moderation_reason: string | null
           created_at: string
           updated_at: string
         }
@@ -709,6 +773,10 @@ export type Database = {
           guest_name?: string
           rating: number
           review_text?: string | null
+          moderation_status?: string
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_reason?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -719,6 +787,10 @@ export type Database = {
           guest_name?: string
           rating?: number
           review_text?: string | null
+          moderation_status?: string
+          moderated_at?: string | null
+          moderated_by?: string | null
+          moderation_reason?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -880,6 +952,35 @@ export type Database = {
           p_payment_status: string
         }
         Returns: undefined
+      }
+      record_notification_send: {
+        Args: {
+          p_user_id?: string | null
+          p_email: string
+          p_channel: string
+          p_type: string
+          p_ref_id: string
+        }
+        Returns: boolean
+      }
+      moderate_review: {
+        Args: {
+          p_review_id: string
+          p_status: string
+          p_reason?: string | null
+        }
+        Returns: undefined
+      }
+      organizer_reputation: {
+        Args: {
+          p_organizer_id: string
+        }
+        Returns: {
+          completed_events: number
+          tickets_sold: number
+          avg_rating: number
+          review_count: number
+        }[]
       }
       staff_check_in: {
         Args: {

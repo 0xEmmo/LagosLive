@@ -88,5 +88,20 @@ export interface CustomerTicket {
   paymentStatus: OrderPaymentStatus;
   refundStatus: string | null;
   refundAmount: number;
+  checkInStatus: string | null;
+  checkedInAt: string | null;
+  refundedAt: string | null;
   createdAt: string;
+}
+
+export type TicketState = 'VALID' | 'USED' | 'CANCELLED' | 'REFUNDED';
+
+// The customer-facing state of a ticket. Order matters:
+// a cancelled event always reads as CANCELLED, a refunded order as REFUNDED,
+// a ticket that was scanned at the gate as USED, everything else VALID.
+export function ticketState(ticket: Pick<CustomerTicket, 'party' | 'refundStatus' | 'refundedAt' | 'checkInStatus'>): TicketState {
+  if (ticket.party.cancelledAt) return 'CANCELLED';
+  if (ticket.refundStatus === 'refunded' || ticket.refundedAt) return 'REFUNDED';
+  if (ticket.checkInStatus === 'checked_in') return 'USED';
+  return 'VALID';
 }

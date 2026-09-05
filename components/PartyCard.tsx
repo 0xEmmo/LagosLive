@@ -21,8 +21,20 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 20
   const [hovered, setHovered] = useState(false);
   const saved = useLagosLiveStore((s) => s.savedParties.includes(party.id));
   const reminded = useLagosLiveStore((s) => s.reminders.includes(party.id));
+  const user = useLagosLiveStore((s) => s.user);
   const toggleSave = useLagosLiveStore((s) => s.toggleSave);
   const toggleReminder = useLagosLiveStore((s) => s.toggleReminder);
+  const showToast = useLagosLiveStore((s) => s.showToast);
+
+  const handleSave = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const wasSaved = saved;
+    toggleSave(party.id);
+    if (!user && !wasSaved) {
+      showToast('Saved on this device', 'Create an account to keep it saved across devices.');
+    }
+  };
 
   const onMouseMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -112,11 +124,7 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 20
               </button>
             )}
             <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleSave(party.id);
-              }}
+              onClick={handleSave}
               className="flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200 active:scale-90 hover:scale-105"
               style={{
                 background: 'rgba(0,0,0,0.5)',

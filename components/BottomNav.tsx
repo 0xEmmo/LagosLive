@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Search, Map as MapIcon, Heart, User } from 'lucide-react';
+import { Home, Search, Ticket, Map as MapIcon, Heart, User } from 'lucide-react';
 import { useLagosLiveStore } from '@/lib/store';
 
 const PUBLIC_ITEMS = [
@@ -10,6 +10,14 @@ const PUBLIC_ITEMS = [
   { href: '/search', match: '/search', label: 'Search', Icon: Search },
   { href: '/map', match: '/map', label: 'Map', Icon: MapIcon },
   { href: '/saved', match: '/saved', label: 'Saved', Icon: Heart },
+];
+
+const AUTH_ITEMS = [
+  { href: '/', match: '/', label: 'Home', Icon: Home },
+  { href: '/search', match: '/search', label: 'Search', Icon: Search },
+  { href: '/tickets', match: '/tickets', label: 'Tickets', Icon: Ticket },
+  { href: '/saved', match: '/saved', label: 'Saved', Icon: Heart },
+  { href: '/profile', match: '/profile', label: 'Profile', Icon: User },
 ];
 
 const HIDDEN_PREFIXES = ['/login', '/signup', '/checkout'];
@@ -20,9 +28,7 @@ export default function BottomNav() {
 
   if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null;
 
-  const items = user
-    ? [...PUBLIC_ITEMS, { href: '/profile', match: '/profile', label: 'Profile', Icon: User }]
-    : PUBLIC_ITEMS;
+  const items = user ? AUTH_ITEMS : PUBLIC_ITEMS;
 
   return (
     <div

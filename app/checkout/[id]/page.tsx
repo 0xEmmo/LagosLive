@@ -115,6 +115,12 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   const [email, setEmail] = useState('');
   const [ticketToken, setTicketToken] = useState('');
   const [emailSent, setEmailSent] = useState<boolean | null>(null);
+  const [promoDismissed, setPromoDismissed] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setPromoDismissed(sessionStorage.getItem('ll_account_promo_dismissed') === '1');
+  }, []);
 
   useEffect(() => {
     if (user?.email) setEmail(user.email);
@@ -569,6 +575,38 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
               Done
             </button>
           </div>
+
+          {isGuest && !promoDismissed && (
+            <div
+              className="mt-7 w-full max-w-[340px] rounded-2xl p-[18px] text-left"
+              style={{ background: 'rgba(255,155,62,0.06)', border: '1px solid rgba(255,155,62,0.25)' }}
+            >
+              <div className="font-heading mb-1 text-sm font-bold" style={{ color: '#FF9B3E' }}>
+                Your ticket is saved — for now.
+              </div>
+              <p className="mb-4 text-xs leading-relaxed" style={{ color: '#A7A8B5' }}>
+                Create an account to keep all your tickets, reviews and reminders in one place — and never lose them if you switch devices.
+              </p>
+              <div className="flex flex-col gap-2">
+                <Link
+                  href="/signup?next=/tickets"
+                  className="btn-primary w-full py-[13px] text-center text-sm font-bold"
+                >
+                  Create Account
+                </Link>
+                <button
+                  onClick={() => {
+                    setPromoDismissed(true);
+                    sessionStorage.setItem('ll_account_promo_dismissed', '1');
+                  }}
+                  className="w-full py-2 text-xs font-semibold"
+                  style={{ color: '#6B6C80' }}
+                >
+                  Maybe Later
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

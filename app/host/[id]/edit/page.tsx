@@ -46,7 +46,26 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
   const isAdminEditingOthersEvent = user.isAdmin && party.createdBy !== user.id;
 
   const submit = async (input: PartyFormInput) => {
+    // Phase 5: notify attending guests when a live event's key details shift.
+    const changes: string[] = [];
+    if (new Date(party.startsAt).getTime() !== new Date(input.startsAt).getTime()) {
+      changes.push('Date & time updated');
+    }
+    if (party.location !== input.location) changes.push('Venue changed');
+    if (party.address !== input.address) changes.push('Address changed');
+
     await updateParty(party.id, input);
+
+    if (changes.length > 0) {
+      fetch('/api/events/notify-changes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ partyId: party.id, changes }),
+      }).catch(() => {
+        // Best-effort — a failed change email must never block a save.
+      });
+    }
+
     router.push(isAdminEditingOthersEvent ? '/admin' : `/party/${party.id}`);
   };
 

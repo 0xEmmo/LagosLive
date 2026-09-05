@@ -88,6 +88,9 @@ export async function POST(request: Request) {
         paymentStatus: order.payment_status,
         refundStatus: order.refund_status,
         refundAmount: order.refund_amount,
+        checkInStatus: order.check_in_status ?? null,
+        checkedInAt: order.checked_in_at ?? null,
+        refundedAt: order.refunded_at ?? null,
         createdAt: order.created_at,
       },
     });

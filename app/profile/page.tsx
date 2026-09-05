@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { X, Bell, Heart, Ticket, AlertTriangle, RefreshCw, TicketCheck } from 'lucide-react';
+import { X, Bell, Heart, Ticket, AlertTriangle, RefreshCw, TicketCheck, Mail } from 'lucide-react';
 import { useParties } from '@/lib/hooks/useParties';
 import { useLagosLiveStore } from '@/lib/store';
 import { fetchMyTickets } from '@/lib/queries';
@@ -28,6 +28,36 @@ export default function ProfilePage() {
   const [ticketsLoading, setTicketsLoading] = useState(true);
   const [ticketsError, setTicketsError] = useState<string | null>(null);
   const [ticketsAttempt, setTicketsAttempt] = useState(0);
+  const [prefs, setPrefs] = useState<{
+    email_enabled: boolean;
+    reminders_enabled: boolean;
+    event_changes_enabled: boolean;
+    saved_updates_enabled: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    fetch('/api/notifications/preferences')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => json?.preferences && setPrefs(json.preferences))
+      .catch(() => {});
+  }, [user]);
+
+  const setPref = async (key: keyof NonNullable<typeof prefs>, value: boolean) => {
+    if (!prefs) return;
+    const next = { ...prefs, [key]: value };
+    setPrefs(next);
+    try {
+      await fetch('/api/notifications/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(next),
+      });
+    } catch {
+      // Revert locally on failure so the UI never lies about what's saved.
+      setPrefs(prefs);
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/login');
@@ -195,6 +225,42 @@ export default function ProfilePage() {
           />
         </div>
       </div>
+
+      {prefs && (
+        <div className="mb-2.5 rounded-2xl px-4 py-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="mb-3 flex items-center gap-2">
+            <Mail size={14} strokeWidth={2} style={{ color: '#FF9B3E' }} />
+            <div className="text-[13px] font-semibold" style={{ color: '#FFFFFF' }}>Email Preferences</div>
+          </div>
+          <div className="flex flex-col gap-3">
+            {(
+              [
+                { key: 'email_enabled', label: 'Order & account emails', hint: 'Receipts, tickets and security updates' },
+                { key: 'reminders_enabled', label: 'Event reminders', hint: '“Happening soon” — 24 hours before' },
+                { key: 'event_changes_enabled', label: 'Event change updates', hint: 'When a saved event venue or time changes' },
+                { key: 'saved_updates_enabled', label: 'Almost-sold-out alerts', hint: 'For events you saved that are nearly full' },
+              ] as const
+            ).map(({ key, label, hint }) => (
+              <div key={key} className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[12.5px] font-semibold" style={{ color: '#FFFFFF' }}>{label}</div>
+                  <div className="text-[10.5px]" style={{ color: '#6B6C80' }}>{hint}</div>
+                </div>
+                <div
+                  onClick={() => setPref(key, !prefs[key])}
+                  className="relative h-[20px] w-9 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-150"
+                  style={{ background: prefs[key] ? '#FF9B3E' : 'rgba(255,255,255,0.12)' }}
+                >
+                  <div
+                    className="absolute left-[2px] top-[2px] h-[16px] w-[16px] rounded-full bg-white transition-transform duration-150 ease-out"
+                    style={{ transform: `translateX(${prefs[key] ? 16 : 0}px)` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {reminderList.length > 0 && (
         <>

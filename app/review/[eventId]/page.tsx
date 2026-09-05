@@ -51,6 +51,29 @@ export default function ReviewPage({ params }: { params: { eventId: string } }) 
 
   const effectiveHover = hover || rating;
 
+  if (party?.cancelledAt) {
+    return (
+      <div className="mx-auto max-w-[600px] animate-fade-in pb-24">
+        <div
+          className="sticky top-0 z-40 flex items-center gap-3 border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150"
+          style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}
+        >
+          <BackButton href={`/party/${party.id}`} />
+          <span className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>
+            Rate &amp; Review
+          </span>
+        </div>
+        <div className="rounded-2xl p-5 text-center" style={{ background: 'rgba(255,45,149,0.06)', border: '1px solid rgba(255,45,149,0.2)' }}>
+          <Lock size={20} strokeWidth={2} style={{ color: '#FF2D95' }} className="mx-auto mb-3" />
+          <p className="text-sm font-semibold" style={{ color: '#FFFFFF' }}>Reviews are closed for this event</p>
+          <p className="mx-auto mt-1.5 max-w-[340px] text-xs leading-[1.6]" style={{ color: '#A7A8B5' }}>
+            {party.title} was cancelled, so there&apos;s nothing to rate. If you had a ticket, your refund should already have been issued — reach out to support if it hasn&apos;t.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-[600px] animate-fade-in pb-24">
       <div

@@ -357,6 +357,9 @@ function toCustomerTicket(row: OrderRow): CustomerTicket | null {
     paymentStatus: row.payment_status as CustomerTicket['paymentStatus'],
     refundStatus: row.refund_status ?? null,
     refundAmount: row.refund_amount ?? 0,
+    checkInStatus: row.check_in_status ?? null,
+    checkedInAt: row.checked_in_at ?? null,
+    refundedAt: row.refunded_at ?? null,
     createdAt: row.created_at,
   };
 }
@@ -429,6 +432,29 @@ export async function fetchPartyHostVerified(id: number): Promise<boolean> {
   const { data, error } = await supabase.rpc('party_host_verified', { p_party_id: id });
   if (error) throw error;
   return !!data;
+}
+
+export interface OrganizerReputation {
+  completedEvents: number;
+  ticketsSold: number;
+  avgRating: number;
+  reviewCount: number;
+}
+
+// Public organizer reputation (Phase 5): aggregate over the organizer's
+// completed (ended), approved, un-cancelled events. The RPC only ever returns
+// aggregate counts/ratings, never per-order or per-guest data.
+export async function fetchOrganizerReputation(organizerId: string): Promise<OrganizerReputation | null> {
+  const { data, error } = await supabase.rpc('organizer_reputation', { p_organizer_id: organizerId });
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) return null;
+  return {
+    completedEvents: Number(row.completed_events ?? 0),
+    ticketsSold: Number(row.tickets_sold ?? 0),
+    avgRating: Number(row.avg_rating ?? 0),
+    reviewCount: Number(row.review_count ?? 0),
+  };
 }
 
 export interface OrganizerPartyStats {

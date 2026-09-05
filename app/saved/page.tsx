@@ -7,6 +7,32 @@ import PartyCard from '@/components/PartyCard';
 import { EventCardGridSkeleton } from '@/components/ui/loaders-skeleton';
 import { useParties } from '@/lib/hooks/useParties';
 import { useLagosLiveStore } from '@/lib/store';
+import type { Party } from '@/lib/types';
+
+// Saved cards show a state badge when the event has since been cancelled or has
+// already ended — sold-out is handled by PartyCard, and hiding a deleted or
+// suspended event is handled gracefully by the RLS-approved parties query.
+function SavedCard({ party, index }: { party: Party; index: number }) {
+  const cancelled = !!party.cancelledAt;
+  const ended = !cancelled && new Date(party.startsAt).getTime() < Date.now();
+  if (!cancelled && !ended) {
+    return <PartyCard key={party.id} party={party} index={index} />;
+  }
+  const meta = cancelled
+    ? { label: 'Cancelled', color: '#FFB347' }
+    : { label: 'Ended', color: '#6B6C80' };
+  return (
+    <div key={party.id} className="relative">
+      <span
+        className="absolute right-3 top-3 z-10 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide backdrop-blur-[8px]"
+        style={{ background: 'rgba(7,7,11,0.72)', border: `1px solid ${meta.color}55`, color: meta.color }}
+      >
+        {meta.label}
+      </span>
+      <PartyCard party={party} index={index} />
+    </div>
+  );
+}
 
 export default function SavedPage() {
   const { parties, loading, error, retry } = useParties();
@@ -82,7 +108,7 @@ export default function SavedPage() {
                 style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', color: '#6B6C80' }}
               >
                 Saved parties are stored on this device.{' '}
-                <Link href="/signup" style={{ color: '#FF2D95' }}>Create an account</Link> to save across devices.
+                <Link href="/signup?next=/saved" style={{ color: '#FFB347' }}>Create an account</Link> to save across devices.
               </div>
             </div>
           )}
@@ -91,7 +117,7 @@ export default function SavedPage() {
             style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', perspective: '1500px' }}
           >
             {saved.map((party, i) => (
-              <PartyCard key={party.id} party={party} index={i} />
+              <SavedCard key={party.id} party={party} index={i} />
             ))}
           </div>
         </>

@@ -16,6 +16,7 @@ import {
   XCircle,
   Ban,
   Ticket,
+  CheckCheck,
 } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import PartyPhoto from '@/components/PartyPhoto';
@@ -25,6 +26,7 @@ import { fetchTicketById } from '@/lib/queries';
 import { formatNaira } from '@/lib/filters';
 import { useLagosLiveStore } from '@/lib/store';
 import type { CustomerTicket, OrderPaymentStatus } from '@/lib/types';
+import { ticketState } from '@/lib/types';
 
 function TicketStatusBadge({ status }: { status: OrderPaymentStatus }) {
   if (status === 'confirmed') {
@@ -92,8 +94,18 @@ function NonConfirmedTicket({ ticket }: { ticket: CustomerTicket }) {
 }
 
 function CancelledTicket({ ticket }: { ticket: CustomerTicket }) {
+  const user = useLagosLiveStore((s) => s.user);
   const { party } = ticket;
-  const refunded = ticket.refundStatus === 'refunded';
+  const refunded = ticket.refundStatus === 'refunded' || !!ticket.refundedAt;
+  const eventCancelled = !!party.cancelledAt;
+  const title = eventCancelled ? 'Event Cancelled' : refunded ? 'Ticket Refunded' : 'Ticket Unavailable';
+  const body = eventCancelled
+    ? party.cancellationReason
+      ? `The organiser cancelled this event: "${party.cancellationReason}"`
+      : 'The organiser cancelled this event.'
+    : refunded
+    ? 'This ticket has been refunded, so it is no longer valid for entry.'
+    : 'This ticket is unavailable for entry.';
   return (
     <div className="flex w-full max-w-[400px] flex-col items-center text-center animate-fade-in">
       <div className="rounded-[28px] p-[1.5px]" style={{ background: 'rgba(255,179,71,0.35)', border: '1px solid rgba(255,179,71,0.25)' }}>
@@ -109,25 +121,25 @@ function CancelledTicket({ ticket }: { ticket: CustomerTicket }) {
             <div className="flex h-14 w-14 items-center justify-center rounded-full" style={{ background: 'rgba(255,179,71,0.08)', border: '1px solid rgba(255,179,71,0.3)' }}>
               <Ban size={26} strokeWidth={1.5} color="#FFB347" />
             </div>
-            <h2 className="font-display mt-4 text-[24px]" style={{ color: '#FFFFFF' }}>Event Cancelled</h2>
-            <p className="mt-2 max-w-[300px] text-[13px]" style={{ color: '#A7A8B5' }}>
-              {party.cancellationReason
-                ? `The organiser cancelled this event: "${party.cancellationReason}"`
-                : 'The organiser cancelled this event.'}
-            </p>
-            <div className="mt-5 w-full rounded-2xl p-4 text-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <div className="text-[10px] font-bold uppercase tracking-[1px]" style={{ color: '#6B6C80' }}>Refund</div>
-              <div className="mt-1 text-[15px] font-bold" style={{ color: refunded ? '#3ECF8E' : '#FFB347' }}>
-                {refunded ? `Refunded ${formatNaira(ticket.refundAmount)}` : ticket.refundStatus === 'processing' ? 'Refund in progress' : 'Refund to be issued'}
+            <h2 className="font-display mt-4 text-[24px]" style={{ color: '#FFFFFF' }}>{title}</h2>
+            <p className="mt-2 max-w-[300px] text-[13px]" style={{ color: '#A7A8B5' }}>{body}</p>
+            {eventCancelled && (
+              <div className="mt-5 w-full rounded-2xl p-4 text-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div className="text-[10px] font-bold uppercase tracking-[1px]" style={{ color: '#6B6C80' }}>Refund</div>
+                <div className="mt-1 text-[15px] font-bold" style={{ color: refunded ? '#3ECF8E' : '#FFB347' }}>
+                  {refunded ? `Refunded ${formatNaira(ticket.refundAmount)}` : ticket.refundStatus === 'processing' ? 'Refund in progress' : 'Refund to be issued'}
+                </div>
               </div>
-            </div>
+            )}
             <div className="mt-6 flex w-full flex-col gap-2.5">
               <Link href="/" className="btn-primary flex items-center justify-center py-[15px] text-sm font-bold">
                 Discover Events
               </Link>
-              <Link href="/tickets" className="w-full rounded-xl py-[15px] text-sm font-semibold glass glass-hover" style={{ color: '#FFB347' }}>
-                Find my ticket
-              </Link>
+              {!user && (
+                <Link href="/tickets" className="w-full rounded-xl py-[15px] text-sm font-semibold glass glass-hover" style={{ color: '#FFB347' }}>
+                  Find my ticket
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -136,7 +148,15 @@ function CancelledTicket({ ticket }: { ticket: CustomerTicket }) {
   );
 }
 
-function ConfirmedTicket({ ticket }: { ticket: CustomerTicket }) {
+function ConfirmedTicket({
+  ticket,
+  holder,
+  used,
+}: {
+  ticket: CustomerTicket;
+  holder: string;
+  used: boolean;
+}) {
   const { party } = ticket;
   return (
     <div className="w-full max-w-[380px] animate-fade-in">
@@ -198,6 +218,21 @@ function ConfirmedTicket({ ticket }: { ticket: CustomerTicket }) {
               <div className="absolute -right-[21px] -top-[7px] h-[14px] w-[14px] rounded-full" style={{ background: '#0C0C0E' }} />
             </div>
 
+            {/* Holder */}
+            <div className="mb-4 rounded-2xl px-3.5 py-2.5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="text-[10px] uppercase tracking-[0.8px]" style={{ color: '#6B6C80' }}>Ticket holder</div>
+              <div className="mt-0.5 truncate text-[13px] font-bold" style={{ color: '#FFFFFF' }}>{holder}</div>
+            </div>
+
+            {used && (
+              <div className="mb-4 flex items-start gap-2.5 rounded-2xl px-3.5 py-3 text-[12.5px]" style={{ background: 'rgba(0,245,212,0.06)', border: '1px solid rgba(0,245,212,0.22)', color: '#00F5D4' }}>
+                <CheckCheck size={15} strokeWidth={2.2} className="mt-0.5 flex-shrink-0" />
+                <span>
+                  {ticket.checkedInAt ? `This ticket was scanned at the gate on ${new Date(ticket.checkedInAt).toLocaleString()}.` : 'This ticket was used at the gate.'} It is no longer valid for entry.
+                </span>
+              </div>
+            )}
+
             {/* Order + code */}
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -211,10 +246,17 @@ function ConfirmedTicket({ ticket }: { ticket: CustomerTicket }) {
             </div>
 
             {/* QR */}
-            <div className="mt-5 rounded-2xl p-4 text-center" style={{ background: '#FFFFFF' }}>
+            <div className="relative mt-5 rounded-2xl p-4 text-center" style={{ background: '#FFFFFF' }}>
               <QRCode value={ticket.orderRef} size={168} fgColor="#0B0B10" bgColor="transparent" style={{ width: '100%', maxWidth: 168, height: 'auto' }} aria-label={`Ticket code for ${ticket.orderRef}`} />
+              {used && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="-rotate-12 rounded-xl border-4 px-3 py-1.5 text-xl font-black uppercase tracking-[3px] opacity-90" style={{ borderColor: '#FF5A2E', color: '#FF5A2E', background: 'rgba(255,255,255,0.72)' }}>
+                    Used
+                  </span>
+                </div>
+              )}
               <div className="mt-2 text-[11px] font-semibold uppercase tracking-[1px]" style={{ color: '#0B0B10' }}>
-                Show this at the entrance
+                {used ? 'Already scanned — not valid at the gate' : 'Show this at the entrance'}
               </div>
             </div>
 
@@ -352,10 +394,14 @@ export default function TicketPage({ params }: { params: { id: string } }) {
               Find my ticket
             </Link>
           </div>
-        ) : ticket.paymentStatus === 'confirmed' && ticket.party.cancelledAt ? (
+        ) : ticket.paymentStatus === 'confirmed' && (ticket.party.cancelledAt || ticket.refundStatus === 'refunded' || ticket.refundedAt) ? (
           <CancelledTicket ticket={ticket} />
         ) : ticket.paymentStatus === 'confirmed' ? (
-          <ConfirmedTicket ticket={ticket} />
+          <ConfirmedTicket
+            ticket={ticket}
+            holder={user ? user.name || user.email : 'Guest entry'}
+            used={ticketState(ticket) === 'USED'}
+          />
         ) : (
           <NonConfirmedTicket ticket={ticket} />
         )}

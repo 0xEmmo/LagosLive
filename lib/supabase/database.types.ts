@@ -123,33 +123,48 @@ export type Database = {
       }
       ticket_types: {
         Row: {
+          active: boolean
           created_at: string
+          description: string | null
           id: number
           name: string
           party_id: number
           price: number
           quantity: number
+          sales_end_at: string | null
+          sales_start_at: string | null
           sold: number
+          sort_order: number
           updated_at: string
         }
         Insert: {
+          active?: boolean
           created_at?: string
+          description?: string | null
           id?: number
           name: string
           party_id: number
           price: number
           quantity: number
+          sales_end_at?: string | null
+          sales_start_at?: string | null
           sold?: number
+          sort_order?: number
           updated_at?: string
         }
         Update: {
+          active?: boolean
           created_at?: string
+          description?: string | null
           id?: number
           name?: string
           party_id?: number
           price?: number
           quantity?: number
+          sales_end_at?: string | null
+          sales_start_at?: string | null
           sold?: number
+          sort_order?: number
           updated_at?: string
         }
         Relationships: [
@@ -943,6 +958,12 @@ export type Database = {
           p_party_id: number
           p_status: string
           p_reason?: string
+        }
+        Returns: undefined
+      }
+      confirm_order_group: {
+        Args: {
+          p_payment_ref: string
         }
         Returns: undefined
       }

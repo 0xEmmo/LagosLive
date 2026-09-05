@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { notFound } from 'next/navigation';
+import { useRouter, useSearchParams, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, CheckCircle2, Loader2, AlertTriangle, X, ShieldCheck } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -12,15 +11,34 @@ import { useLagosLiveStore } from '@/lib/store';
 import { fetchTicketTypes } from '@/lib/queries';
 import { openPaystackInline } from '@/lib/paystack';
 import PartyPhoto from '@/components/PartyPhoto';
+import TicketTypePicker from '@/components/TicketTypePicker';
 import { CheckoutSkeleton } from '@/components/ui/loaders-skeleton';
 import { formatNaira } from '@/lib/filters';
+import {
+  computeCart,
+  isTicketTypeSellable,
+  MAX_QTY_PER_TYPE,
+  parseItemsParam,
+  remainingOf,
+  SERVICE_FEE_PER_TICKET,
+  type TicketCart,
+} from '@/lib/tickets';
 import type { TicketType } from '@/lib/types';
-
-const MAX_QTY = 6;
-const SERVICE_FEE_PER_TICKET = 500;
 
 type Step = 'details' | 'success';
 type PayState = 'idle' | 'starting' | 'paying' | 'verifying' | 'failed' | 'cancelled';
+
+interface LineTicket {
+  orderId: string;
+  orderRef: string;
+  ticketAccessToken: string | null;
+}
+
+interface SuccessLine {
+  name: string;
+  qty: number;
+  total: number;
+}
 
 function Overlay({
   payState,
@@ -99,6 +117,7 @@ function Overlay({
 
 export default function CheckoutPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const partyId = Number(params.id);
   const { party, loading } = useParty(partyId);
   const user = useLagosLiveStore((s) => s.user);
@@ -107,6 +126,8 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   const [payState, setPayState] = useState<PayState>('idle');
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
   const [ttLoading, setTtLoading] = useState(true);
+  const [cart, setCart] = useState<TicketCart>({});
+  const [cartHydrated, setCartHydrated] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [qty, setQty] = useState(1);
   const [error, setError] = useState('');
@@ -115,6 +136,8 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   const [email, setEmail] = useState('');
   const [ticketToken, setTicketToken] = useState('');
   const [emailSent, setEmailSent] = useState<boolean | null>(null);
+  const [lineTickets, setLineTickets] = useState<LineTicket[]>([]);
+  const [successLines, setSuccessLines] = useState<SuccessLine[]>([]);
   const [promoDismissed, setPromoDismissed] = useState(false);
 
   useEffect(() => {
@@ -138,8 +161,14 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
     });
   }, [step]);
 
-  // Ticket types load in parallel with the party fetch — both depend only on
-  // `partyId`, so there's no reason to wait for the party before requesting them.
+  // The event page navigates here with ?items=12:2,7:1 — pre-fill the cart.
+  useEffect(() => {
+    const seeded = parseItemsParam(searchParams.get('items'));
+    setCart(seeded ?? {});
+    setCartHydrated(true);
+  }, [searchParams]);
+
+  // Ticket types load in parallel with the party fetch.
   useEffect(() => {
     if (!Number.isInteger(partyId) || partyId <= 0) return;
     let cancelled = false;
@@ -163,45 +192,55 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
     };
   }, [partyId]);
 
+  // Clamp any seeded cart against reality: dead types and over-quantities are
+  // trimmed once the loader has caught up.
+  const sellableTypes = ticketTypes.filter((t) => isTicketTypeSellable(t));
+  useEffect(() => {
+    if (!cartHydrated || ttLoading) return;
+    setCart((current) => {
+      const next: TicketCart = {};
+      for (const type of sellableTypes) {
+        const q = Math.min(current[type.id] ?? 0, remainingOf(type), MAX_QTY_PER_TYPE);
+        if (q > 0) next[type.id] = q;
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartHydrated, ttLoading, ticketTypes]);
+
   // Events without ticket types (the seeded ones) fall back to a single
   // "General Entry" option priced from the party's entry fee — never a mock.
-  const options: TicketType[] =
-    party && ticketTypes.length > 0
-      ? ticketTypes
-      : party
-      ? [
-          {
-            id: 0,
-            partyId: party.id,
-            name: 'General Entry',
-            price: party.feeNum,
-            quantity: party.capacity,
-            sold: party.capacity - party.spotsLeft,
-          },
-        ]
-      : [];
-
-  const selected = options.find((o) => o.id === selectedId) ?? options[0];
-  const remaining = selected
-    ? ticketTypes.length > 0
-      ? selected.quantity - selected.sold
-      : party
-      ? party.spotsLeft
-      : 0
-    : 0;
+  const hasTicketTypes = ticketTypes.length > 0;
+  const legacyOptions: TicketType[] = hasTicketTypes || !party
+    ? []
+    : [
+        {
+          id: 0,
+          partyId: party.id,
+          name: 'General Entry',
+          price: party.feeNum,
+          quantity: party.capacity,
+          sold: party.capacity - party.spotsLeft,
+          description: null,
+          salesStartAt: null,
+          salesEndAt: null,
+          active: true,
+          sortOrder: 0,
+        },
+      ];
+  const legacySelected = legacyOptions.find((o) => o.id === selectedId) ?? legacyOptions[0];
+  const legacyRemaining = legacySelected && party ? party.spotsLeft : 0;
+  const legacySoldOut = legacyRemaining <= 0;
 
   useEffect(() => {
-    setQty((q) => Math.min(q, Math.max(1, Math.min(MAX_QTY, remaining))));
-  }, [remaining]);
+    if (legacySelected) setQty((q) => Math.min(q, Math.max(1, Math.min(MAX_QTY_PER_TYPE, legacyRemaining))));
+  }, [legacyRemaining, legacySelected]);
 
   if (!party) {
     if (loading) return <CheckoutSkeleton />;
     notFound();
   }
 
-  // Cancelled events can never sell tickets — even for someone who already
-  // opened checkout. The API enforces this too; this guard keeps the client
-  // from even presenting a payment form.
   if (party.cancelledAt) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center px-6 text-center animate-fade-in">
@@ -221,13 +260,13 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
     );
   }
 
-  const unitPrice = selected.price;
-  const soldOut = remaining <= 0;
-  const isFree = unitPrice === 0;
+  const computed = hasTicketTypes ? computeCart(cart, sellableTypes) : { lines: [], tickets: 0, subtotal: 0, serviceFee: 0, total: 0, free: true };
+  const hasSelection = hasTicketTypes ? computed.lines.length > 0 : qty >= 1;
+  const cartIsFree = hasTicketTypes ? computed.free && hasSelection : legacySelected.price === 0;
+  const cartTotal = hasTicketTypes ? computed.total : legacySelected.price * qty + (legacySelected.price > 0 ? SERVICE_FEE_PER_TICKET * qty : 0);
+  const cartSubtotal = hasTicketTypes ? computed.subtotal : legacySelected.price * qty;
+  const cartServiceFee = hasTicketTypes ? computed.serviceFee : legacySelected.price > 0 ? SERVICE_FEE_PER_TICKET * qty : 0;
   const isGuest = !user;
-  const serviceFee = unitPrice > 0 ? SERVICE_FEE_PER_TICKET * qty : 0;
-  const subtotal = unitPrice * qty;
-  const total = subtotal + serviceFee;
 
   const back = () => {
     if (step === 'success') {
@@ -239,7 +278,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
 
   // The guest's ticket-access token is passed in explicitly rather than read
   // from component state. Paystack's callback fires long after the synchronous
-  // block that calls `setTicketToken(...)`, so a closure over that state would
+  // block that calls the state setters, so a closure over that state would
   // still hold the old (empty) value -> the server would reject the guest order
   // as "Order not found." even though the payment already succeeded.
   const verifyPayment = async (reference: string, oid: string, accessToken?: string) => {
@@ -250,9 +289,15 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reference, orderId: oid, token: accessToken || undefined }),
       });
-      const data = (await res.json()) as { status?: string; error?: string; emailSent?: boolean };
+      const data = (await res.json()) as {
+        status?: string;
+        error?: string;
+        emailSent?: boolean;
+        lineTickets?: LineTicket[];
+      };
       if (data.status === 'confirmed') {
         setEmailSent(data.emailSent ?? true);
+        if (data.lineTickets && data.lineTickets.length > 0) setLineTickets(data.lineTickets);
         setStep('success');
         setPayState('idle');
       } else {
@@ -274,8 +319,23 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
     setPayState('cancelled');
   };
 
+  const snapshotCart = (): SuccessLine[] =>
+    hasTicketTypes
+      ? computed.lines.map((line) => ({
+          name: line.type.name,
+          qty: line.qty,
+          total: line.type.price * line.qty + (line.type.price > 0 ? SERVICE_FEE_PER_TICKET * line.qty : 0),
+        }))
+      : [
+          {
+            name: legacySelected.name,
+            qty,
+            total: legacySelected.price * qty + (legacySelected.price > 0 ? SERVICE_FEE_PER_TICKET * qty : 0),
+          },
+        ];
+
   const startPayment = async () => {
-    if (soldOut || !selected) return;
+    if (!hasSelection) return;
     setError('');
     if (isGuest) {
       const trimmed = email.trim().toLowerCase();
@@ -285,17 +345,25 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
       }
       setEmail(trimmed);
     }
+    setSuccessLines(snapshotCart());
     setPayState('starting');
     try {
+      const body = hasTicketTypes
+        ? {
+            partyId: party.id,
+            items: computed.lines.map((line) => ({ ticketTypeId: line.type.id, quantity: line.qty })),
+            email: email.trim().toLowerCase() || undefined,
+          }
+        : {
+            partyId: party.id,
+            ticketTypeId: legacySelected.id || null,
+            quantity: qty,
+            email: email.trim().toLowerCase() || undefined,
+          };
       const res = await fetch('/api/paystack/initialize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          partyId: party.id,
-          ticketTypeId: selected.id || null,
-          quantity: qty,
-          email: email.trim().toLowerCase() || undefined,
-        }),
+        body: JSON.stringify(body),
       });
       const data = (await res.json()) as {
         free?: boolean;
@@ -304,6 +372,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
         amountKobo?: number;
         ticketAccessToken?: string;
         emailSent?: boolean;
+        lineTickets?: LineTicket[];
         error?: string;
       };
       if (!res.ok || !data.reference || !data.orderId) {
@@ -315,13 +384,14 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
       setOrderId(data.orderId ?? '');
       setTicketToken(data.ticketAccessToken ?? '');
       setEmailSent(data.emailSent ?? null);
+      if (data.lineTickets && data.lineTickets.length > 0) setLineTickets(data.lineTickets);
       if (data.free) {
         setStep('success');
         setPayState('idle');
         return;
       }
       setPayState('paying');
-      const accessToken = data.ticketAccessToken;
+      const accessToken = data.lineTickets?.[0]?.ticketAccessToken ?? undefined;
       await openPaystackInline({
         email: email.trim().toLowerCase(),
         amountKobo: data.amountKobo ?? 0,
@@ -339,10 +409,21 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   const ctaLabel =
     payState === 'starting' || payState === 'paying' || payState === 'verifying'
       ? 'Processing…'
-      : isFree
+      : cartIsFree
       ? 'Confirm RSVP'
       : 'Continue to Payment';
-  const ticketHref = orderId ? (ticketToken ? `/ticket/${orderId}?token=${ticketToken}` : `/ticket/${orderId}`) : '/profile';
+  const payDisabled = payState !== 'idle' || ttLoading || !hasSelection;
+
+  const ticketHref =
+    lineTickets[0]?.orderId
+      ? lineTickets[0].ticketAccessToken
+        ? `/ticket/${lineTickets[0].orderId}?token=${lineTickets[0].ticketAccessToken}`
+        : `/ticket/${lineTickets[0].orderId}`
+      : orderId
+      ? ticketToken
+        ? `/ticket/${orderId}?token=${ticketToken}`
+        : `/ticket/${orderId}`
+      : '/profile';
 
   return (
     <div className="mx-auto flex min-h-screen max-w-[520px] flex-col animate-fade-in">
@@ -386,68 +467,81 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
           </div>
 
           <div className="mb-2.5 text-[11px] font-bold uppercase tracking-[1.3px]" style={{ color: '#A7A8B5' }}>
-            Select Ticket Type
+            {hasTicketTypes ? 'Select Tickets' : 'Ticket'}
           </div>
 
           {ttLoading ? (
             <div className="mb-6 flex flex-col gap-2.5">
               <div className="h-[72px] animate-pulse rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }} />
             </div>
+          ) : hasTicketTypes ? (
+            <>
+              {sellableTypes.length === 0 ? (
+                <div className="mb-6 rounded-2xl px-4 py-3.5 text-[13px]" style={{ background: 'rgba(255,90,46,0.06)', border: '1px solid rgba(255,90,46,0.18)', color: '#A7A8B5' }}>
+                  No ticket types are on sale for this event right now.
+                </div>
+              ) : (
+                <TicketTypePicker types={sellableTypes} cart={cart} onChange={setCart} />
+              )}
+              {computed.lines.length > 0 && (
+                <div className="mt-4 mb-6 flex flex-wrap gap-1.5">
+                  {computed.lines.map((line) => (
+                    <span
+                      key={line.type.id}
+                      className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                      style={{ background: 'rgba(255,90,46,0.08)', border: '1px solid rgba(255,90,46,0.22)', color: '#FF7F5C' }}
+                    >
+                      {line.type.name} × {line.qty}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </>
           ) : (
-            <div className="mb-6 flex flex-col gap-2.5">
-              {options.map((opt) => {
-                const optRemaining = ticketTypes.length > 0 ? opt.quantity - opt.sold : party.spotsLeft;
-                const optSoldOut = optRemaining <= 0;
-                const active = selected.id === opt.id && !optSoldOut;
-                return (
-                  <button
-                    key={opt.id}
-                    disabled={optSoldOut}
-                    onClick={() => setSelectedId(opt.id)}
-                    className="flex cursor-pointer items-center justify-between rounded-2xl px-4 py-3.5 text-left transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-                    style={{
-                      background: active ? 'rgba(255,90,46,0.08)' : 'rgba(255,255,255,0.03)',
-                      border: '1px solid',
-                      borderColor: active ? 'rgba(255,90,46,0.28)' : 'rgba(255,255,255,0.08)',
-                    }}
-                  >
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold" style={{ color: '#FFFFFF' }}>{opt.name}</div>
-                      <div className="mt-0.5 text-xs" style={{ color: optSoldOut ? '#FF5A2E' : '#A7A8B5' }}>
-                        {optSoldOut ? 'Sold out' : `${optRemaining} left`}
-                      </div>
-                    </div>
-                    <div className="font-heading text-[15px] font-bold gradient-text">
-                      {opt.price === 0 ? 'Free' : formatNaira(opt.price)}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+            <>
+              <button
+                disabled={legacySoldOut}
+                className="mb-4 flex w-full cursor-pointer items-center justify-between rounded-2xl px-4 py-3.5 text-left transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                style={{
+                  background: 'rgba(255,90,46,0.08)',
+                  border: '1px solid rgba(255,90,46,0.28)',
+                }}
+              >
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold" style={{ color: '#FFFFFF' }}>{legacySelected.name}</div>
+                  <div className="mt-0.5 text-xs" style={{ color: legacySoldOut ? '#FF5A2E' : '#A7A8B5' }}>
+                    {legacySoldOut ? 'Sold out' : `${legacyRemaining} left`}
+                  </div>
+                </div>
+                <div className="font-heading text-[15px] font-bold gradient-text">
+                  {legacySelected.price === 0 ? 'Free' : formatNaira(legacySelected.price)}
+                </div>
+              </button>
 
-          <div className="mb-2.5 text-[11px] font-bold uppercase tracking-[1.3px]" style={{ color: '#A7A8B5' }}>
-            Quantity
-          </div>
-          <div className="mb-6 flex items-center gap-[18px]">
-            <button
-              onClick={() => setQty((q) => Math.max(1, q - 1))}
-              disabled={soldOut}
-              className="h-[38px] w-[38px] rounded-[10px] text-lg transition-all duration-200 active:scale-90 glass glass-hover disabled:opacity-40"
-              style={{ color: '#FFFFFF' }}
-            >
-              −
-            </button>
-            <span className="font-display min-w-[24px] text-center text-2xl" style={{ color: '#FFFFFF' }}>{qty}</span>
-            <button
-              onClick={() => setQty((q) => Math.min(MAX_QTY, Math.min(remaining, q + 1)))}
-              disabled={soldOut || qty >= remaining || qty >= MAX_QTY}
-              className="h-[38px] w-[38px] rounded-[10px] text-lg transition-all duration-200 active:scale-90 glass glass-hover disabled:opacity-40"
-              style={{ color: '#FFFFFF' }}
-            >
-              +
-            </button>
-          </div>
+              <div className="mb-2.5 text-[11px] font-bold uppercase tracking-[1.3px]" style={{ color: '#A7A8B5' }}>
+                Quantity
+              </div>
+              <div className="mb-6 flex items-center gap-[18px]">
+                <button
+                  onClick={() => setQty((q) => Math.max(1, q - 1))}
+                  disabled={legacySoldOut}
+                  className="h-[38px] w-[38px] rounded-[10px] text-lg transition-all duration-200 active:scale-90 glass glass-hover disabled:opacity-40"
+                  style={{ color: '#FFFFFF' }}
+                >
+                  −
+                </button>
+                <span className="font-display min-w-[24px] text-center text-2xl" style={{ color: '#FFFFFF' }}>{qty}</span>
+                <button
+                  onClick={() => setQty((q) => Math.min(MAX_QTY_PER_TYPE, Math.min(legacyRemaining, q + 1)))}
+                  disabled={legacySoldOut || qty >= legacyRemaining || qty >= MAX_QTY_PER_TYPE}
+                  className="h-[38px] w-[38px] rounded-[10px] text-lg transition-all duration-200 active:scale-90 glass glass-hover disabled:opacity-40"
+                  style={{ color: '#FFFFFF' }}
+                >
+                  +
+                </button>
+              </div>
+            </>
+          )}
 
           <div className="mb-2.5 text-[11px] font-bold uppercase tracking-[1.3px]" style={{ color: '#A7A8B5' }}>
             Email
@@ -465,25 +559,34 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#FFFFFF' }}
             />
             <div className="mt-2 text-xs" style={{ color: '#6B6C80' }}>
-              {isGuest ? 'Your ticket will be sent to this email.' : `Your ticket will be sent to ${user.email}.`}
+              {isGuest ? 'Your tickets will be sent to this email.' : `Your tickets will be sent to ${user.email}.`}
             </div>
           </div>
 
           <div className="mb-auto rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <div className="mb-2 flex justify-between text-[13px]" style={{ color: '#A7A8B5' }}>
-              <span>Subtotal ({selected.name} × {qty})</span>
-              <span>{formatNaira(subtotal)}</span>
-            </div>
-            {!isFree && (
+            {hasTicketTypes && computed.lines.length > 0 ? (
+              computed.lines.map((line) => (
+                <div key={line.type.id} className="mb-2 flex justify-between text-[13px]" style={{ color: '#A7A8B5' }}>
+                  <span>{line.type.name} × {line.qty}</span>
+                  <span>{formatNaira(line.type.price * line.qty + (line.type.price > 0 ? SERVICE_FEE_PER_TICKET * line.qty : 0))}</span>
+                </div>
+              ))
+            ) : !hasTicketTypes ? (
+              <div className="mb-2 flex justify-between text-[13px]" style={{ color: '#A7A8B5' }}>
+                <span>{legacySelected.name} × {qty}</span>
+                <span>{formatNaira(cartSubtotal)}</span>
+              </div>
+            ) : null}
+            {cartServiceFee > 0 && (
               <div className="mb-2 flex justify-between text-[13px]" style={{ color: '#A7A8B5' }}>
                 <span>Service Fee</span>
-                <span>{formatNaira(serviceFee)}</span>
+                <span>{formatNaira(cartServiceFee)}</span>
               </div>
             )}
             <div className="my-2 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
             <div className="flex justify-between font-heading text-[15px] font-bold" style={{ color: '#FFFFFF' }}>
               <span>Total</span>
-              <span>{isFree ? 'Free' : formatNaira(total)}</span>
+              <span>{cartIsFree ? 'Free' : formatNaira(cartTotal)}</span>
             </div>
           </div>
 
@@ -495,10 +598,10 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
 
           <button
             onClick={startPayment}
-            disabled={payState !== 'idle' || soldOut || ttLoading}
+            disabled={payDisabled || (hasTicketTypes ? !hasSelection : legacySoldOut)}
             className="btn-primary mt-5 w-full py-[15px] text-sm font-bold disabled:opacity-60"
           >
-            {soldOut ? 'Sold Out' : ctaLabel}
+            {hasTicketTypes ? (hasSelection ? ctaLabel : 'Select Tickets') : legacySoldOut ? 'Sold Out' : ctaLabel}
           </button>
         </div>
       )}
@@ -512,16 +615,18 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
             <CheckCircle2 size={28} color="#3ECF8E" strokeWidth={2.5} />
           </div>
           <h1 className="font-display mb-1.5 text-[34px] tracking-[0.5px]" style={{ color: '#FFFFFF' }}>
-            {isFree ? "You're On The List!" : "You're In!"}
+            {cartIsFree ? "You're On The List!" : "You're In!"}
           </h1>
           <p className="mb-[26px] max-w-[320px] text-sm" style={{ color: '#A7A8B5' }}>
             {isGuest
               ? emailSent === false
-                ? "We couldn't email your ticket — use the link below to open it."
+                ? "We couldn't email your tickets — use the links below to open them."
+                : successLines.length > 1
+                ? `Your ${successLines.length} tickets are on their way to ${email}.`
                 : `Your ticket is on its way to ${email}.`
-              : isFree
+              : cartIsFree
               ? 'Your RSVP is confirmed. See you there.'
-              : 'Your payment was successful. Your ticket is confirmed.'}
+              : 'Your payment was successful. Your tickets are confirmed.'}
           </p>
 
           {isGuest && emailSent === false && (
@@ -530,7 +635,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
               style={{ background: 'rgba(255,90,46,0.08)', border: '1px solid rgba(255,90,46,0.25)', color: '#FF5A2E' }}
             >
               <AlertTriangle size={16} strokeWidth={2} className="mt-0.5 flex-shrink-0" />
-              <span>Email delivery failed. Save this link — it&apos;s the only way to reach your ticket.</span>
+              <span>Email delivery failed. Save these links — they&apos;re the only way to reach your tickets.</span>
             </div>
           )}
 
@@ -540,32 +645,64 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
               <div className="mb-0.5 text-xs" style={{ color: '#A7A8B5' }}>{party.date} · {party.time}</div>
               <div className="text-xs" style={{ color: '#A7A8B5' }}>{party.location}</div>
             </div>
-            <div className="flex items-center justify-between border-t border-dashed px-[18px] py-4" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-              <div className="flex flex-col gap-1.5">
-                <div>
-                  <div className="mb-[3px] text-[10px] uppercase tracking-[0.7px]" style={{ color: '#6B6C80' }}>Order Ref</div>
-                  <div className="font-heading text-sm font-bold gradient-text">{orderRef}</div>
-                </div>
-                <div>
+
+            <div className="flex flex-col border-t border-dashed" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+              <div className="px-[18px] py-4">
+                <div className="mb-[3px] text-[10px] uppercase tracking-[0.7px]" style={{ color: '#6B6C80' }}>Order Ref</div>
+                <div className="font-heading text-sm font-bold gradient-text">{orderRef}</div>
+              </div>
+              {successLines.length === 0 ? (
+                <div className="border-t border-dashed px-[18px] py-4" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
                   <div className="mb-[3px] text-[10px] uppercase tracking-[0.7px]" style={{ color: '#6B6C80' }}>Ticket Code</div>
                   <div className="font-heading text-sm font-bold" style={{ color: '#FFFFFF' }}>{orderRef}</div>
                 </div>
-              </div>
-              <div className="text-right">
-                <div className="mb-[3px] text-[10px] uppercase tracking-[0.7px]" style={{ color: '#6B6C80' }}>
-                  {selected.name} × {qty}
-                </div>
-                <div className="font-heading text-sm font-bold" style={{ color: '#FFFFFF' }}>{isFree ? 'Free' : formatNaira(total)}</div>
-              </div>
+              ) : (
+                successLines.map((line, i) => {
+                  const lt = lineTickets[i];
+                  return (
+                    <div key={i} className="border-t border-dashed px-[18px] py-4" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+                      <div className="flex items-center justify-between">
+                        <div className="min-w-0">
+                          <div className="mb-[3px] text-[10px] uppercase tracking-[0.7px]" style={{ color: '#6B6C80' }}>
+                            {line.name} × {line.qty}
+                          </div>
+                          <div className="font-heading text-sm font-bold" style={{ color: '#FFFFFF' }}>
+                            {line.total === 0 ? 'Free' : formatNaira(line.total)}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {lt && (
+                            <>
+                              <div className="mb-[3px] text-[10px] uppercase tracking-[0.7px]" style={{ color: '#6B6C80' }}>Ticket Code</div>
+                              <div className="font-heading text-sm font-bold" style={{ color: '#FFFFFF' }}>{lt.orderRef}</div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      {isGuest && lt && (
+                        <button
+                          onClick={() =>
+                            router.push(lt.ticketAccessToken ? `/ticket/${lt.orderId}?token=${lt.ticketAccessToken}` : `/ticket/${lt.orderId}`)
+                          }
+                          className="mt-3 w-full rounded-xl py-2.5 text-[13px] font-semibold glass glass-hover"
+                          style={{ color: '#FF7F5C' }}
+                        >
+                          View Ticket · {line.name}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
 
           <div className="mt-7 flex w-full max-w-[340px] flex-col gap-2.5">
             <button
-              onClick={() => router.push(ticketHref)}
+              onClick={() => (isGuest ? router.push(ticketHref) : router.push('/tickets'))}
               className="btn-primary w-full py-[15px] text-sm font-bold"
             >
-              View My Ticket
+              View My Tickets
             </button>
             <button
               onClick={() => router.push(`/party/${party.id}`)}
@@ -582,7 +719,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
               style={{ background: 'rgba(255,155,62,0.06)', border: '1px solid rgba(255,155,62,0.25)' }}
             >
               <div className="font-heading mb-1 text-sm font-bold" style={{ color: '#FF9B3E' }}>
-                Your ticket is saved — for now.
+                Your tickets are saved — for now.
               </div>
               <p className="mb-4 text-xs leading-relaxed" style={{ color: '#A7A8B5' }}>
                 Create an account to keep all your tickets, reviews and reminders in one place — and never lose them if you switch devices.

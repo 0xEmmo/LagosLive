@@ -29,13 +29,15 @@ import PartyCard from '@/components/PartyCard';
 import PartyPhoto from '@/components/PartyPhoto';
 import GetThereMenu from '@/components/GetThereMenu';
 import SwipeCarousel from '@/components/SwipeCarousel';
+import TicketTypePicker from '@/components/TicketTypePicker';
 import { EventDetailSkeleton } from '@/components/ui/loaders-skeleton';
 import { partyPhoto, partyDetailPhoto, VCB, VCT, distanceColor } from '@/lib/data';
 import { useParty } from '@/lib/hooks/useParty';
 import { useParties } from '@/lib/hooks/useParties';
 import { useLagosLiveStore } from '@/lib/store';
-import { fetchEventReviews, fetchPartyHostVerified, fetchOrganizerReputation, type OrganizerReputation } from '@/lib/queries';
-import type { Review } from '@/lib/types';
+import { fetchEventReviews, fetchPartyHostVerified, fetchOrganizerReputation, fetchTicketTypes, type OrganizerReputation } from '@/lib/queries';
+import { encodeCartItems, isTicketTypeSellable, MAX_QTY_PER_TYPE, type TicketCart } from '@/lib/tickets';
+import type { Review, TicketType } from '@/lib/types';
 
 export default function PartyDetailPage({ params }: { params: { id: string } }) {
   const { party, loading, error, retry } = useParty(Number(params.id));
@@ -45,6 +47,22 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [hostVerified, setHostVerified] = useState(false);
   const [reputation, setReputation] = useState<OrganizerReputation | null>(null);
+  const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
+  const [ttLoading, setTtLoading] = useState(true);
+  const [cart, setCart] = useState<TicketCart>({});
+
+  useEffect(() => {
+    if (!Number.isInteger(Number(params.id)) || Number(params.id) <= 0) return;
+    let cancelled = false;
+    setTtLoading(true);
+    fetchTicketTypes(Number(params.id))
+      .then((types) => !cancelled && setTicketTypes(types))
+      .catch(() => !cancelled && setTicketTypes([]))
+      .finally(() => !cancelled && setTtLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [params.id]);
 
   useEffect(() => {
     if (!party || party.createdBy === null) return;
@@ -147,6 +165,11 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
   const spotsUrgent = party.spotsLeft < 100;
   const soldOut = party.spotsLeft <= 0;
   const similarParties = parties.filter((p) => p.id !== party.id && p.vibe === party.vibe).slice(0, 4);
+
+  const hasTicketTypes = ticketTypes.length > 0;
+  const sellableTypes = hasTicketTypes ? ticketTypes.filter((t) => isTicketTypeSellable(t)) : [];
+  const cartTickets = Object.values(cart).reduce((sum, q) => sum + q, 0);
+  const checkoutHref = cartTickets > 0 ? `/checkout/${party.id}?items=${encodeCartItems(cart)}` : `/checkout/${party.id}`;
 
   return (
     <div className="mx-auto max-w-[720px] animate-fade-in">
@@ -261,15 +284,49 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
             </div>
           ) : (
             <Link
-              href={`/checkout/${party.id}`}
+              href={checkoutHref}
               className="btn-primary flex flex-1 items-center justify-center gap-2 py-4 text-[13px] font-bold tracking-[0.5px]"
             >
               <Ticket size={15} strokeWidth={2.5} />
-              {isFree ? 'Get Free Entry' : `Get Tickets · ${party.fee}`}
+              {!hasTicketTypes
+                ? isFree
+                  ? 'Get Free Entry'
+                  : `Get Tickets · ${party.fee}`
+                : cartTickets > 0
+                ? cartTickets > 1
+                  ? `Get Tickets (${cartTickets})`
+                  : 'Get Tickets'
+                : 'Choose Tickets'}
             </Link>
           )}
           <GetThereMenu party={party} />
         </div>
+
+        {/* Tickets — per-tier steppers */}
+        {hasTicketTypes && (
+          <div className="mb-6">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-[11px] font-bold uppercase tracking-[1.5px]" style={{ color: '#A7A8B5' }}>Tickets</h3>
+              {sellableTypes.length > 0 && (
+                <span className="text-[11px]" style={{ color: '#6B6C80' }}>Up to {MAX_QTY_PER_TYPE} per tier</span>
+              )}
+            </div>
+            {ttLoading ? (
+              <div className="flex flex-col gap-2.5">
+                <div className="h-[72px] animate-pulse rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }} />
+              </div>
+            ) : sellableTypes.length === 0 ? (
+              <div
+                className="rounded-2xl px-4 py-3.5 text-[13px]"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', color: '#A7A8B5' }}
+              >
+                No tickets on sale right now, but you can still save this event.
+              </div>
+            ) : (
+              <TicketTypePicker types={sellableTypes} cart={cart} onChange={setCart} />
+            )}
+          </div>
+        )}
 
         {/* Info section with glass cards */}
         <div className="mb-6 flex flex-col gap-3">

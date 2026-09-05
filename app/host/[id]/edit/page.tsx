@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, notFound } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import PartyForm from '@/components/PartyForm';
-import { updateParty, deleteParty, type PartyFormInput } from '@/lib/queries';
+import { updateParty, deleteParty, fetchTicketTypes, type PartyFormInput, type TicketFormType } from '@/lib/queries';
 import { useParty } from '@/lib/hooks/useParty';
 import { useLagosLiveStore } from '@/lib/store';
 
@@ -14,6 +14,13 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
   const user = useLagosLiveStore((s) => s.user);
   const authLoading = useLagosLiveStore((s) => s.authLoading);
   const { party, loading } = useParty(Number(params.id));
+  const [ticketTypes, setTicketTypes] = useState<TicketFormType[] | null>(null);
+
+  useEffect(() => {
+    fetchTicketTypes(Number(params.id))
+      .then((types) => setTicketTypes(types))
+      .catch(() => setTicketTypes([]));
+  }, [params.id]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -105,7 +112,13 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
             This event is pending review and isn&apos;t public yet. Edits you make now will be included in the review.
           </div>
         )}
-        <PartyForm initial={party} onSubmit={submit} submitLabel="Save Changes" />
+        {ticketTypes === null ? (
+          <div className="flex min-h-[40vh] items-center justify-center">
+            <Loader2 size={26} strokeWidth={2} color="#FF2D95" className="animate-spin" />
+          </div>
+        ) : (
+          <PartyForm initial={party} initialTicketTypes={ticketTypes} onSubmit={submit} submitLabel="Save Changes" />
+        )}
         <button
           onClick={remove}
           className="mt-3 w-full rounded-xl py-[13px] text-sm font-semibold transition-all duration-200 active:scale-[0.98]"

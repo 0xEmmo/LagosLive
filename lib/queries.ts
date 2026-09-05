@@ -1,6 +1,7 @@
 import { supabase } from './supabase/client';
 import type { Database } from './supabase/database.types';
 import type { CustomerTicket, Party, PartyStatus, Review, TicketType, Vibe } from './types';
+import { formatNaira } from './filters';
 import { haversineKm } from './geo';
 
 type PartyRow = Database['public']['Tables']['parties']['Row'];
@@ -146,6 +147,19 @@ export async function fetchEventReviews(partyId: number): Promise<Review[]> {
   }));
 }
 
+export interface TicketFormType {
+  id?: number;
+  name: string;
+  price: number;
+  quantity: number;
+  description?: string | null;
+  salesStartAt?: string | null;
+  salesEndAt?: string | null;
+  active: boolean;
+  sortOrder: number;
+  sold?: number;
+}
+
 export interface PartyFormInput {
   title: string;
   startsAt: string; // ISO string from a <input type="datetime-local">
@@ -158,6 +172,7 @@ export interface PartyFormInput {
   feeNum: number;
   vibe: Vibe;
   capacity: number;
+  ticketTypes: TicketFormType[];
   ageRestriction: string;
   dressCode: string;
   organizer: string;
@@ -211,7 +226,7 @@ export async function createParty(input: PartyFormInput, createdBy: string): Pro
   const { data, error } = await supabase.from('parties').insert({ ...toRow(input, createdBy), status: 'draft' }).select().single();
   if (error) throw error;
   const party = toParty(data);
-  await ensureGeneralTicketType(party.id, input.feeNum, input.capacity);
+  await savePartyTicketTypes(party.id, input.ticketTypes ?? [], input.feeNum === 0);
   const { data: promotedResult } = await (supabase as any).rpc('auto_promote_creator_to_organizer', {
     p_party_id: party.id,
   });
@@ -283,7 +298,30 @@ export async function updateParty(id: number, input: PartyFormInput): Promise<Pa
   void cover_url;
   const { data, error } = await supabase.from('parties').update(updateFields).eq('id', id).select().single();
   if (error) throw error;
-  await ensureGeneralTicketType(id, input.feeNum, input.capacity);
+
+  // Persist the ticket tiers (creates/updates/deletes ticket_types rows and
+  // never lets inventory fall below what has already been sold).
+  const { capacity, feeNum } = await savePartyTicketTypes(id, input.ticketTypes ?? [], input.feeNum === 0);
+
+  // Reconcile the party's capacity / spots_left against live reservations so
+  // an edit can never put the party in an impossible state. "Reserved" is the
+  // sum of pending + confirmed tickets: pending holds spots until the payment
+  // window closes, confirmed holds them for the event day.
+  const reserved = await sumReservedTickets(id);
+  if (capacity < reserved) {
+    throw new Error(
+      `Capacity can't be lower than ${reserved} ticket${reserved === 1 ? '' : 's'} already reserved. Refund or cancel orders first.`
+    );
+  }
+  const reconcile = {
+    capacity,
+    fee: feeNum === 0 ? 'Free' : formatNaira(feeNum),
+    fee_num: feeNum,
+    spots_left: capacity - reserved,
+  };
+  const { error: reconcileError } = await supabase.from('parties').update(reconcile).eq('id', id);
+  if (reconcileError) throw reconcileError;
+
   if (input.coverImage) {
     const coverUrl = await uploadCoverImage(id, input.coverImage);
     if (coverUrl) {
@@ -294,38 +332,106 @@ export async function updateParty(id: number, input: PartyFormInput): Promise<Pa
   return updated ?? toParty(data);
 }
 
-// Every organizer-created event gets one real purchasable ticket type
-// ("General Entry") derived from its entry fee and capacity. Kept tiny on
-// purpose: multi-tier ticket types are a later batch, and the checkout already
-// supports any number of types when they exist. Events without a ticket type
-// (the 22 seeded rows) fall back to fee-based checkout via party.fee_num.
-async function ensureGeneralTicketType(partyId: number, feeNum: number, capacity: number) {
-  const { data: existing } = await supabase.from('ticket_types').select('*').eq('party_id', partyId);
-  if (existing && existing.length > 0) {
-    const ticket = existing[0];
-    const { error } = await supabase
-      .from('ticket_types')
-      .update({ name: 'General Entry', price: feeNum, quantity: capacity })
-      .eq('id', ticket.id);
-    if (error) throw error;
-    return;
+type TicketTypeColumn = Database['public']['Tables']['ticket_types']['Insert'];
+
+function toTicketTypeColumn(t: TicketFormType): Omit<TicketTypeColumn, 'party_id'> {
+  return {
+    name: t.name.trim(),
+    price: t.price,
+    quantity: t.quantity,
+    description: t.description?.trim() || null,
+    sales_start_at: t.salesStartAt ? new Date(t.salesStartAt).toISOString() : null,
+    sales_end_at: t.salesEndAt ? new Date(t.salesEndAt).toISOString() : null,
+    active: t.active,
+    sort_order: t.sortOrder,
+  };
+}
+
+// Creates/updates/deletes the ticket tiers for an event. Free events always
+// resolve to exactly one "General Entry" tier priced at 0 with the requested
+// capacity; paid events persist the host's full list as-is. Rows with sold
+// tickets can never be deleted or shrunk below their sold count — existing QR
+// codes (orders) must keep resolving to a real, valid tier.
+async function savePartyTicketTypes(partyId: number, tickets: TicketFormType[], isFree: boolean): Promise<{ capacity: number; feeNum: number }> {
+  const desired: (Omit<TicketTypeColumn, 'party_id'> & { id?: number })[] = isFree
+    ? [
+        {
+          ...toTicketTypeColumn({
+            name: 'General Entry',
+            price: 0,
+            quantity: tickets[0]?.quantity ?? 0,
+            active: true,
+            sortOrder: 0,
+          }),
+        },
+      ]
+    : tickets.map((t) => ({ id: t.id, ...toTicketTypeColumn(t) }));
+
+  const { data: existing, error: existingError } = await supabase.from('ticket_types').select('id, name, sold').eq('party_id', partyId);
+  if (existingError) throw existingError;
+  const existingRows = existing ?? [];
+  const keptIds = new Set(desired.map((d) => d.id).filter((id): id is number => Number.isInteger(id)));
+
+  for (const row of desired) {
+    if (Number.isInteger(row.id) && existingRows.some((e) => e.id === row.id)) {
+      const current = existingRows.find((e) => e.id === row.id);
+      const quantity = Math.trunc(row.quantity ?? 0);
+      if ((current?.sold ?? 0) > quantity) {
+        throw new Error(
+          `Can't lower “${row.name}” to ${quantity} — ${current?.sold} ticket${current?.sold === 1 ? '' : 's'} are already sold on this tier.`
+        );
+      }
+      const { id, ...fields } = row;
+      const { error } = await supabase.from('ticket_types').update(fields).eq('id', id as number);
+      if (error) throw error;
+    } else {
+      const { id, ...fields } = row;
+      const { error } = await supabase.from('ticket_types').insert({ ...fields, party_id: partyId });
+      if (error) throw error;
+    }
   }
-  const { error } = await supabase.from('ticket_types').insert({
-    party_id: partyId,
-    name: 'General Entry',
-    price: feeNum,
-    quantity: capacity,
-  });
+
+  for (const existingRow of existingRows) {
+    if (keptIds.has(existingRow.id)) continue;
+    if (existingRow.sold > 0) {
+      throw new Error(
+        `Can't remove “${existingRow.name}” — it already has ${existingRow.sold} ticket${existingRow.sold === 1 ? '' : 's'} sold. Set it inactive instead.`
+      );
+    }
+    const { error } = await supabase.from('ticket_types').delete().eq('id', existingRow.id);
+    if (error) throw error;
+  }
+
+  const activePrices = desired.filter((d) => d.active !== false).map((d) => d.price);
+  const feeNum = isFree ? 0 : activePrices.length > 0 ? Math.min(...activePrices) : Math.min(...desired.map((d) => d.price));
+  const capacity = desired.reduce((sum, d) => sum + Math.trunc(d.quantity ?? 0), 0);
+  return { capacity, feeNum };
+}
+
+// Live reservations for an event: pending orders hold spots until the payment
+// window closes, confirmed orders hold them until the event. Matches what the
+// insert/settle triggers track in parties.spots_left.
+async function sumReservedTickets(partyId: number): Promise<number> {
+  const { data, error } = await supabase.from('orders').select('quantity, payment_status').eq('party_id', partyId);
   if (error) throw error;
+  return (data ?? []).reduce(
+    (sum, o) => (o.payment_status === 'pending' || o.payment_status === 'confirmed' ? sum + o.quantity : sum),
+    0
+  );
 }
 
 // Buyers fetch ticket types for the checkout; RLS only returns types for
-// parties the viewer can actually see (approved / organizer / admin).
+// parties the viewer can actually see (approved / organizer / admin). The list
+// is ordered by the host's sort order (then id as a stable tiebreaker).
+// Buyers filter down to active / on-sale tiers themselves (isTicketTypeSellable
+// in lib/tickets.ts); hosts editing their event see every tier, including
+// paused ones.
 export async function fetchTicketTypes(partyId: number): Promise<TicketType[]> {
   const { data, error } = await supabase
     .from('ticket_types')
     .select('*')
     .eq('party_id', partyId)
+    .order('sort_order')
     .order('id');
   if (error) throw error;
   return data.map((row) => ({
@@ -335,6 +441,11 @@ export async function fetchTicketTypes(partyId: number): Promise<TicketType[]> {
     price: row.price,
     quantity: row.quantity,
     sold: row.sold,
+    description: row.description,
+    salesStartAt: row.sales_start_at,
+    salesEndAt: row.sales_end_at,
+    active: row.active,
+    sortOrder: row.sort_order,
   }));
 }
 
@@ -512,6 +623,9 @@ export interface TicketTypeInventory {
   total: number; // inventory for this type
   sold: number;
   remaining: number;
+  active: boolean;
+  salesStartAt: string | null;
+  salesEndAt: string | null;
 }
 
 export interface SalesPoint {
@@ -570,6 +684,9 @@ export async function fetchOrganizerEventAnalytics(partyId: number): Promise<Org
     total: t.quantity,
     sold: t.sold,
     remaining: Math.max(0, t.quantity - t.sold),
+    active: t.active,
+    salesStartAt: t.sales_start_at,
+    salesEndAt: t.sales_end_at,
   }));
 
   let confirmedOrders = 0;

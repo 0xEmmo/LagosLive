@@ -9,6 +9,11 @@ export interface TicketType {
   price: number;
   quantity: number;
   sold: number;
+  description: string | null;
+  salesStartAt: string | null;
+  salesEndAt: string | null;
+  active: boolean;
+  sortOrder: number;
 }
 
 export interface Party {

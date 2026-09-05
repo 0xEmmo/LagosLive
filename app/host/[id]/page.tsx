@@ -462,23 +462,46 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
                   No ticket types set up for this event. Sales still count against total capacity.
                 </div>
               ) : (
-                <div className="flex flex-col gap-4">
-                  {analytics.ticketTypes.map((tt) => (
-                    <div key={tt.id}>
-                      <div className="mb-1.5 flex items-baseline justify-between gap-2">
-                        <span className="text-[13px] font-semibold" style={{ color: '#FFFFFF' }}>{tt.name}</span>
-                        <span className="text-[11px]" style={{ color: '#A7A8B5' }}>
-                          <span className="font-bold" style={{ color: '#00F5D4' }}>{tt.sold}</span> sold · <span style={{ color: '#FFFFFF' }}>{tt.remaining}</span> left
+                <div className="flex flex-col gap-1.5">
+                  <div
+                    className="flex items-center gap-2 px-3 text-[10px] font-bold uppercase tracking-[0.8px]"
+                    style={{ color: '#6B6C80' }}
+                  >
+                    <span className="min-w-0 flex-1">Ticket</span>
+                    <span className="w-[62px] text-right">Price</span>
+                    <span className="w-[70px] text-right">Available</span>
+                    <span className="w-[54px] text-right">Sold</span>
+                  </div>
+                  {analytics.ticketTypes.map((tt) => {
+                    const now = new Date();
+                    const beforeStart = tt.salesStartAt && new Date(tt.salesStartAt).getTime() > now.getTime();
+                    const afterEnd = tt.salesEndAt && new Date(tt.salesEndAt).getTime() < now.getTime();
+                    const paused = !tt.active || beforeStart || afterEnd;
+                    const soldOut = tt.remaining <= 0;
+                    return (
+                      <div
+                        key={tt.id}
+                        className="flex items-center gap-2 rounded-xl px-3 py-2.5"
+                        style={{
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px solid rgba(255,255,255,0.06)',
+                          opacity: paused && soldOut ? 0.6 : paused ? 0.75 : 1,
+                        }}
+                      >
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[13px] font-semibold" style={{ color: '#FFFFFF' }}>{tt.name}</span>
+                          <span className="block text-[10px]" style={{ color: paused ? '#FF8A00' : '#6B6C80' }}>
+                            {paused ? 'Paused' : soldOut ? 'Sold out' : 'On sale'}
+                          </span>
                         </span>
+                        <span className="w-[62px] text-right text-[12px] font-semibold" style={{ color: '#00F5D4' }}>
+                          {tt.price === 0 ? 'Free' : formatNaira(tt.price)}
+                        </span>
+                        <span className="w-[70px] text-right text-[12px]" style={{ color: '#A7A8B5' }}>{tt.remaining}</span>
+                        <span className="w-[54px] text-right text-[12px] font-bold" style={{ color: '#FF2D95' }}>{tt.sold}</span>
                       </div>
-                      <div className="mb-1.5">
-                        <ProgressBar sold={tt.sold} total={tt.total} from="#00BFFF" to="#8A2BE2" />
-                      </div>
-                      <div className="text-[10px] uppercase tracking-[0.6px]" style={{ color: '#6B6C80' }}>
-                        {tt.total} total · {tt.price === 0 ? 'Free' : formatNaira(tt.price)} each
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

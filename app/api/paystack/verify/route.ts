@@ -7,9 +7,10 @@ import type { Database } from '@/lib/supabase/database.types';
 
 type OrderRow = Database['public']['Tables']['orders']['Row'];
 
-// Best-effort delivery after a confirmed payment. Needs extra reads (party,
-// ticket type name) purely for the email — if anything is missing we log and
-// skip; the confirmation already happened and must not be rolled back.
+// Best-effort delivery after a confirmed group payment — one email per order
+// line. Needs extra reads (party, ticket type name) purely for the email; if
+// anything is missing we log and skip; the confirmation already happened and
+// must not be rolled back.
 async function notifyConfirmedOrder(order: OrderRow): Promise<boolean> {
   const to = order.customer_email;
   if (!to) {
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
     // Authenticated buyers only ever reach their own order through RLS. Guests
     // prove ownership with the unguessable ticket-access token stored on the
     // order — a bare order id alone is never trusted.
-    let order: OrderRow | null = null;
+    let anchor: OrderRow | null = null;
     if (user) {
       const { data } = await supabase
         .from('orders')
@@ -74,7 +75,7 @@ export async function POST(request: Request) {
         .eq('id', orderId)
         .eq('user_id', user.id)
         .maybeSingle();
-      order = data ?? null;
+      anchor = data ?? null;
     } else {
       if (!token) {
         return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
@@ -85,19 +86,40 @@ export async function POST(request: Request) {
         .eq('id', orderId)
         .eq('ticket_access_token', token)
         .maybeSingle();
-      order = data ?? null;
+      anchor = data ?? null;
     }
-    if (!order) {
+    if (!anchor) {
       return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
     }
-    if (order.payment_ref !== reference) {
+    if (anchor.payment_ref !== reference) {
       return NextResponse.json({ error: 'Payment reference mismatch.' }, { status: 400 });
     }
 
-    // Idempotent: re-verifying an already confirmed order just reports success.
-    // The email was already attempted at confirmation time, so we don't resend.
-    if (order.payment_status === 'confirmed') {
-      return NextResponse.json({ status: 'confirmed', emailSent: true });
+    // The whole group shares one payment_ref — verify, confirm and email every
+    // line together so a multi-type purchase lands (or fails) atomically.
+    const { data: group, error: groupError } = await service
+      .from('orders')
+      .select('*')
+      .eq('payment_ref', reference)
+      .eq('party_id', anchor.party_id)
+      .order('id');
+    if (groupError || !group || group.length === 0) {
+      return NextResponse.json({ error: 'Order group not found.' }, { status: 404 });
+    }
+    const groupTotal = group.reduce((sum, order) => sum + order.total, 0);
+
+    // Idempotent: re-verifying an already confirmed group just reports success.
+    // The emails were already attempted at confirmation time, so we don't resend.
+    if (group.every((order) => order.payment_status === 'confirmed')) {
+      return NextResponse.json({
+        status: 'confirmed',
+        emailSent: true,
+        lineTickets: group.map((order) => ({
+          orderId: order.id,
+          orderRef: order.order_ref,
+          ticketAccessToken: order.ticket_access_token,
+        })),
+      });
     }
 
     let verified;
@@ -110,32 +132,43 @@ export async function POST(request: Request) {
       );
     }
 
-    const failOrder = async (error: string) => {
-      await service.rpc('settle_order_payment', { p_order_id: order.id, p_payment_status: 'failed' });
+    const failGroup = async (error: string) => {
+      for (const order of group) {
+        await service.rpc('settle_order_payment', { p_order_id: order.id, p_payment_status: 'failed' });
+      }
       return NextResponse.json({ status: 'failed', error }, { status: 400 });
     };
 
     if (verified.status !== 'success') {
-      return failOrder('Payment was not completed. No charge was made.');
+      return failGroup('Payment was not completed. No charge was made.');
     }
     if (verified.reference !== reference) {
-      return failOrder('Payment verification failed.');
+      return failGroup('Payment verification failed.');
     }
-    // The only amount we accept is the one the server computed when the order
+    // The only amount we accept is the one the server computed when the group
     // was created — anything else (tampered client, wrong charge) is rejected.
-    if (verified.amountKobo !== order.total * 100 || verified.currency !== 'NGN') {
-      return failOrder('The payment amount did not match. Please contact support.');
+    if (verified.amountKobo !== groupTotal * 100 || verified.currency !== 'NGN') {
+      return failGroup('The payment amount did not match. Please contact support.');
     }
 
-    const { error: confirmError } = await service.rpc('confirm_order_payment', { p_order_id: order.id });
+    const { error: confirmError } = await service.rpc('confirm_order_group', { p_payment_ref: reference });
     if (confirmError) {
-      return failOrder('Sorry, tickets just sold out. Your payment will be refunded.');
+      return failGroup('Sorry, tickets just sold out. Your payment will be refunded.');
     }
 
     // Notification is best-effort: a failed email never unconfirms the ticket.
-    const emailSent = await notifyConfirmedOrder(order);
+    const results = await Promise.all(group.map((order) => notifyConfirmedOrder(order)));
+    const emailSent = results.some(Boolean);
 
-    return NextResponse.json({ status: 'confirmed', emailSent });
+    return NextResponse.json({
+      status: 'confirmed',
+      emailSent,
+      lineTickets: group.map((order) => ({
+        orderId: order.id,
+        orderRef: order.order_ref,
+        ticketAccessToken: order.ticket_access_token,
+      })),
+    });
   } catch {
     return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }

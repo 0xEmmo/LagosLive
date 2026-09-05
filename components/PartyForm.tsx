@@ -1,14 +1,15 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { Ticket, ImagePlus, X } from 'lucide-react';
+import { Ticket, ImagePlus, X, Plus, ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
 import { ALL_VIBES, GRADIENTS } from '@/lib/data';
 import { formatNaira } from '@/lib/filters';
-import type { PartyFormInput } from '@/lib/queries';
+import type { PartyFormInput, TicketFormType } from '@/lib/queries';
 import type { Party, Vibe } from '@/lib/types';
 
 interface PartyFormProps {
   initial?: Party;
+  initialTicketTypes?: TicketFormType[];
   onSubmit: (input: PartyFormInput) => Promise<void>;
   submitLabel: string;
 }
@@ -40,6 +41,7 @@ type FieldName =
   | 'lng'
   | 'fee'
   | 'capacity'
+  | 'ticketTypes'
   | 'organizer'
   | 'organizerPhone'
   | 'organizerEmail'
@@ -87,7 +89,7 @@ function Section({ step, title, hint, children }: { step: number; title: string;
   );
 }
 
-export default function PartyForm({ initial, onSubmit, submitLabel }: PartyFormProps) {
+export default function PartyForm({ initial, initialTicketTypes, onSubmit, submitLabel }: PartyFormProps) {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [startsAt, setStartsAt] = useState(initial ? toDatetimeLocal(initial.startsAt) : '');
   const [endsAt, setEndsAt] = useState(initial ? toDatetimeLocal(initial.endsAt) : '');
@@ -95,10 +97,47 @@ export default function PartyForm({ initial, onSubmit, submitLabel }: PartyFormP
   const [address, setAddress] = useState(initial?.address ?? '');
   const [lat, setLat] = useState(initial ? String(initial.lat) : '6.4281');
   const [lng, setLng] = useState(initial ? String(initial.lng) : '3.4219');
-  const [feeNum, setFeeNum] = useState(initial ? String(initial.feeNum) : '');
   const [isFree, setIsFree] = useState(initial ? initial.feeNum === 0 : true);
   const [vibe, setVibe] = useState<Vibe>(initial?.vibe ?? 'Club');
-  const [capacity, setCapacity] = useState(initial ? String(initial.capacity) : '');
+  const [tickets, setTickets] = useState<TicketFormType[]>(() => {
+    const incoming = initialTicketTypes && initialTicketTypes.length > 0 ? initialTicketTypes : null;
+    if (incoming) {
+      return incoming.map((t, i) => ({
+        ...t,
+        price: Number(t.price),
+        quantity: Number(t.quantity),
+        sortOrder: i,
+        salesStartAt: t.salesStartAt ? toDatetimeLocal(t.salesStartAt) : null,
+        salesEndAt: t.salesEndAt ? toDatetimeLocal(t.salesEndAt) : null,
+      }));
+    }
+    if (initial) {
+      return [
+        {
+          name: 'General Entry',
+          price: initial.feeNum,
+          quantity: initial.capacity,
+          description: null,
+          salesStartAt: null,
+          salesEndAt: null,
+          active: true,
+          sortOrder: 0,
+        },
+      ];
+    }
+    return [
+      {
+        name: 'General Entry',
+        price: 0,
+        quantity: 0,
+        description: null,
+        salesStartAt: null,
+        salesEndAt: null,
+        active: true,
+        sortOrder: 0,
+      },
+    ];
+  });
   const [ageRestriction, setAgeRestriction] = useState(initial?.ageRestriction ?? '18+');
   const [dressCode, setDressCode] = useState(initial?.dressCode ?? 'Casual');
   const [organizer, setOrganizer] = useState(initial?.organizer ?? '');
@@ -117,6 +156,51 @@ export default function PartyForm({ initial, onSubmit, submitLabel }: PartyFormP
   const imageRef = useRef<HTMLInputElement>(null);
 
   const clearError = (key: FieldName) => setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e));
+
+  const updateTicket = (index: number, patch: Partial<TicketFormType>) => {
+    setTickets((list) => list.map((t, i) => (i === index ? { ...t, ...patch } : t)));
+  };
+
+  const addTicket = () => {
+    setTickets((list) => [
+      ...list,
+      { name: '', price: 0, quantity: 1, description: null, salesStartAt: null, salesEndAt: null, active: true, sortOrder: list.length },
+    ]);
+  };
+
+  const removeTicket = (index: number) => {
+    setTickets((list) => list.filter((_, i) => i !== index).map((t, i) => ({ ...t, sortOrder: i })));
+  };
+
+  const moveTicket = (index: number, delta: -1 | 1) => {
+    setTickets((list) => {
+      const target = index + delta;
+      if (target < 0 || target >= list.length) return list;
+      const next = [...list];
+      const [item] = next.splice(index, 1);
+      next.splice(target, 0, item);
+      return next.map((t, i) => ({ ...t, sortOrder: i }));
+    });
+  };
+
+  const switchFree = (free: boolean) => {
+    setIsFree(free);
+    setErrors((e) => ({ ...e, ticketTypes: undefined }));
+    if (free) {
+      setTickets((list) => [
+        {
+          name: 'General Entry',
+          price: 0,
+          quantity: Math.max(1, list.reduce((sum, t) => sum + Math.trunc(Number(t.quantity)) || 0, 0)),
+          description: null,
+          salesStartAt: null,
+          salesEndAt: null,
+          active: true,
+          sortOrder: 0,
+        },
+      ]);
+    }
+  };
 
   const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
   const MAX_SIZE = 5 * 1024 * 1024;
@@ -150,6 +234,43 @@ export default function PartyForm({ initial, onSubmit, submitLabel }: PartyFormP
     if (imageRef.current) imageRef.current.value = '';
   }, [previewUrl]);
 
+  // Returns a human-readable problem with the ticket tiers, or null when they
+  // are ready to save. Runs on submit (and covers both the free single-tier
+  // case and the paid multi-tier case).
+  const validateTickets = (): string | null => {
+    if (isFree) {
+      const qty = Math.trunc(Number(tickets[0]?.quantity));
+      if (!Number.isInteger(qty) || qty <= 0) return 'Set the number of free tickets available.';
+      return null;
+    }
+
+    if (tickets.length === 0) return 'Add at least one ticket type.';
+    const names = new Set<string>();
+    let hasPaidTier = false;
+    for (let i = 0; i < tickets.length; i++) {
+      const t = tickets[i];
+      const label = `Ticket type ${i + 1}`;
+      const name = t.name.trim();
+      if (!name) return `${label} needs a name.`;
+      const lower = name.toLowerCase();
+      if (names.has(lower)) return `Two ticket types are both named “${name}”.`;
+      names.add(lower);
+      const price = Math.trunc(Number(t.price));
+      if (!Number.isInteger(price) || price < 0) return `${label} price must be ₦0 or more.`;
+      const quantity = Math.trunc(Number(t.quantity));
+      if (!Number.isInteger(quantity) || quantity <= 0) return `${label} needs a quantity of at least 1.`;
+      if (t.sold !== undefined && t.sold > 0 && quantity < t.sold) {
+        return `${label} can't go below ${t.sold} ticket${t.sold === 1 ? '' : 's'} already sold.`;
+      }
+      if (t.salesStartAt && t.salesEndAt && new Date(t.salesEndAt) <= new Date(t.salesStartAt)) {
+        return `${label} sales end must be after sales start.`;
+      }
+      if (price > 0) hasPaidTier = true;
+    }
+    if (!hasPaidTier) return 'A paid event needs at least one ticket type priced above ₦0.';
+    return null;
+  };
+
   const validate = (): boolean => {
     const e: Partial<Record<FieldName, string>> = {};
 
@@ -168,15 +289,8 @@ export default function PartyForm({ initial, onSubmit, submitLabel }: PartyFormP
     if (Number.isNaN(latParsed) || latParsed < -90 || latParsed > 90) e.lat = 'Latitude must be a number between -90 and 90.';
     if (Number.isNaN(lngParsed) || lngParsed < -180 || lngParsed > 180) e.lng = 'Longitude must be a number between -180 and 180.';
 
-    const capacityParsed = Number(capacity);
-    if (Number.isNaN(capacityParsed) || !Number.isInteger(capacityParsed) || capacityParsed <= 0) {
-      e.capacity = 'Capacity must be a whole number greater than 0.';
-    }
-
-    if (!isFree) {
-      const feeParsed = Number(feeNum);
-      if (Number.isNaN(feeParsed) || feeParsed < 0) e.fee = 'Entry fee must be ₦0 or more.';
-    }
+    const ticketIssue = validateTickets();
+    if (ticketIssue) e.ticketTypes = ticketIssue;
 
     if (startsAt && endsAt) {
       const start = new Date(startsAt);
@@ -214,10 +328,17 @@ export default function PartyForm({ initial, onSubmit, submitLabel }: PartyFormP
 
   const submit = async () => {
     if (!validate()) return;
-    const feeParsed = isFree ? 0 : Number(feeNum);
     const latParsed = Number(lat);
     const lngParsed = Number(lng);
-    const capacityParsed = Number(capacity);
+    const capacityParsed = tickets.reduce((sum, t) => sum + Math.trunc(Number(t.quantity)), 0);
+    const feeParsed = isFree ? 0 : Math.min(...tickets.map((t) => Math.trunc(Number(t.price))));
+    const ticketTypes = tickets.map((t) => ({
+        ...t,
+        price: Math.trunc(Number(t.price)),
+        quantity: Math.trunc(Number(t.quantity)),
+        salesStartAt: t.salesStartAt ? new Date(t.salesStartAt).toISOString() : null,
+        salesEndAt: t.salesEndAt ? new Date(t.salesEndAt).toISOString() : null,
+      }));
     setError('');
     setSubmitting(true);
     try {
@@ -233,6 +354,7 @@ export default function PartyForm({ initial, onSubmit, submitLabel }: PartyFormP
         feeNum: feeParsed,
         vibe,
         capacity: capacityParsed,
+        ticketTypes,
         ageRestriction: ageRestriction.trim() || 'All Ages',
         dressCode: dressCode.trim() || 'Casual',
         organizer: organizer.trim(),
@@ -249,6 +371,8 @@ export default function PartyForm({ initial, onSubmit, submitLabel }: PartyFormP
       setSubmitting(false);
     }
   };
+
+  const capacityTotal = tickets.reduce((sum, t) => sum + Math.trunc(Number(t.quantity)) || 0, 0);
 
   return (
     <div className="flex flex-col gap-3.5">
@@ -352,12 +476,12 @@ export default function PartyForm({ initial, onSubmit, submitLabel }: PartyFormP
         </div>
       </Section>
 
-      {/* 3. Tickets & capacity */}
-      <Section step={3} title="Tickets & Capacity" hint="Price and how many people can come">
+      {/* 3. Tickets & pricing */}
+      <Section step={3} title="Tickets & Pricing" hint={isFree ? 'How many people can come for free' : 'Add every ticket type people can buy'}>
         <Field label="Entry">
           <div className="flex gap-2.5">
             <button
-              onClick={() => setIsFree(true)}
+              onClick={() => switchFree(true)}
               className="flex-1 rounded-[10px] py-[11px] text-[13px] font-semibold transition-all duration-200 active:scale-[0.97]"
               style={{
                 background: isFree ? 'rgba(0,245,212,0.08)' : 'rgba(255,255,255,0.04)',
@@ -369,7 +493,7 @@ export default function PartyForm({ initial, onSubmit, submitLabel }: PartyFormP
               Free Entry
             </button>
             <button
-              onClick={() => setIsFree(false)}
+              onClick={() => switchFree(false)}
               className="flex-1 rounded-[10px] py-[11px] text-[13px] font-semibold transition-all duration-200 active:scale-[0.97]"
               style={{
                 background: !isFree ? 'rgba(255,45,149,0.08)' : 'rgba(255,255,255,0.04)',
@@ -385,47 +509,179 @@ export default function PartyForm({ initial, onSubmit, submitLabel }: PartyFormP
 
         {isFree ? (
           <div
-            className="flex items-center gap-2 rounded-[10px] px-3.5 py-[13px] text-sm font-semibold"
-            style={{ background: 'rgba(0,245,212,0.06)', border: '1px solid rgba(0,245,212,0.2)', color: '#00F5D4' }}
+            className="rounded-[10px] px-3.5 py-3"
+            style={{ background: 'rgba(0,245,212,0.06)', border: '1px solid rgba(0,245,212,0.2)' }}
           >
-            <Ticket size={14} strokeWidth={2} />
-            Free Entry
+            <div className="mb-3 flex items-center gap-2 text-sm font-semibold" style={{ color: '#00F5D4' }}>
+              <Ticket size={14} strokeWidth={2} />
+              General Entry · Free
+            </div>
+            <Field label="Capacity (free spots)">
+              <input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                value={tickets[0]?.quantity ? String(tickets[0].quantity) : ''}
+                onChange={(e) => updateTicket(0, { quantity: Number(e.target.value) })}
+                placeholder="500"
+                style={inputStyle}
+                className="font-heading"
+              />
+            </Field>
           </div>
         ) : (
-          <Field label="Entry Fee (₦)">
-            <input
-              type="number"
-              inputMode="numeric"
-              min={0}
-              value={feeNum}
-              onChange={(e) => {
-                setFeeNum(e.target.value);
-                clearError('fee');
-              }}
-              placeholder="15000"
-              style={inputStyle}
-              className="font-heading"
-            />
-            <FieldError message={errors.fee} />
-          </Field>
+          <div className="flex flex-col gap-3">
+            {tickets.map((t, i) => (
+              <div
+                key={t.id ?? `new-${i}`}
+                className="rounded-xl p-3.5"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+              >
+                <div className="mb-2.5 flex items-center gap-2">
+                  <input
+                    value={t.name}
+                    onChange={(e) => updateTicket(i, { name: e.target.value })}
+                    placeholder={`Ticket type ${i + 1} name`}
+                    style={{ ...inputStyle, padding: '11px 12px', fontSize: 13 }}
+                    className="font-heading"
+                  />
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    value={String(t.price)}
+                    onChange={(e) => updateTicket(i, { price: Number(e.target.value) })}
+                    placeholder="₦ price"
+                    style={{ ...inputStyle, padding: '11px 12px', fontSize: 13, width: 96 }}
+                    className="font-heading"
+                  />
+                </div>
+
+                <div className="mb-2.5 flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => updateTicket(i, { active: !t.active })}
+                    className="rounded-lg px-2.5 py-[7px] text-[10.5px] font-bold uppercase tracking-[0.5px] transition-all duration-200 active:scale-95"
+                    style={{
+                      background: t.active ? 'rgba(0,245,212,0.08)' : 'rgba(255,255,255,0.04)',
+                      border: `1px solid ${t.active ? 'rgba(0,245,212,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                      color: t.active ? '#00F5D4' : '#6B6C80',
+                    }}
+                  >
+                    {t.active ? 'On sale' : 'Paused'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveTicket(i, -1)}
+                    disabled={i === 0}
+                    className="flex h-[30px] w-[30px] items-center justify-center rounded-lg glass glass-hover disabled:opacity-30"
+                    style={{ color: '#A7A8B5' }}
+                    aria-label="Move ticket type up"
+                  >
+                    <ChevronUp size={14} strokeWidth={2.5} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveTicket(i, 1)}
+                    disabled={i === tickets.length - 1}
+                    className="flex h-[30px] w-[30px] items-center justify-center rounded-lg glass glass-hover disabled:opacity-30"
+                    style={{ color: '#A7A8B5' }}
+                    aria-label="Move ticket type down"
+                  >
+                    <ChevronDown size={14} strokeWidth={2.5} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeTicket(i)}
+                    className="ml-auto flex h-[30px] w-[30px] items-center justify-center rounded-lg transition-all duration-200 active:scale-90"
+                    style={{ background: 'rgba(255,90,46,0.08)', border: '1px solid rgba(255,90,46,0.25)', color: '#FF5A2E' }}
+                    aria-label="Remove ticket type"
+                  >
+                    <Trash2 size={13} strokeWidth={2.5} />
+                  </button>
+                </div>
+
+                <input
+                  value={t.description ?? ''}
+                  onChange={(e) => updateTicket(i, { description: e.target.value })}
+                  placeholder="What's included? (optional)"
+                  style={{ ...inputStyle, padding: '11px 12px', fontSize: 13, marginBottom: 10 }}
+                  className="font-heading"
+                />
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <div className="mb-[6px] text-[9.5px] font-semibold uppercase tracking-[0.7px]" style={{ color: '#6B6C80' }}>
+                      Quantity {t.sold ? `(${t.sold} sold)` : ''}
+                    </div>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      value={String(t.quantity)}
+                      onChange={(e) => updateTicket(i, { quantity: Number(e.target.value) })}
+                      placeholder="200"
+                      style={{ ...inputStyle, padding: '10px', fontSize: 12.5, minWidth: 0 }}
+                      className="font-heading"
+                    />
+                  </div>
+                  <div>
+                    <div className="mb-[6px] text-[9.5px] font-semibold uppercase tracking-[0.7px]" style={{ color: '#6B6C80' }}>
+                      Sales start
+                    </div>
+                    <input
+                      type="datetime-local"
+                      value={t.salesStartAt ?? ''}
+                      onChange={(e) => updateTicket(i, { salesStartAt: e.target.value || null })}
+                      style={{ ...inputStyle, padding: '10px', fontSize: 12.5, minWidth: 0 }}
+                      className="font-heading"
+                    />
+                  </div>
+                  <div>
+                    <div className="mb-[6px] text-[9.5px] font-semibold uppercase tracking-[0.7px]" style={{ color: '#6B6C80' }}>
+                      Sales end
+                    </div>
+                    <input
+                      type="datetime-local"
+                      value={t.salesEndAt ?? ''}
+                      onChange={(e) => updateTicket(i, { salesEndAt: e.target.value || null })}
+                      style={{ ...inputStyle, padding: '10px', fontSize: 12.5, minWidth: 0 }}
+                      className="font-heading"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={addTicket}
+              className="flex items-center justify-center gap-1.5 rounded-[10px] py-[11px] text-[12.5px] font-semibold transition-all duration-200 active:scale-[0.98]"
+              style={{ background: 'rgba(255,45,149,0.07)', border: '1px dashed rgba(255,45,149,0.35)', color: '#FF2D95' }}
+            >
+              <Plus size={14} strokeWidth={2.5} />
+              Add Ticket Type
+            </button>
+          </div>
         )}
 
-        <Field label="Capacity">
-          <input
-            type="number"
-            inputMode="numeric"
-            min={1}
-            value={capacity}
-            onChange={(e) => {
-              setCapacity(e.target.value);
-              clearError('capacity');
-            }}
-            placeholder="500"
-            style={inputStyle}
-            className="font-heading"
-          />
-          <FieldError message={errors.capacity} />
-        </Field>
+        {errors.ticketTypes && <FieldError message={errors.ticketTypes} />}
+
+        <div
+          className="rounded-[10px] px-3.5 py-2.5 text-[12px] leading-[1.7]"
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <span style={{ color: '#6B6C80' }}>Total capacity </span>
+          <span className="font-semibold" style={{ color: '#FFFFFF' }}>{capacityTotal.toLocaleString()} spots</span>
+          {!isFree && (
+            <>
+              <span style={{ color: '#6B6C80' }}> · From </span>
+              <span className="font-semibold" style={{ color: '#00F5D4' }}>
+                {tickets.length > 0 ? formatNaira(Math.min(...tickets.map((t) => Math.trunc(Number(t.price))))) : formatNaira(0)}
+              </span>
+            </>
+          )}
+        </div>
       </Section>
 
       {/* 4. Contact & details */}

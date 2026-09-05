@@ -33,7 +33,11 @@ const RESUME_OK_MS = 2600;
 const RESUME_ERROR_MS = 1400;
 const DEDUPE_WINDOW_MS = 3500;
 
-const SCAN_DEFAULT: Html5QrcodeCameraScanConfig = { fps: 10, qrbox: { width: 230, height: 230 }, aspectRatio: 1.0 };
+// Deliberately no aspectRatio here: html5-qrcode calls
+// track.applyConstraints({ aspectRatio }) on the live feed, which freezes the
+// stream black on many phone cameras (iOS virtual rear lenses especially). The
+// .ci-qr-host CSS already crops the feed into the square viewfinder box.
+const SCAN_DEFAULT: Html5QrcodeCameraScanConfig = { fps: 10, qrbox: { width: 230, height: 230 } };
 
 type CameraErrorKind = 'permission-denied' | 'no-camera' | 'in-use' | 'unsupported' | 'security' | 'unknown';
 
@@ -79,14 +83,41 @@ function mapCameraError(err: unknown): CameraErrorKind {
   return 'unknown';
 }
 
-// Best-effort rear-camera pick from an enumerated device list (labels are only
-// populated after the user grants camera permission).
+// Please pass the MAIN rear (wide) lens first: a phone exposes one video
+// output per "virtual" lens group, so iOS devices list "Back Triple Camera",
+// "Back Dual Wide Camera", "Back Dual Camera", and even the front as separate
+// entries. Only the plain "Back Camera" (wide) is useable for reading a QR code
+// held up to a scanner — the multi-lens virtual cameras stream a dark/blank
+// frame. ranking() puts the plain "back"/"rear"/"environment" wide camera first
+// and demotes front and multi-lens/virtual entries behind it.
+function cameraRank(label: string): number {
+  const l = label.toLowerCase();
+  if (l.includes('front') || l.includes('selfie') || l.includes('user')) return 6;
+  if (/triple|ultra|wide|dual/i.test(l)) return 3;
+  if (/rear|back|environment/i.test(l)) return 1;
+  return 5;
+}
+
 function pickRearCamera(cams: CameraDevice[]): CameraDevice {
-  return (
-    cams.find((c) => /rear|back|environment/i.test(c.label)) ??
-    cams.find((c) => !/front|selfie|user/i.test(c.label)) ??
-    cams[0]
-  );
+  const ranked = [...cams].sort((a, b) => cameraRank(a.label) - cameraRank(b.label));
+  return ranked[0] ?? cams[0];
+}
+
+// Filters the "select a lens" row down to real back cameras only (drop front,
+// selfie, and the multi-lens virtual "triple/dual/ultra-wide" entries), so staff
+// never see confusing options and can only pick a lens that can actually scan.
+function isBackCamera(cam: CameraDevice): boolean {
+  return cameraRank(cam.label) === 1;
+}
+
+// Chromium on Android notoriously starts the camera before the page/DOM is fully
+// settled, which yields a black feed (NotReadableError: Could not start video
+// source) that only appears when paired with the requested device id. Waiting a
+// couple of animation frames before requesting media avoids the race.
+function settleStart(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  });
 }
 
 // null = enumeration itself failed (so the original getUserMedia error is the
@@ -409,21 +440,45 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
         controlsRef.current = { pause: pauseScan, resume: resumeScan };
 
         // ---- Acquire the first stream ----
+        // Settle an extra frame first: on Chromium/Android the camera must be
+        // requested after DOM settle, otherwise the feed starts black.
+        await settleStart();
         if (cameraOverrideRef.current) {
           await startWith({ deviceId: { exact: cameraOverrideRef.current } });
         } else {
-          // Prefer the rear/environment camera everywhere — on phones this is
-          // the back lens; on desktops a relaxed facingMode simply resolves to
-          // the available webcam. If the constraint can't be satisfied, fall
-          // back to an explicitly enumerated camera.
-          try {
-            await startWith({ facingMode: 'environment' });
-          } catch (err) {
-            const kind = mapCameraError(err);
-            if (kind === 'permission-denied' || kind === 'security' || kind === 'unsupported') throw err;
-            const cams = await listCameras(Html5QrcodeCtor);
-            if (!cams || cams.length === 0) throw err;
-            await startWith({ deviceId: { exact: pickRearCamera(cams).id } });
+          // Safari/iOS ignores facingMode for virtual lenses; Android Chrome
+          // sometimes returns the front camera or a blank multi-lens device from
+          // it. On phones we therefore prefer an EXPLICIT camera id resolved from
+          // the real "back/rear/environment" (wide) lens. facingMode stays only
+          // as the last resort for desktop webcams.
+          const cams = await listCameras(Html5QrcodeCtor);
+          const back = cams ? pickRearCamera(cams) : null;
+          if (back && isBackCamera(back)) {
+            const startBack = () => startWith({ deviceId: { exact: back.id } });
+            try {
+              await startBack();
+            } catch (err) {
+              const kind = mapCameraError(err);
+              if (kind === 'permission-denied' || kind === 'security' || kind === 'unsupported') throw err;
+              // Fall back to the browser's notion of a rear camera, then any
+              // enumerated device, before giving up.
+              try {
+                await startWith({ facingMode: 'environment' });
+              } catch (err2) {
+                const kind2 = mapCameraError(err2);
+                if (kind2 === 'permission-denied' || kind2 === 'security' || kind2 === 'unsupported') throw err2;
+                await startWith({ deviceId: { exact: cams![0].id } });
+              }
+            }
+          } else {
+            try {
+              await startWith({ facingMode: 'environment' });
+            } catch (err) {
+              const kind = mapCameraError(err);
+              if (kind === 'permission-denied' || kind === 'security' || kind === 'unsupported') throw err;
+              if (!cams || cams.length === 0) throw err;
+              await startWith({ deviceId: { exact: pickRearCamera(cams).id } });
+            }
           }
         }
 
@@ -444,7 +499,7 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
             const deviceId = (target as MediaTrackConstraints).deviceId;
             if (deviceId && typeof deviceId === 'object' && 'exact' in deviceId) devId = String(deviceId.exact);
           }
-          setActiveCameraId(devId ?? cams.find((c) => /rear|back|environment/i.test(c.label))?.id ?? cams[0]?.id ?? null);
+          setActiveCameraId(devId ?? pickRearCamera(cams).id ?? cams[0]?.id ?? null);
         }
         setScanner('scanning');
       } catch (err) {
@@ -693,9 +748,9 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
                   </>
                 )}
               </div>
-              {scanner === 'scanning' && availableCameras.length >= 2 && (
+              {scanner === 'scanning' && availableCameras.filter(isBackCamera).length >= 2 && (
                 <div className="flex flex-wrap items-center justify-center gap-1.5 px-4 pb-3">
-                  {availableCameras.map((c) => (
+                  {availableCameras.filter(isBackCamera).map((c) => (
                     <button
                       key={c.id}
                       onClick={() => switchCamera(c.id)}
@@ -706,7 +761,7 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
                           : { background: ci.raised, border: `1px solid ${ci.line}`, color: ci.muted }
                       }
                     >
-                      {(c.label || '').replace(/\s*\([^)]*\)\s*$/g, '').trim() || `Camera ${availableCameras.indexOf(c) + 1}`}
+                      {isBackCamera(c) ? 'Back camera' : (c.label || '').replace(/\s*\([^)]*\)\s*$/g, '').trim()}
                     </button>
                   ))}
                 </div>

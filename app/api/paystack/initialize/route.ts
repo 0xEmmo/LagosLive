@@ -59,6 +59,9 @@ export async function POST(request: Request) {
     if (party.status !== 'approved') {
       return NextResponse.json({ error: 'This event is not open for bookings yet.' }, { status: 400 });
     }
+    if (party.cancelled_at) {
+      return NextResponse.json({ error: 'This event has been cancelled.' }, { status: 400 });
+    }
     if (party.spots_left < quantity) {
       return NextResponse.json({ error: 'Sorry, this party just sold out.' }, { status: 400 });
     }

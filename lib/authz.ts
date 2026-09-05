@@ -6,6 +6,7 @@
 
 export type Role = 'viewer' | 'organizer' | 'support' | 'finance' | 'admin' | 'super_admin';
 export type AccountStatus = 'active' | 'suspended' | 'flagged' | 'banned';
+export type HostVerification = 'unverified' | 'pending' | 'verified' | 'rejected';
 
 export const STAFF_ROLES: Role[] = ['support', 'finance', 'admin', 'super_admin'];
 export const ADMIN_ROLES: Role[] = ['admin', 'super_admin'];
@@ -47,4 +48,18 @@ export const ACCOUNT_STATUS_COLOR: Record<AccountStatus, { bg: string; color: st
   suspended: { bg: 'rgba(255,138,0,0.08)', color: '#FF8A00' },
   flagged: { bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
   banned: { bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
+};
+
+export const HOST_VERIFICATION_LABEL: Record<HostVerification, string> = {
+  unverified: 'Not verified',
+  pending: 'Pending review',
+  verified: 'Verified',
+  rejected: 'Rejected',
+};
+
+export const HOST_VERIFICATION_COLOR: Record<HostVerification, { bg: string; color: string }> = {
+  unverified: { bg: 'rgba(255,214,0,0.08)', color: '#FFD600' },
+  pending: { bg: 'rgba(176,106,255,0.1)', color: '#B06AFF' },
+  verified: { bg: 'rgba(0,245,212,0.08)', color: '#00F5D4' },
+  rejected: { bg: 'rgba(255,138,0,0.08)', color: '#FF8A00' },
 };

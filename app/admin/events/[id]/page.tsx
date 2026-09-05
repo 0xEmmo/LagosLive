@@ -7,7 +7,7 @@ import { ArrowLeft, Check, X, Ban, RotateCcw, Flag, Download, Trash2, MapPin, Cl
 import AdminShell from '@/components/admin-shell';
 import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, useRoleGuard, Badge, StatCard } from '@/components/ui/dashboard-ui';
 import { fetchAdminEvent, fetchEventOrders, flagEvent, updateEventNotes, fetchAdminNotes, createAdminNote, deleteAdminNote, logAudit, type AdminEventJoined, type AdminOrderJoined, type NoteRow, toCsv, downloadCsv } from '@/lib/admin-queries';
-import { updatePartyStatus } from '@/lib/queries';
+import { setEventReviewStatus } from '@/lib/queries';
 import { useLagosLiveStore } from '@/lib/store';
 import { formatNaira } from '@/lib/filters';
 
@@ -58,10 +58,16 @@ export default function AdminEventDetailPage() {
 
   const setStatusOf = async (next: string) => {
     if (!event) return;
-    if ((next === 'rejected' || next === 'suspended') && !confirm(`${next === 'suspended' ? 'Suspend' : 'Reject'} "${event.title}"?`)) return;
+    let reason: string | undefined;
+    if (next === 'rejected' || next === 'suspended') {
+      reason = prompt(`${next === 'suspended' ? 'Suspend' : 'Reject'} "${event.title}" — add a reason the host will see:`) ?? '';
+      if (!reason.trim()) {
+        showToast('Reason required', `Add a reason to ${next} an event.`);
+        return;
+      }
+    }
     try {
-      await updatePartyStatus(event.id, next as never);
-      await logAudit('event_status', 'event', event.id, { title: event.title, status: next });
+      await setEventReviewStatus(event.id, next as never, reason);
       setEvent((e) => (e ? { ...e, status: next } : e));
       showToast('Event updated', next);
     } catch {

@@ -81,7 +81,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Event not found.' }, { status: 404 });
     }
     if (party.cancelled_at) {
-      return NextResponse.json({ error: 'This event is already cancelled.' }, { status: 400 });
+      // Already cancelled — this is an idempotent retry. We only re-process
+      // orders whose refund previously FAILED; everything else is left alone.
     }
     const { data: profile } = await service
       .from('profiles')
@@ -102,37 +103,41 @@ export async function POST(request: Request) {
       .eq('payment_status', 'confirmed');
 
     let refundedCount = 0;
+    let failedCount = 0;
     let notifiedCount = 0;
+    let spotsLeft = party.spots_left;
     const now = new Date().toISOString();
 
     for (const order of orders ?? []) {
-      const alreadyRefunded = order.refund_status === 'completed';
-      const refundAccepted = alreadyRefunded || (await issuePaystackRefund(order.payment_ref ?? '', order.total));
+      const alreadyFinal = ['refunded', 'requested', 'processing', 'rejected'].includes(order.refund_status);
+      const shouldRetry = order.refund_status === 'failed';
 
-      if (!alreadyRefunded) {
-        // Release the reserved spots regardless of refund success — the event
-        // is gone, inventory must not stay reserved forever.
-        await service
-          .from('parties')
-          .update({ spots_left: Math.min(party.capacity, party.spots_left + order.quantity) })
-          .eq('id', eventId);
+      if (alreadyFinal && !shouldRetry) {
+        // Nothing to refund; just make sure the guest sees why the event is gone.
+        if (order.refund_status !== 'refunded') {
+          await service
+            .from('orders')
+            .update({ cancellation_reason: reason })
+            .eq('id', order.id);
+        }
+      } else {
+        const refundAccepted = await issuePaystackRefund(order.payment_ref ?? '', order.total);
+        if (refundAccepted) {
+          refundedCount += 1;
+          spotsLeft = Math.min(party.capacity, spotsLeft + order.quantity);
+        } else {
+          failedCount += 1;
+        }
         await service
           .from('orders')
           .update({
-            refund_status: refundAccepted ? 'completed' : 'failed',
+            refund_status: refundAccepted ? 'refunded' : 'failed',
             refund_amount: refundAccepted ? order.total : 0,
             refunded_at: refundAccepted ? now : null,
             cancellation_reason: reason,
           })
           .eq('id', order.id);
-      } else {
-        await service
-          .from('orders')
-          .update({ cancellation_reason: reason })
-          .eq('id', order.id);
       }
-
-      if (refundAccepted) refundedCount += 1;
 
       if (order.customer_email) {
         const sent = await sendEventCancellationEmail({
@@ -144,6 +149,13 @@ export async function POST(request: Request) {
         });
         if (sent) notifiedCount += 1;
       }
+    }
+
+    if (spotsLeft !== party.spots_left) {
+      await service
+        .from('parties')
+        .update({ spots_left: spotsLeft })
+        .eq('id', eventId);
     }
 
     // 2. Mark the event cancelled. Guests reach it via saved links and their
@@ -158,12 +170,13 @@ export async function POST(request: Request) {
       p_action: 'event_cancelled',
       p_target_type: 'event',
       p_target_id: String(eventId),
-      p_details: { reason, refunded_count: refundedCount, notified_count: notifiedCount },
+      p_details: { reason, refunded_count: refundedCount, failed_count: failedCount, notified_count: notifiedCount },
     });
 
     return NextResponse.json({
       success: true,
       refunded_count: refundedCount,
+      failed_count: failedCount,
       notified_count: notifiedCount,
     });
   } catch (err) {

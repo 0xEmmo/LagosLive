@@ -3,15 +3,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Mail, Phone, CalendarDays, Wallet, Ticket, Building2, Shield, Ban, RotateCcw, Trash2 } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, CalendarDays, Wallet, Ticket, Building2, Shield, Ban, RotateCcw, Trash2, ShieldCheck, Check, X } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
 import { PageHeader, StatCard, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, Badge, useRoleGuard } from '@/components/ui/dashboard-ui';
 import { fetchHostDetail, updateProfileStatus, deleteAdminNote, fetchAdminNotes, createAdminNote, logAudit, type HostDetail, type NoteRow } from '@/lib/admin-queries';
 import { formatNaira } from '@/lib/filters';
 import { useLagosLiveStore } from '@/lib/store';
-import { ROLE_LABEL, ACCOUNT_STATUS_LABEL, ACCOUNT_STATUS_COLOR, type Role, type AccountStatus } from '@/lib/authz';
+import { ROLE_LABEL, ACCOUNT_STATUS_LABEL, ACCOUNT_STATUS_COLOR, HOST_VERIFICATION_LABEL, HOST_VERIFICATION_COLOR, type Role, type AccountStatus, type HostVerification } from '@/lib/authz';
 
 const STATUS_STYLE: Record<string, { label: string; bg: string; color: string }> = {
+  draft: { label: 'Draft', bg: 'rgba(255,255,255,0.08)', color: '#D5D6E0' },
   pending: { label: 'Pending', bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
   approved: { label: 'Live', bg: 'rgba(0,245,212,0.08)', color: '#00F5D4' },
   rejected: { label: 'Rejected', bg: 'rgba(255,138,0,0.08)', color: '#FF8A00' },
@@ -29,6 +30,7 @@ export default function AdminHostDetailPage() {
   const [status, setStatus] = useState<'loading' | 'error' | 'ok'>('loading');
   const [attempt, setAttempt] = useState(0);
   const [noteBusy, setNoteBusy] = useState(false);
+  const [verificationBusy, setVerificationBusy] = useState(false);
 
   const load = useCallback(async () => {
     setStatus('loading');
@@ -61,6 +63,34 @@ export default function AdminHostDetailPage() {
       showToast(next === 'active' ? 'Host reinstated' : 'Host suspended', `${host.name} updated.`);
     } catch {
       showToast('Something went wrong', "Couldn't update status.");
+    }
+  };
+
+  const setVerification = async (decision: 'verify' | 'reject' | 'suspend') => {
+    if (!host) return;
+    let reason: string | undefined;
+    if (decision === 'reject' || decision === 'suspend') {
+      reason = prompt(`${decision === 'suspend' ? 'Suspend' : 'Reject'} ${host.name}'s verification — add a reason the host will see:`) ?? '';
+      if (!reason.trim()) {
+        showToast('Reason required', `Add a reason to ${decision} a host.`);
+        return;
+      }
+    }
+    setVerificationBusy(true);
+    try {
+      const res = await fetch('/api/admin/host-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId: host.id, decision, reason }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? 'Failed');
+      setAttempt((a) => a + 1);
+      showToast(decision === 'verify' ? 'Host verified' : decision === 'reject' ? 'Verification rejected' : 'Host suspended', `${host.name} updated.`);
+    } catch {
+      showToast('Something went wrong', "Couldn't update verification.");
+    } finally {
+      setVerificationBusy(false);
     }
   };
 
@@ -106,7 +136,10 @@ export default function AdminHostDetailPage() {
           <ErrorBlock message="Couldn't load host profile." onRetry={() => setAttempt((a) => a + 1)} />
         ) : !host ? (
           <EmptyBlock title="Host not found" subtitle="This account may have been deleted." />
-        ) : (
+        ) : (() => {
+          const v = (host.host_verification_status ?? 'unverified') as HostVerification;
+          const vs = HOST_VERIFICATION_COLOR[v];
+          return (
           <div className="flex flex-col gap-6">
             {/* Header */}
             <PageHeader
@@ -151,6 +184,59 @@ export default function AdminHostDetailPage() {
                   {host.kyc_status !== 'none' && ` · KYC: ${host.kyc_status}`}
                 </div>
               </div>
+            </div>
+
+            {/* Verification */}
+            <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-[12px] font-bold" style={{ color: '#FFFFFF' }}>
+                  <ShieldCheck size={15} color="#FF8A00" /> Host Verification
+                </div>
+                <Badge label={HOST_VERIFICATION_LABEL[v]} bg={vs.bg} color={vs.color} />
+              </div>
+              <div className="flex flex-col gap-2 text-[12.5px]">
+                {host.business_name && (
+                  <div className="text-[12.5px]" style={{ color: '#D5D6E0' }}>
+                    <span style={{ color: '#6B6C80' }}>Business: </span>{host.business_name}
+                  </div>
+                )}
+                {host.website && (
+                  <div className="text-[12.5px]">
+                    <a href={host.website} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline" style={{ color: '#FF8A00' }}>{host.website}</a>
+                  </div>
+                )}
+                {v === 'pending' && host.host_verification_requested_at && (
+                  <div className="text-[11px]" style={{ color: '#6B6C80' }}>
+                    Requested {new Date(host.host_verification_requested_at).toLocaleString()}
+                  </div>
+                )}
+                {v === 'rejected' && host.host_verification_reason && (
+                  <div className="rounded-xl px-3 py-2 text-[12px]" style={{ background: 'rgba(255,138,0,0.08)', border: '1px solid rgba(255,138,0,0.25)', color: '#FFB26B' }}>
+                    Rejected: {host.host_verification_reason}
+                  </div>
+                )}
+                {host.account_status === 'suspended' && host.host_verification_reason && (
+                  <div className="rounded-xl px-3 py-2 text-[12px]" style={{ background: 'rgba(255,138,0,0.08)', border: '1px solid rgba(255,138,0,0.25)', color: '#FFB26B' }}>
+                    Suspended: {host.host_verification_reason}
+                  </div>
+                )}
+                {v === 'unverified' && (
+                  <div className="text-[12px]" style={{ color: '#A7A8B5' }}>This host hasn&apos;t requested verification yet.</div>
+                )}
+              </div>
+              {host.account_status === 'active' && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {v !== 'verified' && (
+                    <ActionBtn label={verificationBusy ? '...' : 'Verify'} icon={<Check size={13} />} color="#00F5D4" onClick={() => setVerification('verify')} />
+                  )}
+                  {(v === 'pending' || v === 'rejected') && (
+                    <ActionBtn label={verificationBusy ? '...' : 'Reject'} icon={<X size={13} />} color="#FF2D95" onClick={() => setVerification('reject')} />
+                  )}
+                  {v === 'verified' && (
+                    <ActionBtn label={verificationBusy ? '...' : 'Suspend'} icon={<Ban size={13} />} color="#FF8A00" onClick={() => setVerification('suspend')} />
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Events List */}
@@ -226,7 +312,8 @@ export default function AdminHostDetailPage() {
               </div>
             </div>
           </div>
-        )}
+          );
+        })()}
       </div>
     </AdminShell>
   );

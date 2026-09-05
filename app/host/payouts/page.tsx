@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, RefreshCw, Wallet, Landmark, CalendarDays, XCircle, Plus } from 'lucide-react';
+import Link from 'next/link';
+import { AlertTriangle, RefreshCw, Wallet, Landmark, CalendarDays, XCircle, Plus, ShieldCheck } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import HostBottomNav from '@/components/HostBottomNav';
 import { useLagosLiveStore } from '@/lib/store';
@@ -79,8 +80,8 @@ export default function HostPayoutsPage() {
       setRequestMsg('Payout request submitted! It will be reviewed by our team.');
       setShowRequestForm(false);
       setAttempt((a) => a + 1);
-    } catch {
-      setRequestMsg('Failed to submit payout request. Please try again.');
+    } catch (err) {
+      setRequestMsg(err instanceof Error ? err.message : 'Failed to submit payout request. Please try again.');
     } finally {
       setRequesting(false);
     }
@@ -106,6 +107,29 @@ export default function HostPayoutsPage() {
           </div>
         </div>
 
+        {user.hostVerificationStatus !== 'verified' && (
+          <div className="flex items-center gap-3 rounded-2xl p-4" style={{ background: 'rgba(255,138,0,0.06)', border: '1px solid rgba(255,138,0,0.25)' }}>
+            <ShieldCheck size={18} strokeWidth={1.5} color="#FF8A00" />
+            <div className="flex-1 text-[12px]" style={{ color: '#D5D6E0' }}>
+              <span className="font-bold" style={{ color: '#FFFFFF' }}>
+                {user.hostVerificationStatus === 'pending'
+                  ? 'Your host verification is under review.'
+                  : user.hostVerificationStatus === 'rejected'
+                  ? 'Your host verification was rejected.'
+                  : 'You must verify your host account to request payouts.'}
+              </span>{' '}
+              Payouts open up once our team confirms you.
+            </div>
+            <Link
+              href="/host/verification"
+              className="shrink-0 rounded-[10px] px-3.5 py-2 text-[11.5px] font-bold"
+              style={{ background: 'rgba(255,138,0,0.14)', border: '1px solid rgba(255,138,0,0.4)', color: '#FF8A00' }}
+            >
+              {user.hostVerificationStatus === 'pending' ? 'Status' : 'Verify'}
+            </Link>
+          </div>
+        )}
+
         {/* Request payout */}
         <div className="rounded-2xl p-4" style={{ background: 'rgba(255,45,149,0.04)', border: '1px solid rgba(255,45,149,0.15)' }}>
           <div className="flex items-center justify-between gap-3">
@@ -121,7 +145,7 @@ export default function HostPayoutsPage() {
               onClick={() => setShowRequestForm(!showRequestForm)}
               disabled={!canRequest}
               className="flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-[12px] font-bold transition-all disabled:opacity-40"
-              style={{ background: canRequest ? 'linear-gradient(135deg, #FF2D95, #8A2BE2)' : 'rgba(255,255,255,0.06)', color: '#FFFFFF' }}
+              style={{ background: canRequest ? 'linear-gradient(135deg, #FF9B3E, #FF6A00)' : 'rgba(255,255,255,0.06)', color: '#FFFFFF' }}
             >
               <Plus size={14} strokeWidth={2.5} />
               {canRequest ? 'Request' : 'Unavailable'}
@@ -143,7 +167,7 @@ export default function HostPayoutsPage() {
                 onClick={handleRequestPayout}
                 disabled={requesting}
                 className="mt-3 w-full rounded-xl py-2.5 text-[13px] font-bold transition-all disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, #FF2D95, #8A2BE2)', color: '#FFFFFF' }}
+                style={{ background: 'linear-gradient(135deg, #FF9B3E, #FF6A00)', color: '#FFFFFF' }}
               >
                 {requesting ? 'Submitting...' : 'Confirm Payout Request'}
               </button>

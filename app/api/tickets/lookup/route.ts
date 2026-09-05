@@ -45,6 +45,8 @@ function toParty(row: NonNullable<OrderRow['parties']>) {
     isThisWeek: startsAt.getTime() - Date.now() < ONE_WEEK_MS && startsAt.getTime() > Date.now() - 24 * 60 * 60 * 1000,
     createdBy: row.created_by,
     status: row.status,
+    cancelledAt: row.cancelled_at,
+    cancellationReason: row.cancellation_reason,
   };
 }
 
@@ -84,6 +86,8 @@ export async function POST(request: Request) {
         total: order.total,
         orderRef: order.order_ref,
         paymentStatus: order.payment_status,
+        refundStatus: order.refund_status,
+        refundAmount: order.refund_amount,
         createdAt: order.created_at,
       },
     });

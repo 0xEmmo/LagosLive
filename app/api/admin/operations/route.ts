@@ -3,9 +3,33 @@ import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/serv
 
 type Op =
   | { action: 'set_refund'; orderId: string; refundStatus: string; refundAmount: number }
+  | { action: 'issue_refund'; orderId: string }
   | { action: 'resend_email'; orderId: string }
   | { action: 'set_role'; targetUserId: string; role: string }
   | { action: 'audit'; targetType: string; targetId: string; logAction: string; details?: Record<string, unknown> };
+
+const PAYSTACK_API = 'https://api.paystack.co';
+
+async function issuePaystackRefund(paymentRef: string, totalNaira: number): Promise<boolean> {
+  if (!process.env.PAYSTACK_SECRET_KEY || !paymentRef || totalNaira <= 0) return false;
+  try {
+    const response = await fetch(`${PAYSTACK_API}/refund`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ transaction: paymentRef, amount: Math.round(totalNaira * 100) }),
+    });
+    const json = (await response.json().catch(() => null)) as { status?: boolean; message?: string } | null;
+    return (
+      response.ok &&
+      (json?.status === true || (json !== null && String(json.message ?? '').toLowerCase().includes('refund')))
+    );
+  } catch {
+    return false;
+  }
+}
 
 // Server route for staff operations that need a service client (RLS for staff
 // already allows most reads/writes, but payment-related transitions and audit
@@ -42,6 +66,40 @@ export async function POST(request: Request) {
         p_target_id: op.orderId,
         p_details: { refund_amount: op.refundAmount },
       } as never);
+      return NextResponse.json({ ok: true });
+    }
+
+    if (body.action === 'issue_refund') {
+      // Retry a failed real-money refund for a cancelled event.
+      const op = body as Extract<Op, { action: 'issue_refund' }>;
+      const { data: order } = await service
+        .from('orders')
+        .select('id, total, payment_ref, refund_status')
+        .eq('id', op.orderId)
+        .eq('payment_status', 'confirmed')
+        .maybeSingle();
+      if (!order) return NextResponse.json({ error: 'Order not found or not confirmed.' }, { status: 404 });
+      if (order.refund_status !== 'failed' && order.refund_status !== 'none') {
+        return NextResponse.json({ error: 'Refund is already handled or in progress.' }, { status: 409 });
+      }
+      const accepted = await issuePaystackRefund(order.payment_ref ?? '', order.total);
+      const now = new Date().toISOString();
+      await service.from('orders').update({
+        refund_status: accepted ? 'refunded' : 'failed',
+        refund_amount: accepted ? order.total : 0,
+        refunded_at: accepted ? now : null,
+      }).eq('id', op.orderId);
+      try {
+        await service.rpc('write_audit_log', {
+          p_action: accepted ? 'refund_retry_success' : 'refund_retry_failed',
+          p_target_type: 'order',
+          p_target_id: op.orderId,
+          p_details: { amount: order.total, payment_ref: order.payment_ref ?? null },
+        } as never);
+      } catch {
+        // Best-effort auditing.
+      }
+      if (!accepted) return NextResponse.json({ error: 'Paystack did not accept the refund. Please try again.' }, { status: 502 });
       return NextResponse.json({ ok: true });
     }
 

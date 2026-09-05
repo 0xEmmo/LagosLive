@@ -20,8 +20,10 @@ const PAYMENT_STYLE: Record<string, { label: string; bg: string; color: string }
 const REFUND_STYLE: Record<string, { label: string; bg: string; color: string }> = {
   none: { label: 'None', bg: 'rgba(255,255,255,0.06)', color: '#A7A8B5' },
   requested: { label: 'Requested', bg: 'rgba(255,214,0,0.12)', color: '#FFD600' },
+  processing: { label: 'Processing', bg: 'rgba(176,106,255,0.1)', color: '#B06AFF' },
   refunded: { label: 'Refunded', bg: 'rgba(0,245,212,0.1)', color: '#00F5D4' },
   rejected: { label: 'Rejected', bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
+  failed: { label: 'Failed', bg: 'rgba(255,138,0,0.1)', color: '#FF8A00' },
 };
 
 interface Note {
@@ -104,6 +106,27 @@ export default function AdminOrderDetailPage() {
       showToast('Something went wrong', err instanceof Error ? err.message : "Couldn't resend the email.");
     } finally {
       setEmailBusy(false);
+    }
+  };
+
+  const retryRefund = async () => {
+    if (!order) return;
+    if (!confirm('Retry this refund with Paystack?')) return;
+    setRefundBusy(true);
+    try {
+      const res = await fetch('/api/admin/operations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'issue_refund', orderId }),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) throw new Error(data.error ?? 'Request failed');
+      setAttempt((a) => a + 1);
+      showToast('Refund issued', 'The refund was sent back to the guest.');
+    } catch (err) {
+      showToast('Refund failed', err instanceof Error ? err.message : "Couldn't retry the refund.");
+    } finally {
+      setRefundBusy(false);
     }
   };
 
@@ -200,6 +223,16 @@ export default function AdminOrderDetailPage() {
                       {s}
                     </button>
                   ))}
+                  {(order.refund_status === 'failed' || order.refund_status === 'none') && (
+                    <button
+                      disabled={refundBusy}
+                      onClick={retryRefund}
+                      className="rounded-[9px] border px-3 py-2 text-[12px] font-semibold disabled:opacity-50"
+                      style={{ background: 'rgba(255,138,0,0.1)', borderColor: 'rgba(255,138,0,0.35)', color: '#FF8A00' }}
+                    >
+                      {refundBusy ? 'Retrying…' : 'Retry refund'}
+                    </button>
+                  )}
                 </div>
               </div>
 

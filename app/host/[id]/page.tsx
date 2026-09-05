@@ -20,12 +20,15 @@ import {
   MapPin,
   TrendingUp,
   Star,
+  Send,
+  BadgeCheck,
+  PenLine,
   type LucideIcon,
 } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import PartyPhoto from '@/components/PartyPhoto';
 import SalesChart from '@/components/SalesChart';
-import { fetchOrganizerEventAnalytics, partyShareUrl, fetchEventReviews, type OrganizerEventAnalytics } from '@/lib/queries';
+import { fetchOrganizerEventAnalytics, partyShareUrl, fetchEventReviews, submitEventForReview, withdrawEvent, fetchPartyHostVerified, type OrganizerEventAnalytics } from '@/lib/queries';
 import { formatNaira } from '@/lib/filters';
 import { partyPhoto } from '@/lib/data';
 import { useParty } from '@/lib/hooks/useParty';
@@ -33,6 +36,7 @@ import { useLagosLiveStore } from '@/lib/store';
 import type { PartyStatus, Review } from '@/lib/types';
 
 const STATUS_STYLE: Record<PartyStatus, { label: string; bg: string; color: string }> = {
+  draft: { label: 'Draft', bg: 'rgba(255,255,255,0.08)', color: '#D5D6E0' },
   pending: { label: 'Pending Review', bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
   approved: { label: 'Live', bg: 'rgba(0,245,212,0.08)', color: '#00F5D4' },
   rejected: { label: 'Rejected', bg: 'rgba(255,138,0,0.08)', color: '#FF8A00' },
@@ -78,6 +82,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
   const router = useRouter();
   const user = useLagosLiveStore((s) => s.user);
   const authLoading = useLagosLiveStore((s) => s.authLoading);
+  const showToast = useLagosLiveStore((s) => s.showToast);
   const { party, loading } = useParty(Number(params.id));
   const [analytics, setAnalytics] = useState<OrganizerEventAnalytics | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
@@ -85,6 +90,19 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
   const [attempt, setAttempt] = useState(0);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [hostVerified, setHostVerified] = useState(false);
+
+  useEffect(() => {
+    if (!party) return;
+    let cancelled = false;
+    fetchPartyHostVerified(party.id)
+      .then((ok) => !cancelled && setHostVerified(ok))
+      .catch(() => { /* non-blocking */ });
+    return () => {
+      cancelled = true;
+    };
+  }, [party]);
 
   useEffect(() => {
     if (!party) return;
@@ -163,6 +181,20 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
   if (party.createdBy !== user.id) return null;
 
   const statusStyle = STATUS_STYLE[party.status];
+
+  const runReviewAction = async (action: 'submit' | 'withdraw') => {
+    setReviewBusy(true);
+    try {
+      if (action === 'submit') await submitEventForReview(party.id);
+      else await withdrawEvent(party.id);
+      showToast(action === 'submit' ? 'Submitted for review' : 'Moved back to draft', action === 'submit' ? 'Your event is with the review team.' : 'Your event is saved as a draft.');
+      setAttempt((a) => a + 1);
+    } catch (err) {
+      showToast('Something went wrong', err instanceof Error ? err.message : "Couldn't update the event.");
+    } finally {
+      setReviewBusy(false);
+    }
+  };
   const cancelledFailed = (analytics?.cancelledOrders ?? 0) + (analytics?.failedOrders ?? 0);
   const totalCapacity = party.capacity;
   const ticketsSold = analytics?.ticketsSold ?? 0;
@@ -233,6 +265,72 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
           </div>
         )}
 
+        {/* Review flow — Phase 3 trust: draft -> submitted -> approved */}
+        {(party.status === 'draft' || party.status === 'rejected' || party.status === 'pending') && !party.cancelledAt && (
+          <div className="rounded-2xl p-4" style={{ background: 'rgba(255,214,0,0.05)', border: '1px solid rgba(255,214,0,0.18)' }}>
+            {party.status === 'draft' ? (
+              <>
+                <div className="mb-1 text-[12px] font-bold uppercase tracking-[0.5px]" style={{ color: '#FFD600' }}>
+                  Draft — not public yet
+                </div>
+                <div className="mb-3 text-[12px] leading-[1.6]" style={{ color: '#A7A8B5' }}>
+                  Only you can see this event. Submit it for review to put it in front of the admin team.
+                </div>
+                <button
+                  onClick={() => runReviewAction('submit')}
+                  disabled={reviewBusy}
+                  className="flex w-full items-center justify-center gap-2 rounded-[11px] py-3 text-[13px] font-bold uppercase tracking-[0.5px] transition-all disabled:opacity-50"
+                  style={{ background: 'linear-gradient(135deg, #FF9B3E 0%, #FF6A00 100%)', color: '#FFFFFF', boxShadow: '0 10px 28px rgba(255,106,0,0.25)' }}
+                >
+                  <Send size={14} strokeWidth={2.5} />
+                  {reviewBusy ? 'Submitting...' : 'Submit for review'}
+                </button>
+              </>
+            ) : party.status === 'rejected' ? (
+              <>
+                <div className="mb-1 text-[12px] font-bold uppercase tracking-[0.5px]" style={{ color: '#FF8A00' }}>
+                  Not approved
+                </div>
+                {party.reviewReason && (
+                  <div className="mb-3 rounded-xl p-3 text-[12px] leading-[1.6]" style={{ background: 'rgba(255,138,0,0.08)', border: '1px solid rgba(255,138,0,0.2)', color: '#A7A8B5' }}>
+                    <span style={{ color: '#FF8A00', fontWeight: 700 }}>Why:</span> {party.reviewReason}
+                  </div>
+                )}
+                <div className="mb-3 text-[12px] leading-[1.6]" style={{ color: '#A7A8B5' }}>
+                  Fix the issue above, then resubmit — the admin team will take another look.
+                </div>
+                <button
+                  onClick={() => runReviewAction('submit')}
+                  disabled={reviewBusy}
+                  className="flex w-full items-center justify-center gap-2 rounded-[11px] py-3 text-[13px] font-bold uppercase tracking-[0.5px] transition-all disabled:opacity-50"
+                  style={{ background: 'linear-gradient(135deg, #FF9B3E 0%, #FF6A00 100%)', color: '#FFFFFF', boxShadow: '0 10px 28px rgba(255,106,0,0.25)' }}
+                >
+                  <Send size={14} strokeWidth={2.5} />
+                  {reviewBusy ? 'Submitting...' : 'Resubmit for review'}
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="mb-1 text-[12px] font-bold uppercase tracking-[0.5px]" style={{ color: '#FFD600' }}>
+                  In review
+                </div>
+                <div className="mb-3 text-[12px] leading-[1.6]" style={{ color: '#A7A8B5' }}>
+                  An admin is reviewing this event. It&apos;ll go live as soon as it&apos;s approved. You can still withdraw it.
+                </div>
+                <button
+                  onClick={() => runReviewAction('withdraw')}
+                  disabled={reviewBusy}
+                  className="flex w-full items-center justify-center gap-2 rounded-[11px] py-3 text-[13px] font-bold transition-all disabled:opacity-50"
+                  style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#D5D6E0' }}
+                >
+                  <PenLine size={14} strokeWidth={2} />
+                  {reviewBusy ? 'Withdrawing...' : 'Withdraw to draft'}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Run the door — Phase 2 check-in */}
         {party.status === 'approved' && !party.cancelledAt && (
           <div className="rounded-2xl p-4" style={{ background: 'linear-gradient(135deg, rgba(255,107,0,0.14) 0%, rgba(255,179,71,0.06) 100%)', border: '1px solid rgba(255,107,0,0.35)' }}>
@@ -299,6 +397,12 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
                 <span className="absolute right-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: statusStyle.bg, color: statusStyle.color, backdropFilter: 'blur(8px)' }}>
                   {statusStyle.label}
                 </span>
+                {hostVerified && (
+                  <span className="absolute left-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: 'rgba(0,245,212,0.14)', border: '1px solid rgba(0,245,212,0.35)', color: '#00F5D4', backdropFilter: 'blur(8px)' }}>
+                    <BadgeCheck size={12} strokeWidth={2.2} />
+                    Verified Host
+                  </span>
+                )}
               </div>
               <div className="p-4">
                 <div className="font-heading text-[18px] font-bold leading-tight" style={{ color: '#FFFFFF' }}>{party.title}</div>

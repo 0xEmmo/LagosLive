@@ -22,6 +22,7 @@ import PartyPhoto from '@/components/PartyPhoto';
 import { LogoMark, Wordmark } from '@/components/Logo';
 import { partyPhoto } from '@/lib/data';
 import { fetchTicketById } from '@/lib/queries';
+import { formatNaira } from '@/lib/filters';
 import { useLagosLiveStore } from '@/lib/store';
 import type { CustomerTicket, OrderPaymentStatus } from '@/lib/types';
 
@@ -82,6 +83,54 @@ function NonConfirmedTicket({ ticket }: { ticket: CustomerTicket }) {
         <Link href="/profile" className="w-full rounded-xl py-[15px] text-sm font-semibold glass glass-hover" style={{ color: '#A7A8B5' }}>
           My Tickets
         </Link>
+        <Link href="/tickets" className="w-full rounded-xl py-[15px] text-sm font-semibold glass glass-hover" style={{ color: '#FFB347' }}>
+          Find my ticket
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function CancelledTicket({ ticket }: { ticket: CustomerTicket }) {
+  const { party } = ticket;
+  const refunded = ticket.refundStatus === 'refunded';
+  return (
+    <div className="flex w-full max-w-[400px] flex-col items-center text-center animate-fade-in">
+      <div className="rounded-[28px] p-[1.5px]" style={{ background: 'rgba(255,179,71,0.35)', border: '1px solid rgba(255,179,71,0.25)' }}>
+        <div className="w-full overflow-hidden rounded-[26.5px]" style={{ background: '#161619' }}>
+          <div className="relative" style={{ height: 150, background: party.gradient }}>
+            <PartyPhoto src={partyPhoto(party.id, party.coverUrl)} alt={party.title} gradient={party.gradient} sizes="400px" />
+            <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(to top, #161619 0%, transparent 60%)' }} />
+            <div className="absolute bottom-3 left-4 right-4">
+              <h1 className="font-heading truncate text-[21px] font-bold" style={{ color: '#FFFFFF' }}>{party.title}</h1>
+            </div>
+          </div>
+          <div className="flex flex-col items-center px-6 pb-7 pt-5">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full" style={{ background: 'rgba(255,179,71,0.08)', border: '1px solid rgba(255,179,71,0.3)' }}>
+              <Ban size={26} strokeWidth={1.5} color="#FFB347" />
+            </div>
+            <h2 className="font-display mt-4 text-[24px]" style={{ color: '#FFFFFF' }}>Event Cancelled</h2>
+            <p className="mt-2 max-w-[300px] text-[13px]" style={{ color: '#A7A8B5' }}>
+              {party.cancellationReason
+                ? `The organiser cancelled this event: "${party.cancellationReason}"`
+                : 'The organiser cancelled this event.'}
+            </p>
+            <div className="mt-5 w-full rounded-2xl p-4 text-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="text-[10px] font-bold uppercase tracking-[1px]" style={{ color: '#6B6C80' }}>Refund</div>
+              <div className="mt-1 text-[15px] font-bold" style={{ color: refunded ? '#3ECF8E' : '#FFB347' }}>
+                {refunded ? `Refunded ${formatNaira(ticket.refundAmount)}` : ticket.refundStatus === 'processing' ? 'Refund in progress' : 'Refund to be issued'}
+              </div>
+            </div>
+            <div className="mt-6 flex w-full flex-col gap-2.5">
+              <Link href="/" className="btn-primary flex items-center justify-center py-[15px] text-sm font-bold">
+                Discover Events
+              </Link>
+              <Link href="/tickets" className="w-full rounded-xl py-[15px] text-sm font-semibold glass glass-hover" style={{ color: '#FFB347' }}>
+                Find my ticket
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -299,7 +348,12 @@ export default function TicketPage({ params }: { params: { id: string } }) {
             <Link href="/profile" className="btn-primary mt-2 px-7 py-3 text-sm font-semibold">
               My Tickets
             </Link>
+            <Link href="/tickets" className="mt-3 text-sm font-semibold hover:underline" style={{ color: '#FFB347' }}>
+              Find my ticket
+            </Link>
           </div>
+        ) : ticket.paymentStatus === 'confirmed' && ticket.party.cancelledAt ? (
+          <CancelledTicket ticket={ticket} />
         ) : ticket.paymentStatus === 'confirmed' ? (
           <ConfirmedTicket ticket={ticket} />
         ) : (

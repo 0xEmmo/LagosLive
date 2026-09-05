@@ -15,6 +15,10 @@ export interface User {
   phone?: string | null;
   kycStatus: 'none' | 'pending' | 'approved' | 'rejected';
   hasBankAccount: boolean;
+  hostVerificationStatus: 'unverified' | 'pending' | 'verified' | 'rejected';
+  hostVerificationReason?: string | null;
+  businessName?: string | null;
+  website?: string | null;
 }
 
 export interface Toast {
@@ -132,6 +136,10 @@ export const useLagosLiveStore = create<LagosLiveState>()(
                 phone: profile.phone,
                 kycStatus: profile.kyc_status as User['kycStatus'],
                 hasBankAccount: !!profile.bank_account_encrypted,
+                hostVerificationStatus: profile.host_verification_status as User['hostVerificationStatus'],
+                hostVerificationReason: profile.host_verification_reason,
+                businessName: profile.business_name,
+                website: profile.website,
               }
             : null,
           pushEnabled: profile?.push_enabled ?? true,

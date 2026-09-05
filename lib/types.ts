@@ -1,5 +1,5 @@
 export type Vibe = 'Club' | 'Rooftop' | 'Festival' | 'Concert' | 'House Party' | 'Lounge';
-export type PartyStatus = 'pending' | 'approved' | 'rejected' | 'suspended';
+export type PartyStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'suspended';
 export type OrderPaymentStatus = 'pending' | 'confirmed' | 'failed' | 'cancelled';
 
 export interface TicketType {
@@ -44,6 +44,7 @@ export interface Party {
   coverUrl: string | null;
   cancelledAt: string | null;
   cancellationReason: string | null;
+  reviewReason: string | null;
   reviewCount: number;
   avgRating: number;
 }

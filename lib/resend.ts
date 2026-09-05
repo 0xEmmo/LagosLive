@@ -393,6 +393,73 @@ export async function sendEventCancellationEmail(data: EventCancellationEmailDat
   });
 }
 
+const RESEND_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://lagos-live.vercel.app';
+
+export interface HostVerificationEmailData {
+  to: string;
+  hostName: string;
+  decision: 'approved' | 'rejected' | 'suspended';
+  reason?: string;
+}
+
+const VERIFICATION_INTRO: Record<HostVerificationEmailData['decision'], string> = {
+  approved: 'Great news — your host account is now verified.',
+  rejected: `We couldn't verify your host account yet.`,
+  suspended: 'Your host account has been suspended.',
+};
+
+const VERIFICATION_COPY: Record<HostVerificationEmailData['decision'], string> = {
+  approved:
+    'You can now list events on Lagos Live and request payouts. Verified hosts get the public "Verified Host" badge next to their events so buyers know they are dealing with a real operator.',
+  rejected:
+    'An admin reviewed your details. Update your host profile with accurate business information and request verification again.',
+  suspended:
+    'You can no longer list new events or request payouts while suspended. If you believe this is a mistake, reply to this email or contact support@lagoslive.ng.',
+};
+
+// Sent to hosts when an admin resolves their verification request. Best-effort.
+export async function sendHostVerificationEmail(data: HostVerificationEmailData): Promise<boolean> {
+  const reasonBlock = data.reason
+    ? `<div style="margin-top:16px;background:#0B0B10;border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px;">
+         <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:#6B6C80;text-transform:uppercase;margin-bottom:6px;">Note from the review team</div>
+         <div style="font-size:14px;color:#FFFFFF;">${escapeHtml(data.reason)}</div>
+       </div>`
+    : '';
+  const cta = data.decision === 'approved'
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="border-collapse:collapse;margin-top:22px;">
+         <tr><td align="center" style="border-radius:11px;background:linear-gradient(135deg,#FF9B3E,#FF6A00);">
+           <a href="${RESEND_SITE_URL}/host" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:14px 26px;border-radius:11px;color:#FFFFFF;font-size:14px;font-weight:800;text-decoration:none;">Go to your dashboard</a>
+         </td></tr>
+       </table>`
+    : `<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="border-collapse:collapse;margin-top:22px;">
+         <tr><td align="center" style="border-radius:11px;background:rgba(255,255,255,0.08);">
+           <a href="${RESEND_SITE_URL}/host/verification" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:14px 26px;border-radius:11px;color:#FFFFFF;font-size:14px;font-weight:800;text-decoration:none;">Update details</a>
+         </td></tr>
+       </table>`;
+  const html = `
+    <div style="background-color:#0B0B10;margin:0;padding:32px 12px;font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+      <div style="max-width:520px;margin:0 auto;background-color:#12121C;border-radius:24px;overflow:hidden;border:1px solid #26263A;">
+        <div style="padding:34px 30px 24px 30px;background:linear-gradient(135deg,#2A1606 0%,#12121C 60%);border-bottom:1px solid rgba(255,154,62,0.22);">
+          <div style="font-size:11px;font-weight:800;letter-spacing:3px;color:#FF9B3E;text-transform:uppercase;">Lagos&nbsp;Live</div>
+          <div style="font-size:26px;font-weight:900;color:#FFFFFF;margin-top:12px;line-height:32px;">Host Verification Update</div>
+        </div>
+        <div style="padding:26px 30px 30px 30px;">
+          <p style="font-size:14px;line-height:22px;color:#D5D6E0;margin:0 0 8px;">Hi ${escapeHtml(data.hostName)},</p>
+          <p style="font-size:14px;line-height:22px;color:#D5D6E0;margin:0;">${VERIFICATION_INTRO[data.decision]}</p>
+          <p style="font-size:14px;line-height:22px;color:#A7A8B5;margin:14px 0 0;">${VERIFICATION_COPY[data.decision]}</p>
+          ${reasonBlock}
+          ${cta}
+          <p style="font-size:12px;color:#6B6C80;margin:24px 0 0;line-height:18px;">— Lagos Live Team</p>
+        </div>
+      </div>
+    </div>`;
+  return sendHtmlEmail({
+    to: data.to,
+    subject: `Lagos Live — Host verification ${data.decision === 'approved' ? 'approved' : 'update'}`,
+    html,
+  });
+}
+
 export interface ReviewRequestEmailData {
   to: string;
   guestName: string;

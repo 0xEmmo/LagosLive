@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, CalendarPlus, ShieldCheck, CalendarDays, Clock, Ticket, Wallet, Settings, ListOrdered, Activity, AlertTriangle, RefreshCw, type LucideIcon } from 'lucide-react';
+import { Plus, CalendarPlus, ShieldCheck, CalendarDays, Clock, Ticket, Wallet, Settings, ListOrdered, Activity, AlertTriangle, RefreshCw, BadgeCheck, type LucideIcon } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import PartyPhoto from '@/components/PartyPhoto';
 import HostBottomNav from '@/components/HostBottomNav';
@@ -16,6 +16,7 @@ import { useLagosLiveStore } from '@/lib/store';
 import type { Party, PartyStatus } from '@/lib/types';
 
 const STATUS_STYLE: Record<PartyStatus, { label: string; bg: string; color: string }> = {
+  draft: { label: 'Draft', bg: 'rgba(255,255,255,0.08)', color: '#D5D6E0' },
   pending: { label: 'Pending Review', bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
   approved: { label: 'Live', bg: 'rgba(0,245,212,0.08)', color: '#00F5D4' },
   rejected: { label: 'Rejected', bg: 'rgba(255,138,0,0.08)', color: '#FF8A00' },
@@ -193,6 +194,32 @@ export default function HostDashboardPage() {
       </div>
 
       <div className="flex flex-col gap-4 p-5">
+        {/* Host verification callout — Phase 3 trust */}
+        {user.role === 'organizer' && user.hostVerificationStatus !== 'verified' && (
+          <Link
+            href="/host/verification"
+            className="flex items-center gap-3 rounded-2xl p-4 transition-all active:scale-[0.99]"
+            style={{ background: user.hostVerificationStatus === 'rejected' ? 'rgba(255,138,0,0.07)' : 'rgba(255,214,0,0.05)', border: `1px solid ${user.hostVerificationStatus === 'rejected' ? 'rgba(255,138,0,0.28)' : 'rgba(255,214,0,0.2)'}` }}
+          >
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl" style={{ background: user.hostVerificationStatus === 'rejected' ? 'rgba(255,138,0,0.12)' : 'rgba(255,214,0,0.1)' }}>
+              <BadgeCheck size={18} strokeWidth={2} color={user.hostVerificationStatus === 'rejected' ? '#FF8A00' : '#FFD600'} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[13px] font-bold" style={{ color: '#FFFFFF' }}>
+                {user.hostVerificationStatus === 'pending' ? 'Verification in review' : user.hostVerificationStatus === 'rejected' ? 'Host verification rejected' : 'Verify your host account'}
+              </div>
+              <div className="text-[11.5px] leading-[1.5]" style={{ color: '#A7A8B5' }}>
+                {user.hostVerificationStatus === 'pending'
+                  ? 'We’re reviewing your details. Verified hosts can list freely and request payouts.'
+                  : user.hostVerificationStatus === 'rejected'
+                  ? 'Update your details and re-apply to unlock payouts and the verified badge.'
+                  : 'Get the verified badge and unlock payouts. Takes under a minute.'}
+              </div>
+            </div>
+            <span className="flex-shrink-0 text-[12px] font-bold" style={{ color: user.hostVerificationStatus === 'rejected' ? '#FF8A00' : '#FFD600' }}>Open →</span>
+          </Link>
+        )}
+
         {loading ? (
           <>
             <StatSkeleton />

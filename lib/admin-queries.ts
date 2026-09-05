@@ -598,16 +598,15 @@ export async function requestPayout(
   platformFee: number,
   bankLast4: string | null
 ): Promise<void> {
-  const { error } = await supabase.from('payouts').insert({
-    organizer_id: organizerId,
-    period_start: periodStart,
-    period_end: periodEnd,
-    revenue,
-    platform_fee: platformFee,
-    amount,
-    bank_last4: bankLast4,
+  // Routed through the server endpoint so verification/role/amount are
+  // enforced outside of RLS and the request is audit-logged.
+  const res = await fetch('/api/payouts/request', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount, periodStart, periodEnd, revenue, platformFee, bankLast4 }),
   });
-  if (error) throw error;
+  const body = await res.json().catch(() => ({ error: 'Something went wrong. Please try again.' }));
+  if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
 }
 
 // ---- Analytics time range ---------------------------------------------------

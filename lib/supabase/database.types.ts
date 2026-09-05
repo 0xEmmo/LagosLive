@@ -173,6 +173,7 @@ export type Database = {
           cancellation_reason: string | null
           avg_rating: number
           review_count: number
+          review_reason: string | null
           created_at: string
           created_by: string | null
           cover_url: string | null
@@ -214,6 +215,7 @@ export type Database = {
           cancellation_reason?: string | null
           avg_rating?: number
           review_count?: number
+          review_reason?: string | null
            created_at?: string
           created_by?: string | null
           cover_url?: string | null
@@ -255,6 +257,7 @@ export type Database = {
           cancellation_reason?: string | null
           avg_rating?: number
           review_count?: number
+          review_reason?: string | null
           created_at?: string
           created_by?: string | null
           cover_url?: string | null
@@ -293,8 +296,14 @@ export type Database = {
           account_status: string
           bank_account_encrypted: string | null
           bio: string | null
+          business_name: string | null
           created_at: string
           email: string
+          host_verification_reason: string | null
+          host_verification_requested_at: string | null
+          host_verification_reviewed_at: string | null
+          host_verification_reviewed_by: string | null
+          host_verification_status: string
           id: string
           is_admin: boolean
           kyc_status: string
@@ -304,13 +313,20 @@ export type Database = {
           phone: string | null
           push_enabled: boolean
           role: string
+          website: string | null
         }
         Insert: {
           account_status?: string
           bank_account_encrypted?: string | null
           bio?: string | null
+          business_name?: string | null
           created_at?: string
           email: string
+          host_verification_reason?: string | null
+          host_verification_requested_at?: string | null
+          host_verification_reviewed_at?: string | null
+          host_verification_reviewed_by?: string | null
+          host_verification_status?: string
           id: string
           is_admin?: boolean
           kyc_status?: string
@@ -320,13 +336,20 @@ export type Database = {
           phone?: string | null
           push_enabled?: boolean
           role?: string
+          website?: string | null
         }
         Update: {
           account_status?: string
           bank_account_encrypted?: string | null
           bio?: string | null
+          business_name?: string | null
           created_at?: string
           email?: string
+          host_verification_reason?: string | null
+          host_verification_requested_at?: string | null
+          host_verification_reviewed_at?: string | null
+          host_verification_reviewed_by?: string | null
+          host_verification_status?: string
           id?: string
           is_admin?: boolean
           kyc_status?: string
@@ -336,6 +359,7 @@ export type Database = {
           phone?: string | null
           push_enabled?: boolean
           role?: string
+          website?: string | null
         }
         Relationships: []
       }
@@ -835,6 +859,20 @@ export type Database = {
           v_roles: string[]
         }
         Returns: boolean
+      }
+      party_host_verified: {
+        Args: {
+          p_party_id: number
+        }
+        Returns: boolean
+      }
+      set_event_review_status: {
+        Args: {
+          p_party_id: number
+          p_status: string
+          p_reason?: string
+        }
+        Returns: undefined
       }
       settle_order_payment: {
         Args: {

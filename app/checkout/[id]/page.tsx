@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import { ArrowLeft, CheckCircle2, Loader2, AlertTriangle, X, ShieldCheck } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { partyPhoto } from '@/lib/data';
@@ -190,6 +191,28 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   if (!party) {
     if (loading) return <CheckoutSkeleton />;
     notFound();
+  }
+
+  // Cancelled events can never sell tickets — even for someone who already
+  // opened checkout. The API enforces this too; this guard keeps the client
+  // from even presenting a payment form.
+  if (party.cancelledAt) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center px-6 text-center animate-fade-in">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: 'rgba(255,90,46,0.08)', border: '1px solid rgba(255,90,46,0.25)' }}>
+          <X size={28} color="#FF5A2E" strokeWidth={2} />
+        </div>
+        <h1 className="font-display mt-5 text-[28px] tracking-[0.5px]" style={{ color: '#FFFFFF' }}>Event Cancelled</h1>
+        <p className="mt-2 max-w-[300px] text-sm" style={{ color: '#A7A8B5' }}>
+          {party.cancellationReason
+            ? `This event was cancelled: "${party.cancellationReason}"`
+            : 'This event has been cancelled.'}
+        </p>
+        <Link href="/" className="btn-primary mt-6 px-7 py-3 text-sm font-semibold">
+          Discover Events
+        </Link>
+      </div>
+    );
   }
 
   const unitPrice = selected.price;

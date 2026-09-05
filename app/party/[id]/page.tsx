@@ -22,6 +22,7 @@ import {
   RefreshCw,
   Star,
   PenLine,
+  ShieldCheck,
 } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import PartyCard from '@/components/PartyCard';
@@ -33,7 +34,7 @@ import { partyPhoto, partyDetailPhoto, VCB, VCT, distanceColor } from '@/lib/dat
 import { useParty } from '@/lib/hooks/useParty';
 import { useParties } from '@/lib/hooks/useParties';
 import { useLagosLiveStore } from '@/lib/store';
-import { fetchEventReviews } from '@/lib/queries';
+import { fetchEventReviews, fetchPartyHostVerified } from '@/lib/queries';
 import type { Review } from '@/lib/types';
 
 export default function PartyDetailPage({ params }: { params: { id: string } }) {
@@ -42,6 +43,18 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [hostVerified, setHostVerified] = useState(false);
+
+  useEffect(() => {
+    if (!party || party.createdBy === null) return;
+    let cancelled = false;
+    fetchPartyHostVerified(party.id)
+      .then((ok) => !cancelled && setHostVerified(ok))
+      .catch(() => !cancelled && setHostVerified(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [party]);
 
   useEffect(() => {
     let cancelled = false;
@@ -301,13 +314,23 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
           {[
             { label: 'Age', value: party.ageRestriction },
             { label: 'Dress Code', value: party.dressCode },
-            { label: 'Organizer', value: party.organizer },
           ].map((item) => (
             <div key={item.label} className="glass rounded-xl p-3.5" style={{ background: 'rgba(255,255,255,0.03)' }}>
               <div className="mb-[5px] text-[10px] uppercase tracking-[0.7px]" style={{ color: '#6B6C80' }}>{item.label}</div>
               <div className="text-sm font-semibold" style={{ color: '#FFFFFF' }}>{item.value}</div>
             </div>
           ))}
+          <div className="glass rounded-xl p-3.5" style={{ background: 'rgba(255,255,255,0.03)' }}>
+            <div className="mb-[5px] text-[10px] uppercase tracking-[0.7px]" style={{ color: '#6B6C80' }}>Organizer</div>
+            <div className="flex items-center gap-1.5">
+              <div className="text-sm font-semibold" style={{ color: '#FFFFFF' }}>{party.organizer}</div>
+              {hostVerified && (
+                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.6px]" style={{ background: 'rgba(0,245,212,0.1)', border: '1px solid rgba(0,245,212,0.3)', color: '#00F5D4' }}>
+                  <ShieldCheck size={10} strokeWidth={2.5} /> Verified
+                </span>
+              )}
+            </div>
+          </div>
           <div className="glass rounded-xl p-3.5" style={{ background: 'rgba(255,255,255,0.03)' }}>
             <div className="mb-[5px] text-[10px] uppercase tracking-[0.7px]" style={{ color: '#6B6C80' }}>Distance</div>
             <div className="text-sm font-semibold" style={{ color: distanceColor(party.distance) }}>{party.distance} km away</div>

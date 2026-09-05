@@ -6,20 +6,21 @@ import { Eye, Pencil, Check, X, Ban, RotateCcw, Trash2, Flag, Search, Download }
 import AdminShell from '@/components/admin-shell';
 import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, useRoleGuard, Badge } from '@/components/ui/dashboard-ui';
 import { fetchAdminEvents, type AdminEventJoined, toCsv, downloadCsv } from '@/lib/admin-queries';
-import { updatePartyStatus, deleteParty } from '@/lib/queries';
+import { setEventReviewStatus, deleteParty } from '@/lib/queries';
 import { useLagosLiveStore } from '@/lib/store';
 import { formatNaira } from '@/lib/filters';
 
 const PAGE_SIZE = 50;
 
 const STATUS_STYLE: Record<string, { label: string; bg: string; color: string }> = {
+  draft: { label: 'Draft', bg: 'rgba(255,255,255,0.08)', color: '#D5D6E0' },
   pending: { label: 'Pending', bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
   approved: { label: 'Live', bg: 'rgba(0,245,212,0.08)', color: '#00F5D4' },
   rejected: { label: 'Rejected', bg: 'rgba(255,138,0,0.08)', color: '#FF8A00' },
   suspended: { label: 'Suspended', bg: 'rgba(255,138,0,0.08)', color: '#FF8A00' },
 };
 
-type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected' | 'suspended';
+type StatusFilter = 'all' | 'draft' | 'pending' | 'approved' | 'rejected' | 'suspended';
 
 export default function AdminEventsPage() {
   const { ready } = useRoleGuard('admin');
@@ -77,11 +78,18 @@ export default function AdminEventsPage() {
   };
 
   const setStatusOf = async (id: number, next: string, title: string) => {
-    if ((next === 'rejected' || next === 'suspended') && !confirm(`${next === 'suspended' ? 'Suspend' : 'Reject'} "${title}"? It will be hidden from the public.`)) return;
+    let reason: string | undefined;
+    if (next === 'rejected' || next === 'suspended') {
+      reason = prompt(`${next === 'suspended' ? 'Suspend' : 'Reject'} "${title}" — add a reason the host will see:`) ?? '';
+      if (!reason.trim()) {
+        showToast('Reason required', `Add a reason to ${next} an event.`);
+        return;
+      }
+    }
     const prev = events;
     setEvents((e) => e.map((x) => (x.id === id ? { ...x, status: next } : x)));
     try {
-      await updatePartyStatus(id, next as never);
+      await setEventReviewStatus(id, next as never, reason);
       showToast(next === 'approved' ? 'Event approved' : next === 'rejected' ? 'Event rejected' : next === 'suspended' ? 'Event suspended' : 'Event reinstated', `"${title}" updated.`);
     } catch {
       setEvents(prev);
@@ -133,7 +141,7 @@ export default function AdminEventsPage() {
             />
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {(['all', 'pending', 'approved', 'rejected', 'suspended'] as StatusFilter[]).map((f) => {
+            {(['all', 'draft', 'pending', 'approved', 'rejected', 'suspended'] as StatusFilter[]).map((f) => {
               const active = filter === f;
               return (
                 <button
@@ -191,8 +199,9 @@ export default function AdminEventsPage() {
                       <ActionLink href={`/host/${ev.id}/edit`} label="Edit" icon={<Pencil size={12} />} />
                       {ev.status === 'approved' && <ActionBtn label="Suspend" icon={<Ban size={12} />} color="#FF8A00" onClick={() => setStatusOf(ev.id, 'suspended', ev.title)} />}
                       {(ev.status === 'suspended' || ev.status === 'rejected') && <ActionBtn label="Reinstate" icon={<RotateCcw size={12} />} color="#00F5D4" onClick={() => setStatusOf(ev.id, 'approved', ev.title)} />}
-                      {ev.status === 'pending' && (
+                      {(ev.status === 'pending' || ev.status === 'draft') && (
                         <>
+                          <ActionBtn label="Submit" icon={<Check size={12} />} color="#FFD600" onClick={() => setStatusOf(ev.id, 'pending', ev.title)} />
                           <ActionBtn label="Approve" icon={<Check size={12} />} color="#00F5D4" onClick={() => setStatusOf(ev.id, 'approved', ev.title)} />
                           <ActionBtn label="Reject" icon={<X size={12} />} color="#FF8A00" onClick={() => setStatusOf(ev.id, 'rejected', ev.title)} />
                         </>
@@ -239,7 +248,10 @@ export default function AdminEventsPage() {
                             <Link href={`/admin/events/${ev.id}`} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#A7A8B5' }}>View</Link>
                             <Link href={`/host/${ev.id}/edit`} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#A7A8B5' }}>Edit</Link>
                             {ev.status === 'approved' && <button onClick={() => setStatusOf(ev.id, 'suspended', ev.title)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#FF8A00' }}>Suspend</button>}
-                            {ev.status === 'pending' && <button onClick={() => setStatusOf(ev.id, 'approved', ev.title)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#00F5D4' }}>Approve</button>}
+                            {(ev.status === 'pending' || ev.status === 'draft') && <>
+                              <button onClick={() => setStatusOf(ev.id, 'approved', ev.title)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#00F5D4' }}>Approve</button>
+                              {ev.status === 'pending' && <button onClick={() => setStatusOf(ev.id, 'rejected', ev.title)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#FF8A00' }}>Reject</button>}
+                            </>}
                             <button onClick={() => remove(ev)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#FF2D95' }}>Delete</button>
                           </div>
                         </td>

@@ -52,6 +52,7 @@ function toParty(row: PartyRow, userLocation?: { lat: number; lng: number } | nu
     coverUrl: row.cover_url ?? null,
     cancelledAt: row.cancelled_at ?? null,
     cancellationReason: row.cancellation_reason ?? null,
+    reviewReason: row.review_reason ?? null,
     reviewCount: row.review_count ?? 0,
     avgRating: Number(row.avg_rating ?? 0),
   };
@@ -207,7 +208,7 @@ function toRow(input: PartyFormInput, createdBy: string): PartyInsert {
 }
 
 export async function createParty(input: PartyFormInput, createdBy: string): Promise<{ party: Party; promoted: boolean }> {
-  const { data, error } = await supabase.from('parties').insert(toRow(input, createdBy)).select().single();
+  const { data, error } = await supabase.from('parties').insert({ ...toRow(input, createdBy), status: 'draft' }).select().single();
   if (error) throw error;
   const party = toParty(data);
   await ensureGeneralTicketType(party.id, input.feeNum, input.capacity);
@@ -400,6 +401,34 @@ export async function deleteParty(id: number): Promise<void> {
 export async function updatePartyStatus(id: number, status: PartyStatus): Promise<void> {
   const { error } = await supabase.from('parties').update({ status }).eq('id', id);
   if (error) throw error;
+}
+
+// The one audited path for event status changes (Phase 3 trust). Authorized
+// server-side in set_event_review_status(): hosts may submit their own
+// draft/rejected event or withdraw their own pending one; admins may
+// approve/reject/suspend (reject/suspend take a reason the host can see).
+export async function setEventReviewStatus(id: number, status: PartyStatus, reason?: string): Promise<void> {
+  const { error } = await (supabase.rpc as any)('set_event_review_status', {
+    p_party_id: id,
+    p_status: status,
+    ...(reason ? { p_reason: reason } : {}),
+  });
+  if (error) throw error;
+}
+
+export function submitEventForReview(id: number): Promise<void> {
+  return setEventReviewStatus(id, 'pending');
+}
+
+export function withdrawEvent(id: number): Promise<void> {
+  return setEventReviewStatus(id, 'draft');
+}
+
+// Public "Verified Host" signal (Phase 3). Server side, reveals a boolean only.
+export async function fetchPartyHostVerified(id: number): Promise<boolean> {
+  const { data, error } = await supabase.rpc('party_host_verified', { p_party_id: id });
+  if (error) throw error;
+  return !!data;
 }
 
 export interface OrganizerPartyStats {

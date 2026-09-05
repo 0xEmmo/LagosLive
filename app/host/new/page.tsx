@@ -38,7 +38,7 @@ export default function NewEventPage() {
       setWasPromoted(true);
       showToast('Welcome to Lagos Live Hosts!', "You're now an organizer. Create and manage events from your host dashboard.");
     } else {
-      showToast('Event submitted', 'Your event is pending admin review.');
+      showToast('Draft created', 'Submit your event for review when it’s ready.');
     }
   };
 
@@ -76,8 +76,8 @@ export default function NewEventPage() {
             </div>
           )}
           <p className="mb-6 max-w-[320px] text-sm leading-[1.7]" style={{ color: '#A7A8B5' }}>
-            <strong style={{ color: '#FFFFFF' }}>{submittedTitle}</strong> is now pending review. It&apos;ll go live on
-            Lagos Live as soon as an admin approves it.
+            <strong style={{ color: '#FFFFFF' }}>{submittedTitle}</strong> is saved as a draft. Submit it for review when
+            you&apos;re ready — it goes live as soon as an admin approves it.
           </p>
           <div
             className="mb-7 w-full max-w-[340px] rounded-2xl p-4 text-left"
@@ -88,13 +88,13 @@ export default function NewEventPage() {
             </div>
             <ol className="flex flex-col gap-2 text-[13px]" style={{ color: '#A7A8B5' }}>
               <li className="flex gap-2">
-                <span style={{ color: '#FFD600' }}>1.</span> An admin reviews your listing.
+                <span style={{ color: '#FFD600' }}>1.</span> Finish your listing — it stays private as a draft.
               </li>
               <li className="flex gap-2">
-                <span style={{ color: '#FFD600' }}>2.</span> Once approved, it appears on the main feed and search.
+                <span style={{ color: '#FFD600' }}>2.</span> Submit it for review from your event page.
               </li>
               <li className="flex gap-2">
-                <span style={{ color: '#FFD600' }}>3.</span> Track tickets &amp; revenue from Your Events.
+                <span style={{ color: '#FFD600' }}>3.</span> Once approved, it appears on the main feed and search.
               </li>
             </ol>
           </div>

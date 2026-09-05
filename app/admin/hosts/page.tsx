@@ -6,7 +6,7 @@ import { Ban, RotateCcw, Search, Eye } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
 import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, Badge, useRoleGuard } from '@/components/ui/dashboard-ui';
 import { fetchAllProfiles, fetchPayouts, updateProfileStatus, type HostProfile, type PayoutRow } from '@/lib/admin-queries';
-import { ROLE_LABEL, ACCOUNT_STATUS_LABEL, ACCOUNT_STATUS_COLOR, type Role, type AccountStatus } from '@/lib/authz';
+import { ROLE_LABEL, ACCOUNT_STATUS_LABEL, ACCOUNT_STATUS_COLOR, HOST_VERIFICATION_LABEL, HOST_VERIFICATION_COLOR, type Role, type AccountStatus, type HostVerification } from '@/lib/authz';
 import { useLagosLiveStore } from '@/lib/store';
 import { toCsv, downloadCsv } from '@/lib/admin-queries';
 
@@ -148,9 +148,11 @@ export default function AdminHostsPage() {
         ) : hosts.length === 0 ? (
           <EmptyBlock title="No hosts" subtitle="No hosts match your search." />
         ) : (
-          <TableShell head={['Name', 'Email', 'Role', 'Status', 'Joined', 'Paid Out', '']}>
+          <TableShell head={['Name', 'Email', 'Role', 'Status', 'Verification', 'Joined', 'Paid Out', '']}>
             {hosts.map((p) => {
               const st = ACCOUNT_STATUS_COLOR[(p.account_status as AccountStatus) ?? 'active'] ?? ACCOUNT_STATUS_COLOR.active;
+              const v = p.host_verification_status as HostVerification ?? 'unverified';
+              const vs = HOST_VERIFICATION_COLOR[v];
               const paid = hostPayoutMap[p.id] ?? 0;
               return (
                 <tr key={p.id} className="transition-colors hover:bg-white/[0.02]">
@@ -163,6 +165,9 @@ export default function AdminHostsPage() {
                       bg={st.bg}
                       color={st.color}
                     />
+                  </Cell>
+                  <Cell>
+                    <Badge label={HOST_VERIFICATION_LABEL[v]} bg={vs.bg} color={vs.color} />
                   </Cell>
                   <Cell>{new Date(p.created_at).toLocaleDateString()}</Cell>
                   <Cell>{paid > 0 ? `₦${(paid / 100).toLocaleString()}` : '—'}</Cell>

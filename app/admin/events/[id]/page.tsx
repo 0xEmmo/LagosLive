@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Check, X, Ban, RotateCcw, Flag, Download, Trash2, MapPin, Clock, Ticket } from 'lucide-react';
+import { ArrowLeft, Check, X, Ban, RotateCcw, Flag, Download, Trash2, MapPin, Clock, Ticket, QrCode } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
 import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, useRoleGuard, Badge, StatCard } from '@/components/ui/dashboard-ui';
 import { fetchAdminEvent, fetchEventOrders, flagEvent, updateEventNotes, fetchAdminNotes, createAdminNote, deleteAdminNote, logAudit, type AdminEventJoined, type AdminOrderJoined, type NoteRow, toCsv, downloadCsv } from '@/lib/admin-queries';
@@ -162,6 +162,15 @@ export default function AdminEventDetailPage() {
               subtitle={`${event.date} · ${event.time} · ${event.location}`}
               right={
                 <div className="flex flex-wrap gap-2">
+                  {event.status === 'approved' && (
+                    <Link
+                      href={`/check-in/${event.id}`}
+                      className="flex items-center gap-1.5 rounded-[9px] border px-2.5 py-1.5 text-[11.5px] font-semibold"
+                      style={{ background: 'linear-gradient(135deg, #FF9B3E 0%, #FF6A00 100%)', borderColor: 'transparent', color: '#FFFFFF' }}
+                    >
+                      <QrCode size={13} /> Check In
+                    </Link>
+                  )}
                   {event.status === 'approved' && <ActionBtn label="Suspend" icon={<Ban size={13} />} color="#FF8A00" onClick={() => setStatusOf('suspended')} />}
                   {(event.status === 'suspended' || event.status === 'rejected') && <ActionBtn label="Reinstate" icon={<RotateCcw size={13} />} color="#00F5D4" onClick={() => setStatusOf('approved')} />}
                   {event.status === 'pending' && (

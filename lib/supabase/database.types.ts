@@ -19,6 +19,8 @@ export type Database = {
           admin_notes: string | null
           check_in_status: string
           checked_in_at: string | null
+          checked_in_by: string | null
+          checked_in_gate: string | null
           cancellation_reason: string | null
           created_at: string
           customer_email: string | null
@@ -47,6 +49,8 @@ export type Database = {
           admin_notes?: string | null
           check_in_status?: string
           checked_in_at?: string | null
+          checked_in_by?: string | null
+          checked_in_gate?: string | null
           cancellation_reason?: string | null
           created_at?: string
           customer_email?: string | null
@@ -74,6 +78,8 @@ export type Database = {
           admin_notes?: string | null
           check_in_status?: string
           checked_in_at?: string | null
+          checked_in_by?: string | null
+          checked_in_gate?: string | null
           cancellation_reason?: string | null
           created_at?: string
           customer_email?: string | null
@@ -836,6 +842,14 @@ export type Database = {
           p_payment_status: string
         }
         Returns: undefined
+      }
+      staff_check_in: {
+        Args: {
+          p_party_id: number
+          p_order_ref: string
+          p_gate?: string
+        }
+        Returns: Json
       }
       write_audit_log: {
         Args: {

@@ -206,11 +206,11 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
             </Link>
           )}
           <Link
-            href={`/host/${party.id}/check-in`}
-            className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-semibold"
-            style={{ background: 'rgba(0,245,212,0.12)', border: '1px solid rgba(0,245,212,0.3)', color: '#00F5D4' }}
+            href={`/check-in/${party.id}`}
+            className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-bold"
+            style={{ background: 'linear-gradient(135deg, #FF9B3E 0%, #FF6A00 100%)', color: '#FFFFFF', boxShadow: '0 8px 24px rgba(255,106,0,0.28)' }}
           >
-            <Ticket size={13} strokeWidth={2} />
+            <QrCode size={13} strokeWidth={2} />
             Check-in
           </Link>
         </div>
@@ -230,6 +230,29 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Run the door — Phase 2 check-in */}
+        {party.status === 'approved' && !party.cancelledAt && (
+          <div className="rounded-2xl p-4" style={{ background: 'linear-gradient(135deg, rgba(255,107,0,0.14) 0%, rgba(255,179,71,0.06) 100%)', border: '1px solid rgba(255,107,0,0.35)' }}>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="text-[12px] font-bold uppercase tracking-[0.5px]" style={{ color: '#FF9B3E' }}>
+                Run the door
+              </div>
+              <QrCode size={14} strokeWidth={2} color="#FF9B3E" />
+            </div>
+            <Link
+              href={`/check-in/${party.id}`}
+              className="flex w-full items-center justify-center gap-2 rounded-[12px] py-4 text-[14px] font-bold uppercase tracking-[1px] transition-transform active:scale-[0.98]"
+              style={{ background: 'linear-gradient(135deg, #FF9B3E 0%, #FF6A00 100%)', color: '#FFFFFF', boxShadow: '0 12px 32px rgba(255,106,0,0.28)' }}
+            >
+              <QrCode size={16} strokeWidth={2.2} />
+              Check in guests
+            </Link>
+            <Link href={`/host/${party.id}/check-in`} className="mt-2.5 block text-center text-[11px] font-semibold underline underline-offset-2" style={{ color: '#C9A97B' }}>
+              Manual ticket list instead
+            </Link>
           </div>
         )}
 

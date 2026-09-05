@@ -554,3 +554,86 @@ export async function fetchOrganizerEventAnalytics(partyId: number): Promise<Org
 export function partyShareUrl(partyId: number): string {
   return `https://lagoslive.ng/party/${partyId}`;
 }
+
+// ---------------------------------------------------------------------------
+// Phase 2 — check-in (scanner + door operations).
+// ---------------------------------------------------------------------------
+
+// Events available for the door: approved + not cancelled, from ~12h before the
+// event (a Friday-night event that started an hour ago must still be found) to
+// whenever it ends. Staff (finance/admin/super_admin) see all approved events,
+// organisers only their own — matching the RLS that lets them run the gate.
+const CHECK_IN_EVENT_WINDOW_MS = 12 * 60 * 60 * 1000;
+
+export async function fetchCheckInEvents(userId: string, role: string): Promise<Party[]> {
+  const staff = role === 'finance' || role === 'admin' || role === 'super_admin';
+  let query = supabase
+    .from('parties')
+    .select('*')
+    .eq('status', 'approved')
+    .is('cancelled_at', null)
+    .gte('starts_at', new Date(Date.now() - CHECK_IN_EVENT_WINDOW_MS).toISOString())
+    .order('starts_at', { ascending: true });
+  if (!staff) query = query.eq('created_by', userId);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []).map((row) => toParty(row));
+}
+
+export interface CheckInStats {
+  sold: number; // tickets admitted-to-miss = sum of quantities on confirmed orders
+  checkedIn: number; // candidates checked in (quantity of orders marked checked_in)
+  confirmedOrders: number;
+}
+
+// Live door numbers for the scanner. RLS scopes this to the caller's own event
+// (organiser) or all orders (finance/admin/super_admin) — the same guarantee the
+// check-in RPC enforces atomically per scan.
+export async function fetchCheckInStats(partyId: number): Promise<CheckInStats> {
+  const { data, error } = await supabase
+    .from('orders')
+    .select('quantity, check_in_status')
+    .eq('party_id', partyId)
+    .eq('payment_status', 'confirmed');
+  if (error) throw error;
+  let sold = 0;
+  let checkedIn = 0;
+  for (const row of data ?? []) {
+    sold += row.quantity;
+    if (row.check_in_status === 'checked_in') checkedIn += row.quantity;
+  }
+  return { sold, checkedIn, confirmedOrders: (data ?? []).length };
+}
+
+// Most recent check-ins for the host's "CHECK-IN ACTIVITY" strip. Order-level,
+// so a scan that checked in N tickets appears once with its quantity.
+export async function fetchCheckInActivity(partyId: number, limit = 25): Promise<CheckInActivityItem[]> {
+  const { data, error } = await supabase
+    .from('orders')
+    .select('id, order_ref, quantity, customer_email, checked_in_at, checked_in_gate, ticket_types(name)')
+    .eq('party_id', partyId)
+    .eq('payment_status', 'confirmed')
+    .eq('check_in_status', 'checked_in')
+    .order('checked_in_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    orderRef: row.order_ref,
+    quantity: row.quantity,
+    guestEmail: row.customer_email,
+    checkedInAt: row.checked_in_at,
+    gate: row.checked_in_gate,
+    ticketType: Array.isArray(row.ticket_types) ? row.ticket_types[0]?.name ?? null : row.ticket_types?.name ?? null,
+  }));
+}
+
+export interface CheckInActivityItem {
+  id: string;
+  orderRef: string;
+  quantity: number;
+  guestEmail: string | null;
+  checkedInAt: string | null;
+  gate: string | null;
+  ticketType: string | null;
+}

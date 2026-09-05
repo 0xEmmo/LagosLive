@@ -120,6 +120,79 @@ function settleStart(): Promise<void> {
   });
 }
 
+// A camera that "opens" but never delivers sensor data renders a decodable but
+// pure-black frame (extra/virtual rear lenses and some multi-cam groups). Distil
+// the decoded picture and treat all-black output as "this lens is not usable".
+function frameIsBlack(video: HTMLVideoElement): boolean {
+  try {
+    const size = 48;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return false;
+    ctx.drawImage(video, 0, 0, size, size);
+    const { data } = ctx.getImageData(0, 0, size, size);
+    let sum = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      sum += data[i] + data[i + 1] + data[i + 2];
+    }
+    return sum / (size * size * 3) < 22;
+  } catch {
+    return false;
+  }
+}
+
+// Open a candidate camera and verify it really delivers live, non-black frames
+// before trusting it as the QR lens. Used when the device enumerates several
+// rear options that share a label, so we never pick the blank one by mistake.
+async function probeCameraLive(deviceId: string): Promise<boolean> {
+  let stream: MediaStream | null = null;
+  let video: HTMLVideoElement | null = null;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { deviceId: { exact: deviceId }, facingMode: 'environment' },
+    });
+    const track = stream.getVideoTracks()[0];
+    if (!track) {
+      stream.getTracks().forEach((t) => t.stop());
+      return false;
+    }
+    const v = document.createElement('video');
+    video = v;
+    v.setAttribute('playsinline', 'true');
+    v.muted = true;
+    v.srcObject = stream;
+    v.style.position = 'absolute';
+    v.style.left = '-10000px';
+    v.style.width = '2px';
+    v.style.height = '2px';
+    document.body.appendChild(v);
+    await v.play().catch(() => {});
+
+    return await new Promise<boolean>((resolve) => {
+      const timeout = window.setTimeout(() => resolve(false), 1200);
+      const check = () => {
+        if (v.readyState >= 2 && (v.videoWidth || 0) > 0) {
+          requestAnimationFrame(() => {
+            window.clearTimeout(timeout);
+            resolve(!frameIsBlack(v));
+          });
+        } else {
+          requestAnimationFrame(check);
+        }
+      };
+      check();
+    });
+  } catch {
+    return false;
+  } finally {
+    if (stream) stream.getTracks().forEach((t) => t.stop());
+    if (video) video.remove();
+  }
+}
+
 // null = enumeration itself failed (so the original getUserMedia error is the
 // real reason to report); [] = enumerated but truly no video input device.
 async function listCameras(Ctor: typeof Html5QrcodeClass): Promise<CameraDevice[] | null> {
@@ -443,41 +516,53 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
         // Settle an extra frame first: on Chromium/Android the camera must be
         // requested after DOM settle, otherwise the feed starts black.
         await settleStart();
+        const cams = cameraOverrideRef.current ? null : await listCameras(Html5QrcodeCtor);
+        const candidates = cams ? [...cams].sort((a, b) => cameraRank(a.label) - cameraRank(b.label)) : [];
+
+        // facingMode: 'environment' stays only as a last resort (desktop
+        // webcams); explicit device ids are used for phones because iOS/Safari
+        // maps facingMode onto a virtual lens that streams a blank frame.
+        const startEnvFallback = async () => {
+          try {
+            await startWith({ facingMode: 'environment' });
+          } catch (err) {
+            const kind = mapCameraError(err);
+            if (kind === 'permission-denied' || kind === 'security' || kind === 'unsupported') throw err;
+            if (candidates.length === 0) throw err;
+            await startWith({ deviceId: { exact: candidates[0].id } });
+          }
+        };
+
         if (cameraOverrideRef.current) {
           await startWith({ deviceId: { exact: cameraOverrideRef.current } });
+        } else if (candidates.length === 0) {
+          await startEnvFallback();
         } else {
-          // Safari/iOS ignores facingMode for virtual lenses; Android Chrome
-          // sometimes returns the front camera or a blank multi-lens device from
-          // it. On phones we therefore prefer an EXPLICIT camera id resolved from
-          // the real "back/rear/environment" (wide) lens. facingMode stays only
-          // as the last resort for desktop webcams.
-          const cams = await listCameras(Html5QrcodeCtor);
-          const back = cams ? pickRearCamera(cams) : null;
-          if (back && isBackCamera(back)) {
-            const startBack = () => startWith({ deviceId: { exact: back.id } });
-            try {
-              await startBack();
-            } catch (err) {
-              const kind = mapCameraError(err);
-              if (kind === 'permission-denied' || kind === 'security' || kind === 'unsupported') throw err;
-              // Fall back to the browser's notion of a rear camera, then any
-              // enumerated device, before giving up.
-              try {
-                await startWith({ facingMode: 'environment' });
-              } catch (err2) {
-                const kind2 = mapCameraError(err2);
-                if (kind2 === 'permission-denied' || kind2 === 'security' || kind2 === 'unsupported') throw err2;
-                await startWith({ deviceId: { exact: cams![0].id } });
+          const back = candidates.filter((c) => cameraRank(c.label) !== 6);
+          let picked: string | null = null;
+          if (back.length >= 2) {
+            // Several rear entries exist (identical "Back camera" labels or the
+            // multi-lens virtual ones): only one of them delivers real frames for
+            // QR scanning, so disclose which actually works before selecting it.
+            for (const cam of back.slice(0, 3)) {
+              if (disposed) return;
+              if (await probeCameraLive(cam.id)) {
+                picked = cam.id;
+                break;
               }
             }
           } else {
+            picked = back[0]?.id ?? (candidates[0] ? candidates[0].id : null);
+          }
+          if (!picked) {
+            await startEnvFallback();
+          } else {
             try {
-              await startWith({ facingMode: 'environment' });
+              await startWith({ deviceId: { exact: picked } });
             } catch (err) {
               const kind = mapCameraError(err);
               if (kind === 'permission-denied' || kind === 'security' || kind === 'unsupported') throw err;
-              if (!cams || cams.length === 0) throw err;
-              await startWith({ deviceId: { exact: pickRearCamera(cams).id } });
+              await startEnvFallback();
             }
           }
         }
@@ -490,16 +575,16 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
         }
 
         // Labels only appear once permission was granted — refresh the picker.
-        const cams = (await listCameras(Html5QrcodeCtor)) ?? [];
+        const refreshed = (await listCameras(Html5QrcodeCtor)) ?? [];
         if (!disposed) {
-          setAvailableCameras(cams);
+          setAvailableCameras(refreshed);
           const target = activeTargetRef.current;
           let devId: string | null = null;
           if (target && typeof target === 'object') {
             const deviceId = (target as MediaTrackConstraints).deviceId;
             if (deviceId && typeof deviceId === 'object' && 'exact' in deviceId) devId = String(deviceId.exact);
           }
-          setActiveCameraId(devId ?? pickRearCamera(cams).id ?? cams[0]?.id ?? null);
+          setActiveCameraId(devId ?? pickRearCamera(refreshed)?.id ?? refreshed[0]?.id ?? null);
         }
         setScanner('scanning');
       } catch (err) {
@@ -631,6 +716,19 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
 
   const remaining = stats ? Math.max(0, stats.sold - stats.checkedIn) : 0;
 
+  // Rear lenses worth offering as switchable buttons, one per distinct label.
+  // Devices can enumerate two entries both named "Back camera" — dedupe those
+  // so staff never see two identical options (and never a selectable front).
+  const pickerCameras = (() => {
+    const seen = new Set<string>();
+    return availableCameras.filter(isBackCamera).filter((c) => {
+      const key = (c.label || '').replace(/\s*\([^)]*\)\s*$/g, '').trim().toLowerCase();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  })();
+
   return (
     <div className="mx-auto min-h-screen max-w-[520px] animate-fade-in" style={{ background: ci.surface }}>
       <header className="sticky top-0 z-40 border-b px-5 py-3.5" style={{ background: 'rgba(19,19,22,0.92)', borderColor: ci.line, backdropFilter: 'blur(22px)' }}>
@@ -748,9 +846,9 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
                   </>
                 )}
               </div>
-              {scanner === 'scanning' && availableCameras.filter(isBackCamera).length >= 2 && (
+              {scanner === 'scanning' && pickerCameras.length >= 2 && (
                 <div className="flex flex-wrap items-center justify-center gap-1.5 px-4 pb-3">
-                  {availableCameras.filter(isBackCamera).map((c) => (
+                  {pickerCameras.map((c, i) => (
                     <button
                       key={c.id}
                       onClick={() => switchCamera(c.id)}
@@ -761,7 +859,7 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
                           : { background: ci.raised, border: `1px solid ${ci.line}`, color: ci.muted }
                       }
                     >
-                      {isBackCamera(c) ? 'Back camera' : (c.label || '').replace(/\s*\([^)]*\)\s*$/g, '').trim()}
+                      {(c.label || '').replace(/\s*\([^)]*\)\s*$/g, '').trim() || `Camera ${i + 1}`}
                     </button>
                   ))}
                 </div>

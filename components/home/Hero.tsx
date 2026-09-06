@@ -192,7 +192,7 @@ export default function Hero({ parties, loading }: HeroProps) {
               </div>
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-[0.6px]" style={{ color: '#00F5D4' }}>Sell tickets</div>
-                <div className="text-[11px]" style={{ color: '#A7A8B5' }}>From ₦500/ticket fee</div>
+                <div className="text-[11px]" style={{ color: '#A7A8B5' }}>5% + ₦100 per paid ticket</div>
               </div>
             </div>
             {/* Floating price chip — real event data only */}

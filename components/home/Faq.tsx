@@ -9,11 +9,19 @@ import { useLagosLiveStore } from '@/lib/store';
 const FAQS = [
   {
     q: 'How much does it cost to host an event on Lagos Live?',
-    a: 'Creating and listing your event is completely free. When you request a payout, a 15% platform fee applies to your confirmed ticket revenue — so you keep the bigger share.',
+    a: 'Creating and listing your event is completely free. Free-entry events stay free end to end — we never charge a kobo. For regular ticketed events, a simple fee of 5% + ₦100 applies per paid ticket sold, so organizers can plan profits clearly.',
+  },
+  {
+    q: 'Are free events really free for me to host?',
+    a: 'Yes. Free-entry events never cost you a thing — no fee per ticket, no hidden charges. Create, share and fill your seats completely free, no catch.',
   },
   {
     q: 'When do I get paid, and how?',
     a: 'Each of your events comes with a payouts dashboard. Once your confirmed revenue grows past the minimum, you can request a payout and our team processes it to your verified bank account.',
+  },
+  {
+    q: 'Do you offer custom event services?',
+    a: 'Yes. For larger operations we provide event wrist tags and printing, on-site ticketing support and custom operations setups. Reach out to us on WhatsApp for a tailored quote based on your event size and needs.',
   },
   {
     q: 'Can I sell multiple ticket types or different prices?',

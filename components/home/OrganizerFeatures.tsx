@@ -34,7 +34,7 @@ const FEATURES = [
   {
     icon: Wallet,
     title: 'Get paid, simply',
-    body: 'Confirmed ticket revenue is paid out to your verified account. A 15% platform fee applies at payout — with a ₦5,000 minimum.',
+    body: 'Confirmed ticket revenue is paid out to your verified account. Free events cost nothing; ticketed events simply carry a 5% + ₦100 fee per paid ticket.',
   },
 ];
 

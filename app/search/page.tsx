@@ -305,7 +305,7 @@ function SearchPageContent() {
       ) : (
         <div
           className="grid gap-4 px-5 py-4"
-          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', perspective: '1500px' }}
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
         >
           {filtered.map((party, i) => (
             <PartyCard key={party.id} party={party} showReminder={false} index={i} />

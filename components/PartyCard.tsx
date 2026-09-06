@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { Heart, Bell, Calendar, MapPin } from 'lucide-react';
 import type { Party } from '@/lib/types';
@@ -16,9 +15,10 @@ interface PartyCardProps {
   index?: number;
 }
 
+// Flat, mobile-first event card. No 3D tilt, no scale/translate transforms, no
+// dynamic shadows — hovering only shifts border/text colors and tapping fades
+// the card, so scrolling and click response stay smooth on touch devices.
 export default function PartyCard({ party, showReminder = true, imageHeight = 200, index }: PartyCardProps) {
-  const [tilt, setTilt] = useState({ rx: 0, ry: 0, active: false });
-  const [hovered, setHovered] = useState(false);
   const saved = useLagosLiveStore((s) => s.savedParties.includes(party.id));
   const reminded = useLagosLiveStore((s) => s.reminders.includes(party.id));
   const user = useLagosLiveStore((s) => s.user);
@@ -36,21 +36,6 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 20
     }
   };
 
-  const onMouseMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const px = (e.clientX - rect.left) / rect.width - 0.5;
-    const py = (e.clientY - rect.top) / rect.height - 0.5;
-    setTilt({ rx: +(py * -8).toFixed(2), ry: +(px * 8).toFixed(2), active: true });
-  };
-  const onMouseLeave = () => {
-    setTilt((t) => ({ ...t, active: false }));
-    setHovered(false);
-  };
-
-  const transform = tilt.active
-    ? `perspective(1000px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) translateY(-8px) scale(1.02)`
-    : 'perspective(1000px) rotateX(0deg) rotateY(0deg)';
-
   const soldOut = party.spotsLeft <= 0;
   const almostFull = !soldOut && party.capacity > 0 && party.spotsLeft / party.capacity < 0.15;
   const tonight = isPartyTonight(party);
@@ -59,36 +44,21 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 20
   return (
     <Link
       href={`/party/${party.id}`}
-      className="ll-card group block overflow-hidden rounded-[20px] cursor-pointer"
-      onMouseMove={onMouseMove}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={onMouseLeave}
+      className="ll-card group block cursor-pointer overflow-hidden rounded-[20px] border border-white/10 transition-colors duration-200 ease-out hover:border-[#FF2D95]/40 active:opacity-80"
       style={{
         background: '#171725',
-        border: '1px solid',
-        borderColor: tilt.active ? 'rgba(255,45,149,0.3)' : 'rgba(255,255,255,0.08)',
-        boxShadow: tilt.active
-          ? '0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(255,45,149,0.15)'
-          : '0 10px 40px rgba(0,0,0,0.4)',
-        transform,
-        transformStyle: 'preserve-3d',
-        transition: tilt.active
-          ? 'transform 0.06s linear'
-          : 'transform 0.5s cubic-bezier(0.22,0.9,0.3,1), box-shadow 0.3s ease, border-color 0.3s ease',
-        willChange: 'transform',
+        boxShadow: '0 10px 40px rgba(0,0,0,0.4)',
         animationDelay: index !== undefined ? `${Math.min(index, 8) * 45}ms` : undefined,
         animationFillMode: index !== undefined ? 'backwards' : undefined,
       }}
     >
       <div className="relative overflow-hidden" style={{ height: imageHeight, background: party.gradient }}>
-        <div className={`transition-transform duration-700 ease-out ${hovered ? 'scale-110' : 'scale-100'}`}>
-          <PartyPhoto
-            src={partyPhoto(party.id, party.coverUrl)}
-            alt={party.title}
-            gradient={party.gradient}
-            sizes="(max-width: 768px) 100vw, 33vw"
-          />
-        </div>
+        <PartyPhoto
+          src={partyPhoto(party.id, party.coverUrl)}
+          alt={party.title}
+          gradient={party.gradient}
+          sizes="(max-width: 768px) 100vw, 33vw"
+        />
         <div
           className="pointer-events-none absolute inset-0 z-[1]"
           style={{ background: 'linear-gradient(to top, rgba(7,7,11,0.85) 0%, transparent 60%)' }}
@@ -112,7 +82,7 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 20
                   e.stopPropagation();
                   toggleReminder(party.id, party.title);
                 }}
-                className="flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200 active:scale-90 hover:scale-105"
+                className="flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-200 active:opacity-70"
                 style={{
                   background: 'rgba(0,0,0,0.5)',
                   backdropFilter: 'blur(8px)',
@@ -125,7 +95,7 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 20
             )}
             <button
               onClick={handleSave}
-              className="flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200 active:scale-90 hover:scale-105"
+              className="flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-200 active:opacity-70"
               style={{
                 background: 'rgba(0,0,0,0.5)',
                 backdropFilter: 'blur(8px)',
@@ -147,7 +117,10 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 20
         </div>
       </div>
       <div className="px-4 py-4">
-        <div className="mb-2 font-heading text-base font-bold leading-tight" style={{ color: '#FFFFFF' }}>
+        <div
+          className="mb-2 font-heading text-base font-bold leading-tight transition-colors duration-200 group-hover:text-[#00BFFF]"
+          style={{ color: '#FFFFFF' }}
+        >
           {party.title}
         </div>
         <div className="mb-3 flex flex-col gap-1.5">
@@ -201,7 +174,7 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 20
             {party.fee}
           </span>
           <span
-            className="rounded-full px-3 py-1 text-[11px] font-semibold transition-all duration-200"
+            className="rounded-full px-3 py-1 text-[11px] font-semibold"
             style={{
               background: soldOut ? 'rgba(255,255,255,0.06)' : 'rgba(255,45,149,0.1)',
               border: `1px solid ${soldOut ? 'rgba(255,255,255,0.12)' : 'rgba(255,45,149,0.25)'}`,

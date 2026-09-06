@@ -255,7 +255,7 @@ export default function HomePage() {
       <GridStates loading={loading} error={error} empty={parties.length === 0} retry={retry}>
         <div
           className="grid gap-4 px-5 pb-6"
-          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', perspective: '1500px' }}
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}
         >
           {trending.slice(0, 8).map((party, i) => (
             <PartyCard key={party.id} party={party} index={i} />

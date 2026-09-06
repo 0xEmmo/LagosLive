@@ -24,15 +24,13 @@ export default function HomeSearchBar() {
     <div className="px-5 pb-4">
       <form
         onSubmit={onFormSubmit}
-        className="flex items-center gap-2.5 rounded-xl px-4 py-[12px] transition-all duration-200"
+        className="flex items-center gap-2.5 rounded-xl px-4 py-[12px] transition-colors duration-200"
         style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}
         onFocus={(e) => {
           e.currentTarget.style.borderColor = 'rgba(255,45,149,0.3)';
-          e.currentTarget.style.boxShadow = '0 0 24px rgba(255,45,149,0.08)';
         }}
         onBlur={(e) => {
           e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
-          e.currentTarget.style.boxShadow = 'none';
         }}
       >
         <Search size={17} strokeWidth={2} style={{ color: '#6B6C80' }} />
@@ -50,7 +48,7 @@ export default function HomeSearchBar() {
         )}
         <button
           type="submit"
-          className="rounded-[8px] px-[11px] py-1 text-[12px] font-bold transition-all duration-200 active:scale-95"
+          className="rounded-[8px] px-[11px] py-1 text-[12px] font-bold transition-colors duration-200 active:opacity-80"
           style={{ background: 'linear-gradient(135deg,#FF2D95,#8A2BE2)', color: '#FFFFFF' }}
         >
           Search
@@ -66,7 +64,7 @@ export default function HomeSearchBar() {
           <button
             key={tag}
             onClick={() => submit(tag)}
-            className="whitespace-nowrap rounded-full px-3 py-1 text-[12px] font-medium transition-all duration-200 active:scale-95"
+            className="whitespace-nowrap rounded-full px-3 py-1 text-[12px] font-medium transition-colors duration-200 active:opacity-80"
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#A7A8B5' }}
           >
             {tag}

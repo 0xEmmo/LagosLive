@@ -73,6 +73,11 @@ export default function Footer() {
             <h4 className="font-heading font-bold text-white mb-4 text-sm uppercase tracking-[1px]">Help and support</h4>
             <ul className="space-y-2.5">
               <li>
+                <Link href="/tickets/find" className="text-gray-400 hover:text-[#00D9FF] transition text-sm">
+                  Find your ticket
+                </Link>
+              </li>
+              <li>
                 <Link href="/support" className="text-gray-400 hover:text-[#00D9FF] transition text-sm">
                   Contact
                 </Link>

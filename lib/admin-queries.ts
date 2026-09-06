@@ -774,3 +774,54 @@ function mapRpcError(message: string, fallback: string): string {
   if (message.includes('Profile not found')) return 'That profile no longer exists.';
   return `Couldn't ${fallback}.`;
 }
+
+// ---- Promos (discount codes) -------------------------------------------------
+
+export type PromoRow = Database['public']['Tables']['promos']['Row'];
+
+export interface PromoInput {
+  code: string;
+  discountPercent: number;
+  description: string;
+  maxUses: number | null;
+  startsAt: string | null;
+  endsAt: string | null;
+}
+
+export async function fetchPromos(): Promise<PromoRow[]> {
+  const { data, error } = await supabase.from('promos').select('*').order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as PromoRow[];
+}
+
+export async function createPromo(input: PromoInput): Promise<string> {
+  const { data, error } = await supabase.rpc('create_promo', {
+    p_code: input.code,
+    p_discount_percent: input.discountPercent,
+    p_description: input.description,
+    p_max_uses: input.maxUses,
+    p_starts_at: input.startsAt,
+    p_ends_at: input.endsAt,
+  });
+  if (error) throw new Error(mapRpcError(error.message, 'create the promo code'));
+  return data as string;
+}
+
+export async function updatePromo(promoId: string, input: PromoInput, active: boolean): Promise<void> {
+  const { error } = await supabase.rpc('update_promo', {
+    p_promo_id: promoId,
+    p_code: input.code,
+    p_discount_percent: input.discountPercent,
+    p_description: input.description,
+    p_max_uses: input.maxUses,
+    p_starts_at: input.startsAt,
+    p_ends_at: input.endsAt,
+    p_active: active,
+  });
+  if (error) throw new Error(mapRpcError(error.message, 'update the promo code'));
+}
+
+export async function deletePromo(promoId: string): Promise<void> {
+  const { error } = await supabase.rpc('delete_promo', { p_promo_id: promoId });
+  if (error) throw new Error(mapRpcError(error.message, 'delete the promo code'));
+}

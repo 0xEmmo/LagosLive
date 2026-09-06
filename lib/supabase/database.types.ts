@@ -25,12 +25,16 @@ export type Database = {
           created_at: string
           customer_email: string | null
           fulfilled_at: string | null
+          guest_name: string | null
+          guest_phone: string | null
           id: string
           order_ref: string
           party_id: number
           payment_method: string | null
           payment_ref: string | null
           payment_status: string
+          promo_code: string | null
+          promo_discount: number | null
           quantity: number
           refund_amount: number
           refund_status: string
@@ -55,12 +59,16 @@ export type Database = {
           created_at?: string
           customer_email?: string | null
           fulfilled_at?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
           id?: string
           order_ref: string
           party_id: number
           payment_method?: string | null
           payment_ref?: string | null
           payment_status?: string
+          promo_code?: string | null
+          promo_discount?: number | null
           quantity: number
           refund_amount?: number
           refund_status?: string
@@ -84,12 +92,16 @@ export type Database = {
           created_at?: string
           customer_email?: string | null
           fulfilled_at?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
           id?: string
           order_ref?: string
           party_id?: number
           payment_method?: string | null
           payment_ref?: string | null
           payment_status?: string
+          promo_code?: string | null
+          promo_discount?: number | null
           quantity?: number
           refund_amount?: number
           refund_status?: string
@@ -948,6 +960,48 @@ export type Database = {
         }
         Relationships: []
       }
+      promos: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          description: string | null
+          discount_percent: number
+          ends_at: string | null
+          id: string
+          max_uses: number | null
+          starts_at: string | null
+          updated_at: string
+          uses: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          description?: string | null
+          discount_percent: number
+          ends_at?: string | null
+          id?: string
+          max_uses?: number | null
+          starts_at?: string | null
+          updated_at?: string
+          uses?: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          description?: string | null
+          discount_percent?: number
+          ends_at?: string | null
+          id?: string
+          max_uses?: number | null
+          starts_at?: string | null
+          updated_at?: string
+          uses?: number
+        }
+        Relationships: []
+      }
       roles: {
         Row: {
           created_at: string
@@ -1087,6 +1141,36 @@ export type Database = {
           p_description?: string
         }
         Returns: string
+      }
+      create_promo: {
+        Args: {
+          p_code: string
+          p_discount_percent: number
+          p_description?: string | null
+          p_max_uses?: number | null
+          p_starts_at?: string | null
+          p_ends_at?: string | null
+        }
+        Returns: string
+      }
+      update_promo: {
+        Args: {
+          p_promo_id: string
+          p_code: string
+          p_discount_percent: number
+          p_description: string | null
+          p_max_uses?: number | null
+          p_starts_at?: string | null
+          p_ends_at?: string | null
+          p_active: boolean
+        }
+        Returns: undefined
+      }
+      delete_promo: {
+        Args: {
+          p_promo_id: string
+        }
+        Returns: undefined
       }
       confirm_order_payment: {
         Args: {

@@ -15,8 +15,10 @@ import TicketTypePicker from '@/components/TicketTypePicker';
 import { CheckoutSkeleton } from '@/components/ui/loaders-skeleton';
 import { formatNaira } from '@/lib/filters';
 import {
+  cartDiscount,
   computeCart,
   isTicketTypeSellable,
+  lineDiscount,
   MAX_QTY_PER_TYPE,
   parseItemsParam,
   remainingOf,
@@ -134,6 +136,12 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   const [orderRef, setOrderRef] = useState('');
   const [orderId, setOrderId] = useState('');
   const [email, setEmail] = useState('');
+  const [guestName, setGuestName] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
+  const [promoInput, setPromoInput] = useState('');
+  const [promo, setPromo] = useState<{ code: string; discountPercent: number } | null>(null);
+  const [promoState, setPromoState] = useState<'idle' | 'checking' | 'ok' | 'error'>('idle');
+  const [promoError, setPromoError] = useState('');
   const [ticketToken, setTicketToken] = useState('');
   const [emailSent, setEmailSent] = useState<boolean | null>(null);
   const [lineTickets, setLineTickets] = useState<LineTicket[]>([]);
@@ -266,6 +274,15 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   const cartTotal = hasTicketTypes ? computed.total : legacySelected.price * qty + (legacySelected.price > 0 ? SERVICE_FEE_PER_TICKET * qty : 0);
   const cartSubtotal = hasTicketTypes ? computed.subtotal : legacySelected.price * qty;
   const cartServiceFee = hasTicketTypes ? computed.serviceFee : legacySelected.price > 0 ? SERVICE_FEE_PER_TICKET * qty : 0;
+  const discountPercent = promo?.discountPercent ?? 0;
+  const appliedDiscount =
+    discountPercent > 0
+      ? hasTicketTypes
+        ? cartDiscount(computed, discountPercent)
+        : lineDiscount(legacySelected.price, qty, discountPercent)
+      : 0;
+  const netCartTotal = Math.max(0, cartTotal - appliedDiscount);
+  const isFreeCheckout = cartIsFree || netCartTotal === 0;
   const isGuest = !user;
 
   const back = () => {
@@ -334,6 +351,41 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
           },
         ];
 
+  const applyPromo = async () => {
+    const code = promoInput.trim();
+    if (!code || promoState === 'checking') return;
+    setPromoState('checking');
+    setPromoError('');
+    try {
+      const res = await fetch('/api/promos/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const data = (await res.json()) as { valid?: boolean; code?: string; discountPercent?: number; error?: string };
+      if (!res.ok || !data.valid || typeof data.discountPercent !== 'number') {
+        setPromo(null);
+        setPromoState('error');
+        setPromoError(data.error ?? 'That promo code is not valid.');
+        return;
+      }
+      setPromo({ code: data.code!, discountPercent: data.discountPercent });
+      setPromoInput(data.code!);
+      setPromoState('ok');
+    } catch {
+      setPromo(null);
+      setPromoState('error');
+      setPromoError('Promo code could not be checked right now. Please try again.');
+    }
+  };
+
+  const clearPromo = () => {
+    setPromo(null);
+    setPromoInput('');
+    setPromoState('idle');
+    setPromoError('');
+  };
+
   const startPayment = async () => {
     if (!hasSelection) return;
     setError('');
@@ -344,6 +396,14 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
         return;
       }
       setEmail(trimmed);
+      if (guestName.trim() === '') {
+        setError('Enter your full name to finish checkout.');
+        return;
+      }
+      if (guestPhone.trim() && !/^[0-9+\-() ]{6,20}$/.test(guestPhone.trim())) {
+        setError('Enter a valid phone number.');
+        return;
+      }
     }
     setSuccessLines(snapshotCart());
     setPayState('starting');
@@ -353,12 +413,18 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
             partyId: party.id,
             items: computed.lines.map((line) => ({ ticketTypeId: line.type.id, quantity: line.qty })),
             email: email.trim().toLowerCase() || undefined,
+            guestName: guestName.trim() || undefined,
+            guestPhone: guestPhone.trim() || undefined,
+            promoCode: promo?.code,
           }
         : {
             partyId: party.id,
             ticketTypeId: legacySelected.id || null,
             quantity: qty,
             email: email.trim().toLowerCase() || undefined,
+            guestName: guestName.trim() || undefined,
+            guestPhone: guestPhone.trim() || undefined,
+            promoCode: promo?.code,
           };
       const res = await fetch('/api/paystack/initialize', {
         method: 'POST',
@@ -409,7 +475,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   const ctaLabel =
     payState === 'starting' || payState === 'paying' || payState === 'verifying'
       ? 'Processing…'
-      : cartIsFree
+      : isFreeCheckout
       ? 'Confirm RSVP'
       : 'Continue to Payment';
   const payDisabled = payState !== 'idle' || ttLoading || !hasSelection;
@@ -563,6 +629,83 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
             </div>
           </div>
 
+          <div className="mb-2.5 text-[11px] font-bold uppercase tracking-[1.3px]" style={{ color: '#A7A8B5' }}>
+            Full Name
+          </div>
+          <div className="mb-5">
+            <input
+              type="text"
+              autoComplete="name"
+              value={guestName}
+              onChange={(e) => setGuestName(e.target.value)}
+              placeholder="e.g. Ada Obi"
+              className="w-full rounded-2xl px-4 py-3.5 text-sm outline-none"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#FFFFFF' }}
+            />
+            <div className="mt-2 text-xs" style={{ color: '#6B6C80' }}>
+              {isGuest ? 'Your name goes on the ticket for check-in.' : 'Optional — shown on your ticket for check-in.'}
+            </div>
+          </div>
+
+          <div className="mb-2.5 text-[11px] font-bold uppercase tracking-[1.3px]" style={{ color: '#A7A8B5' }}>
+            Phone Number
+          </div>
+          <div className="mb-6">
+            <input
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              value={guestPhone}
+              onChange={(e) => setGuestPhone(e.target.value)}
+              placeholder="+234 800 000 0000"
+              className="w-full rounded-2xl px-4 py-3.5 text-sm outline-none"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#FFFFFF' }}
+            />
+          </div>
+
+          <div className="mb-2.5 text-[11px] font-bold uppercase tracking-[1.3px]" style={{ color: '#A7A8B5' }}>
+            Promo Code
+          </div>
+          <div className="mb-6 flex gap-2">
+            <input
+              type="text"
+              autoComplete="off"
+              value={promoInput}
+              onChange={(e) => {
+                setPromoInput(e.target.value.toUpperCase());
+                setPromoState('idle');
+                setPromoError('');
+              }}
+              placeholder="SAVE10"
+              disabled={promoState === 'checking'}
+              className="w-full rounded-2xl px-4 py-3.5 text-sm uppercase tracking-[0.5px] outline-none disabled:opacity-60"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#FFFFFF' }}
+            />
+            {promo ? (
+              <button
+                onClick={clearPromo}
+                className="flex-shrink-0 rounded-2xl px-4 text-[13px] font-semibold"
+                style={{ background: 'rgba(255,90,46,0.08)', border: '1px solid rgba(255,90,46,0.25)', color: '#FF7F5C' }}
+              >
+                Remove
+              </button>
+            ) : (
+              <button
+                onClick={applyPromo}
+                disabled={promoState === 'checking' || !promoInput.trim()}
+                className="flex-shrink-0 rounded-2xl px-5 text-[13px] font-bold disabled:opacity-40"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#FFFFFF' }}
+              >
+                Apply
+              </button>
+            )}
+          </div>
+          {promoError && (
+            <div className="-mt-3 mb-4 animate-fade-in text-xs" style={{ color: '#FF5A2E' }}>
+              {promoError}
+            </div>
+          )}
+
           <div className="mb-auto rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
             {hasTicketTypes && computed.lines.length > 0 ? (
               computed.lines.map((line) => (
@@ -583,10 +726,16 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
                 <span>{formatNaira(cartServiceFee)}</span>
               </div>
             )}
+            {promo && appliedDiscount > 0 && (
+              <div className="mb-2 flex justify-between text-[13px] font-semibold" style={{ color: '#5DE0B1' }}>
+                <span>Promo ({promo.code} · {promo.discountPercent}%)</span>
+                <span>-{formatNaira(appliedDiscount)}</span>
+              </div>
+            )}
             <div className="my-2 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
             <div className="flex justify-between font-heading text-[15px] font-bold" style={{ color: '#FFFFFF' }}>
               <span>Total</span>
-              <span>{cartIsFree ? 'Free' : formatNaira(cartTotal)}</span>
+              <span>{isFreeCheckout ? 'Free' : formatNaira(netCartTotal)}</span>
             </div>
           </div>
 
@@ -615,7 +764,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
             <CheckCircle2 size={28} color="#3ECF8E" strokeWidth={2.5} />
           </div>
           <h1 className="font-display mb-1.5 text-[34px] tracking-[0.5px]" style={{ color: '#FFFFFF' }}>
-            {cartIsFree ? "You're On The List!" : "You're In!"}
+            {isFreeCheckout ? "You're On The List!" : "You're In!"}
           </h1>
           <p className="mb-[26px] max-w-[320px] text-sm" style={{ color: '#A7A8B5' }}>
             {isGuest
@@ -624,7 +773,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
                 : successLines.length > 1
                 ? `Your ${successLines.length} tickets are on their way to ${email}.`
                 : `Your ticket is on its way to ${email}.`
-              : cartIsFree
+              : isFreeCheckout
               ? 'Your RSVP is confirmed. See you there.'
               : 'Your payment was successful. Your tickets are confirmed.'}
           </p>
@@ -647,6 +796,25 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
             </div>
 
             <div className="flex flex-col border-t border-dashed" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+              {guestName.trim() && (
+                <div className="border-t border-dashed px-[18px] py-4" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+                  <div className="mb-[3px] text-[10px] uppercase tracking-[0.7px]" style={{ color: '#6B6C80' }}>Ticket Holder</div>
+                  <div className="font-heading text-sm font-bold" style={{ color: '#FFFFFF' }}>
+                    {guestName.trim()}
+                    {guestPhone.trim() ? ` · ${guestPhone.trim()}` : ''}
+                  </div>
+                </div>
+              )}
+              {promo && appliedDiscount > 0 && (
+                <div className="flex items-center justify-between border-t border-dashed px-[18px] py-3.5" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+                  <div className="text-xs font-semibold" style={{ color: '#5DE0B1' }}>
+                    Promo {promo.code} · {promo.discountPercent}%
+                  </div>
+                  <div className="text-[13px] font-bold" style={{ color: '#5DE0B1' }}>
+                    -{formatNaira(appliedDiscount)}
+                  </div>
+                </div>
+              )}
               <div className="px-[18px] py-4">
                 <div className="mb-[3px] text-[10px] uppercase tracking-[0.7px]" style={{ color: '#6B6C80' }}>Order Ref</div>
                 <div className="font-heading text-sm font-bold gradient-text">{orderRef}</div>

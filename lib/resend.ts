@@ -18,6 +18,10 @@ export interface TicketConfirmationData {
   total: number;
   orderRef: string;
   ticketUrl: string;
+  guestName?: string;
+  guestPhone?: string;
+  promoCode?: string;
+  promoDiscount?: number;
 }
 
 function escapeHtml(value: string): string {
@@ -47,6 +51,26 @@ function ticketEmailHtml(d: TicketConfirmationData): string {
   const paymentDate = formatPaymentDate();
   const typeLabel = escapeHtml(d.ticketTypeName).toUpperCase();
   const qty = qtyLabel(d.quantity);
+  const buyerLabel = d.guestName
+    ? `${escapeHtml(d.guestName)}${d.guestPhone ? ` &nbsp;·&nbsp; ${escapeHtml(d.guestPhone)}` : ''}`
+    : escapeHtml(d.to);
+  const promoRow =
+    d.promoCode && d.promoDiscount
+      ? `
+        <div style="padding:12px 18px 16px 18px;border-top:1px dashed rgba(255,255,255,0.12);">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+            <tr>
+              <td>
+                <div style="font-size:10px;color:#6B6C80;letter-spacing:1.3px;text-transform:uppercase;margin-bottom:5px;">Promo ${escapeHtml(d.promoCode)}</div>
+                <div style="font-size:11px;font-weight:700;color:#5DE0B1;">You saved ${escapeHtml(formatNaira(d.promoDiscount))}</div>
+              </td>
+              <td align="right" valign="bottom">
+                <div style="font-size:13px;font-weight:900;color:#5DE0B1;">-${escapeHtml(formatNaira(d.promoDiscount))}</div>
+              </td>
+            </tr>
+          </table>
+        </div>`
+      : '';
 
   return `
     <div style="background-color:#0B0B10;margin:0;padding:32px 12px;font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
@@ -110,6 +134,7 @@ function ticketEmailHtml(d: TicketConfirmationData): string {
               <div style="font-size:10px;color:#6B6C80;letter-spacing:1.3px;text-transform:uppercase;margin-bottom:7px;">Ticket Code</div>
               <div style="font-size:15px;font-weight:800;color:#FF2D95;letter-spacing:1px;font-family:'Courier New', monospace;word-break:break-all;">${escapeHtml(d.orderRef)}</div>
             </div>
+            ${promoRow}
           </div>
         </div>
 
@@ -137,7 +162,7 @@ function ticketEmailHtml(d: TicketConfirmationData): string {
             </tr>
             <tr>
               <td style="padding-top:9px;font-size:11px;color:#6B6C80;">Purchased by</td>
-              <td align="right" style="padding-top:9px;font-size:11px;font-weight:700;color:#A7A8B5;">${escapeHtml(d.to)}</td>
+              <td align="right" style="padding-top:9px;font-size:11px;font-weight:700;color:#A7A8B5;">${buyerLabel}</td>
             </tr>
           </table>
         </div>

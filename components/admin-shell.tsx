@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   MessageSquareQuote,
   IdCard,
+  Tag,
 } from 'lucide-react';
 import { useLagosLiveStore } from '@/lib/store';
 import { isAdmin, type Role } from '@/lib/authz';
@@ -40,6 +41,7 @@ const NAV: AdminNavItem[] = [
   { href: '/admin/staff', label: 'Staff', icon: IdCard, permissions: ['staff.view'] },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag, permissions: ['orders.view'] },
   { href: '/admin/reviews', label: 'Reviews', icon: MessageSquareQuote, permissions: ['reviews.view'] },
+  { href: '/admin/promos', label: 'Promos', icon: Tag, permissions: ['promos.view'] },
   { href: '/admin/revenue', label: 'Revenue', icon: Wallet, permissions: ['revenue.view'] },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3, permissions: ['analytics.view'] },
   { href: '/admin/support', label: 'Support', icon: LifeBuoy, permissions: ['support.view'] },

@@ -3,7 +3,7 @@ import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/serv
 import { generatePaymentRef, paystackInitialize } from '@/lib/paystack-server';
 import { buildTicketUrl, generateTicketAccessToken, isValidEmail } from '@/lib/ticket-access';
 import { sendTicketConfirmation } from '@/lib/resend';
-import { MAX_QTY_PER_TYPE } from '@/lib/tickets';
+import { lineDiscount, MAX_QTY_PER_TYPE } from '@/lib/tickets';
 
 interface CheckoutLine {
   ticketTypeId: number | null;
@@ -27,6 +27,9 @@ export async function POST(request: Request) {
       ticketTypeId?: unknown;
       quantity?: unknown;
       email?: unknown;
+      guestName?: unknown;
+      guestPhone?: unknown;
+      promoCode?: unknown;
     };
 
     const partyId = Number(body.partyId);
@@ -83,6 +86,24 @@ export async function POST(request: Request) {
       }
       email = candidate;
     }
+
+    // Buyer details: full name + phone ride onto the ticket lines (shown on the
+    // e-ticket and guest list). Guests must give a name so the host has someone
+    // to check in; signed-in buyers can fill them in optionally. Promo codes are
+    // uppercase ledger fields — the discount itself is (re)validated below.
+    const isGuest = userId === null;
+    const guestName = typeof body.guestName === 'string' ? body.guestName.trim() : '';
+    const guestPhone = typeof body.guestPhone === 'string' ? body.guestPhone.trim() : '';
+    if (guestName.length > 80) {
+      return NextResponse.json({ error: 'Full name is too long.' }, { status: 400 });
+    }
+    if (isGuest && guestName === '') {
+      return NextResponse.json({ error: 'Enter your full name to finish checkout.' }, { status: 400 });
+    }
+    if (guestPhone && !/^[0-9+\-() ]{6,20}$/.test(guestPhone)) {
+      return NextResponse.json({ error: 'Enter a valid phone number.' }, { status: 400 });
+    }
+    const promoCodeRaw = typeof body.promoCode === 'string' ? body.promoCode.trim().toUpperCase() : '';
 
     // Party is read through the user's RLS — only approved, publicly visible
     // events (or the organizer's own) can be sold.
@@ -159,9 +180,51 @@ export async function POST(request: Request) {
       });
     }
 
-    const groupTotal = resolved.reduce((sum, line) => sum + line.total, 0);
-
     const service = createServiceSupabase();
+
+    // Promo discount: server-authoritative. The client may preview a code, but
+    // the charge is always computed here. Discounts apply to paid ticket
+    // subtotals only (never the service fee) and are folded into each line's
+    // stored total, so verify/confirm and the Paystack amount check keep seeing
+    // exactly what was charged.
+    let promoCode: string | null = null;
+    let discountPercent = 0;
+    const hasPaidLine = resolved.some((line) => line.unitPrice > 0);
+    if (promoCodeRaw) {
+      if (!hasPaidLine) {
+        return NextResponse.json({ error: 'Promo codes apply to paid tickets only.' }, { status: 400 });
+      }
+      if (!/^[A-Z0-9][A-Z0-9_-]{2,23}$/.test(promoCodeRaw)) {
+        return NextResponse.json({ error: 'That promo code is not valid.' }, { status: 400 });
+      }
+      const { data: promo } = await service
+        .from('promos')
+        .select('code, discount_percent, active, uses, max_uses, starts_at, ends_at')
+        .eq('code', promoCodeRaw)
+        .maybeSingle();
+      const now = Date.now();
+      const promoInvalid =
+        !promo ||
+        !promo.active ||
+        (promo.starts_at && new Date(promo.starts_at).getTime() > now) ||
+        (promo.ends_at && new Date(promo.ends_at).getTime() < now) ||
+        (promo.max_uses !== null && promo.uses >= promo.max_uses);
+      if (promoInvalid) {
+        return NextResponse.json({ error: 'That promo code is not valid for this purchase.' }, { status: 400 });
+      }
+      promoCode = promo!.code;
+      discountPercent = promo!.discount_percent;
+    }
+
+    // Each line's total becomes its NET amount (discount removed). The gross
+    // unit price and per-line discount stay on the row for reporting.
+    let groupTotal = 0;
+    const plans = resolved.map((line) => {
+      const discount = lineDiscount(line.unitPrice, line.quantity, discountPercent);
+      const netTotal = line.total - discount;
+      groupTotal += netTotal;
+      return { ...line, discount, netTotal };
+    });
 
     // Release any earlier abandoned pending orders for this event — keyed on
     // the buyer's identity (user id, or guest email) so inventory reserved by
@@ -182,9 +245,11 @@ export async function POST(request: Request) {
     // unguessable ticket-access token (the DB forbids sharing a token across rows).
     const reference = generatePaymentRef();
     const multiLine = resolved.length > 1;
-    const rows = resolved.map((line, i) => ({
+    const rows = plans.map((line, i) => ({
       user_id: userId,
       customer_email: email,
+      guest_name: guestName || null,
+      guest_phone: guestPhone || null,
       ticket_access_token: userId ? null : generateTicketAccessToken(),
       party_id: party.id,
       ticket_type_id: line.ticketTypeId,
@@ -192,7 +257,9 @@ export async function POST(request: Request) {
       quantity: line.quantity,
       unit_price: line.unitPrice,
       service_fee: line.serviceFee,
-      total: line.total,
+      promo_code: promoCode,
+      promo_discount: line.discount > 0 ? line.discount : null,
+      total: line.netTotal,
       order_ref: multiLine ? `${reference}-${i + 1}` : reference,
       payment_ref: reference,
       status: 'pending',
@@ -212,18 +279,22 @@ export async function POST(request: Request) {
     // confirmation screen instead.
     const sendLineEmails = async (): Promise<boolean> => {
       try {
-        for (let i = 0; i < resolved.length; i++) {
+        for (let i = 0; i < plans.length; i++) {
           await sendTicketConfirmation({
             to: email,
+            guestName: guestName || undefined,
+            guestPhone: guestPhone || undefined,
             partyTitle: party.title,
             partyDate: party.date,
             partyTime: party.time,
             partyLocation: party.location,
-            ticketTypeName: resolved[i].ticketTypeName,
-            quantity: resolved[i].quantity,
-            total: resolved[i].total,
+            ticketTypeName: plans[i].ticketTypeName,
+            quantity: plans[i].quantity,
+            total: plans[i].netTotal,
             orderRef: orders[i].order_ref,
             ticketUrl: buildTicketUrl(orders[i].id, orders[i].ticket_access_token),
+            promoCode: promoCode ?? undefined,
+            promoDiscount: plans[i].discount > 0 ? plans[i].discount : undefined,
           });
         }
         return true;
@@ -278,6 +349,7 @@ export async function POST(request: Request) {
         authorizationUrl: init.authorizationUrl,
         amountKobo: groupTotal * 100,
         free: false,
+        promo: promoCode ? { code: promoCode, discountPercent } : undefined,
       });
     } catch (err) {
       await settleGroup('failed');

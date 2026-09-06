@@ -25,6 +25,19 @@ export function remainingOf(t: TicketType): number {
   return Math.max(0, t.quantity - t.sold);
 }
 
+// Percent-off promo discount for a paid (price > 0) line, in naira. Integer
+// math keeps amounts exact — a 10% cut of a ₦3,000 ticket is floor(300) = ₦300.
+// Service fees are platform revenue and are never discounted.
+export function lineDiscount(price: number, qty: number, discountPercent: number): number {
+  if (price <= 0 || qty <= 0 || discountPercent <= 0) return 0;
+  return Math.floor((price * qty * discountPercent) / 100);
+}
+
+// Total naira discount a promo would remove from a cart summary.
+export function cartDiscount(summary: Pick<CartSummary, 'lines'>, discountPercent: number): number {
+  return summary.lines.reduce((sum, line) => sum + lineDiscount(line.type.price, line.qty, discountPercent), 0);
+}
+
 export interface CartLine {
   type: TicketType;
   qty: number;

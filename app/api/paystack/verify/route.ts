@@ -31,6 +31,8 @@ async function notifyConfirmedOrder(order: OrderRow): Promise<boolean> {
     }
     return await sendTicketConfirmation({
       to,
+      guestName: order.guest_name ?? undefined,
+      guestPhone: order.guest_phone ?? undefined,
       partyTitle: party.title,
       partyDate: party.date,
       partyTime: party.time,
@@ -40,6 +42,8 @@ async function notifyConfirmedOrder(order: OrderRow): Promise<boolean> {
       total: order.total,
       orderRef: order.order_ref,
       ticketUrl: buildTicketUrl(order.id, order.ticket_access_token),
+      promoCode: order.promo_code ?? undefined,
+      promoDiscount: order.promo_discount ?? undefined,
     });
   } catch (err) {
     console.warn('[verify] could not build ticket email for order', order.id, err);

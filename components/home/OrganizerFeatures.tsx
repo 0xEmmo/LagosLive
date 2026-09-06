@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { CalendarPlus, TicketPercent, Share2, ScanLine, LineChart, Wallet } from 'lucide-react';
+import { CalendarPlus, TicketPercent, ScanLine, Wallet } from 'lucide-react';
 import { hostStartHref } from '@/lib/data';
 import { useLagosLiveStore } from '@/lib/store';
 
@@ -17,19 +17,9 @@ const FEATURES = [
     body: 'Multiple ticket tiers with their own prices and quantities, plus promo codes for discounts. Free events cost nothing to run.',
   },
   {
-    icon: Share2,
-    title: 'Reach people instantly',
-    body: 'Get a shareable event page and link. Promote it on WhatsApp, Instagram or X — sales land straight in your dashboard.',
-  },
-  {
     icon: ScanLine,
     title: 'Check in at the door',
     body: 'Every ticket carries a unique QR code. Scan it from the check-in screen so you always know who&apos;s inside.',
-  },
-  {
-    icon: LineChart,
-    title: 'Track your sales',
-    body: 'Follow ticket sales and revenue live per event. See what&apos;s working and what needs a push before the big night.',
   },
   {
     icon: Wallet,
@@ -65,7 +55,7 @@ export default function OrganizerFeatures() {
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2">
           {FEATURES.map(({ icon: Icon, title, body }) => (
             <div
               key={title}

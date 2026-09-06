@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { Ticket, ImagePlus, X, Plus, ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
+import { Ticket, ImagePlus, X, Plus, ChevronUp, ChevronDown, Trash2, MapPin } from 'lucide-react';
 import { ALL_VIBES, GRADIENTS } from '@/lib/data';
 import { formatNaira } from '@/lib/filters';
+import AddressInput from '@/components/AddressInput';
 import type { PartyFormInput, TicketFormType } from '@/lib/queries';
 import type { Party, Vibe } from '@/lib/types';
 
@@ -453,7 +454,18 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, submi
         </Field>
 
         <Field label="Full Address">
-          <input value={address} onChange={(e) => { setAddress(e.target.value); clearError('address'); }} placeholder="15 Ozumba Mbadiwe Ave, Victoria Island, Lagos" style={inputStyle} className="font-heading" />
+          <AddressInput
+            value={address}
+            inputStyle={inputStyle}
+            onLocationChange={(result) => {
+              clearError('address');
+              if (result) {
+                setAddress(result.address);
+                setLat(String(result.latitude));
+                setLng(String(result.longitude));
+              }
+            }}
+          />
           <FieldError message={errors.address} />
         </Field>
 
@@ -472,7 +484,8 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, submi
           </div>
         </div>
         <div className="text-[11px]" style={{ color: '#6B6C80' }}>
-          Coordinates power the map and ride links. Pre-filled with Victoria Island — update if your venue is elsewhere.
+          Start typing your address and pick from the suggestions — coordinates are filled in automatically to power the
+          map and ride links. You can still adjust the numbers manually if needed.
         </div>
       </Section>
 

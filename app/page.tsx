@@ -2,7 +2,6 @@
 
 import { useTrendingEvents } from '@/lib/hooks/useTrendingEvents';
 import Hero from '@/components/home/Hero';
-import AudienceSplit from '@/components/home/AudienceSplit';
 import TrendingEvents from '@/components/home/TrendingEvents';
 import OrganizerFeatures from '@/components/home/OrganizerFeatures';
 import HowItWorks from '@/components/home/HowItWorks';
@@ -19,7 +18,6 @@ export default function HomePage() {
     <div className="animate-fade-in">
       <main>
         <Hero parties={parties} loading={loading} />
-        <AudienceSplit />
         <TrendingEvents entries={entries} loading={loading} />
         <OrganizerFeatures />
         <HowItWorks />

@@ -1,16 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { UserPlus, CalendarRange, TicketCheck, ScanLine, Wallet } from 'lucide-react';
+import { Sparkles, Send, Wallet } from 'lucide-react';
 import { hostStartHref } from '@/lib/data';
 import { useLagosLiveStore } from '@/lib/store';
 
 const STEPS = [
-  { icon: UserPlus, title: 'Create your organizer account', body: 'Sign up in seconds — you can sell tickets right away.' },
-  { icon: CalendarRange, title: 'Set up your event', body: 'Add the details, dates, location, ticket tiers and prices.' },
-  { icon: TicketCheck, title: 'Share your event page', body: 'Send the link anywhere. Attendees buy directly on the page.' },
-  { icon: ScanLine, title: 'Check guests in with QR codes', body: 'Scan tickets at the door with your phone on event day.' },
-  { icon: Wallet, title: 'Get paid out', body: 'Confirmed sales are paid to your bank account once you request a payout.' },
+  { icon: Sparkles, title: 'Create & set up', body: 'Sign up in seconds. Add event details, dates, location, ticket tiers and prices.' },
+  { icon: Send, title: 'Share & sell', body: 'Send the link anywhere. Attendees buy directly on the page. No complicated setup needed.' },
+  { icon: Wallet, title: 'Check in & get paid', body: 'Scan QR codes at the door. Confirmed sales paid to your bank account.' },
 ];
 
 export default function HowItWorks() {
@@ -29,7 +27,7 @@ export default function HowItWorks() {
         </h2>
       </div>
 
-      <ol className="grid gap-4 md:grid-cols-5 md:gap-3">
+      <ol className="grid gap-4 sm:grid-cols-3 md:gap-5">
         {STEPS.map(({ icon: Icon, title, body }, i) => (
           <li
             key={title}

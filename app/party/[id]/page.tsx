@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { notFound } from 'next/navigation';
 import {
-  ChevronLeft,
-  ChevronRight,
   Heart,
   Bell,
   Calendar,
@@ -28,10 +27,11 @@ import BackButton from '@/components/BackButton';
 import PartyCard from '@/components/PartyCard';
 import PartyPhoto from '@/components/PartyPhoto';
 import GetThereMenu from '@/components/GetThereMenu';
-import SwipeCarousel from '@/components/SwipeCarousel';
 import TicketTypePicker from '@/components/TicketTypePicker';
 import { EventDetailSkeleton } from '@/components/ui/loaders-skeleton';
-import { partyPhoto, partyDetailPhoto, VCB, VCT, distanceColor } from '@/lib/data';
+import { partyPhoto, VCB, VCT, distanceColor } from '@/lib/data';
+
+const EventMap = dynamic(() => import('@/components/EventMap'), { ssr: false });
 import { useParty } from '@/lib/hooks/useParty';
 import { useParties } from '@/lib/hooks/useParties';
 import { useLagosLiveStore } from '@/lib/store';
@@ -42,7 +42,6 @@ import type { Review, TicketType } from '@/lib/types';
 export default function PartyDetailPage({ params }: { params: { id: string } }) {
   const { party, loading, error, retry } = useParty(Number(params.id));
   const { parties } = useParties();
-  const [carouselIndex, setCarouselIndex] = useState(0);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [hostVerified, setHostVerified] = useState(false);
@@ -160,7 +159,7 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
     } catch {}
   };
 
-  const images = [partyPhoto(party.id, party.coverUrl), partyDetailPhoto(party.id, 'b', party.coverUrl), partyDetailPhoto(party.id, 'c')];
+  const coverSrc = partyPhoto(party.id, party.coverUrl);
   const capPct = Math.min(100, Math.round(((party.capacity - party.spotsLeft) / party.capacity) * 100));
   const spotsUrgent = party.spotsLeft < 100;
   const soldOut = party.spotsLeft <= 0;
@@ -203,44 +202,16 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
         </div>
       </div>
 
-      {/* Image carousel */}
-      <div className="relative h-[320px] overflow-hidden">
-        <SwipeCarousel count={images.length} index={carouselIndex} onIndexChange={setCarouselIndex}>
-          {images.map((src, i) => (
-            <div key={i} className="relative h-[320px] w-full flex-shrink-0" style={{ background: party.gradient }}>
-              <PartyPhoto src={src} alt={`${party.title} photo ${i + 1}`} gradient={party.gradient} sizes="100vw" priority={i === 0} />
-              <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(7,7,11,0.6) 0%, transparent 50%)' }} />
-            </div>
-          ))}
-        </SwipeCarousel>
-        <button
-          onClick={() => setCarouselIndex((i) => Math.max(0, i - 1))}
-          className="absolute left-3 top-1/2 z-[3] flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-white backdrop-blur-[8px] transition-all duration-200 active:scale-90"
-          style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}
-        >
-          <ChevronLeft size={13} strokeWidth={2.5} />
-        </button>
-        <button
-          onClick={() => setCarouselIndex((i) => Math.min(images.length - 1, i + 1))}
-          className="absolute right-3 top-1/2 z-[3] flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-white backdrop-blur-[8px] transition-all duration-200 active:scale-90"
-          style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}
-        >
-          <ChevronRight size={13} strokeWidth={2.5} />
-        </button>
-        <div className="absolute bottom-3.5 left-1/2 z-[3] flex -translate-x-1/2 items-center gap-1.5">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              onClick={() => setCarouselIndex(i)}
-              className="h-[6px] cursor-pointer rounded-[3px] transition-all duration-300"
-              style={{
-                width: carouselIndex === i ? 24 : 6,
-                background: carouselIndex === i ? '#FF2D95' : 'rgba(255,255,255,0.4)',
-                boxShadow: carouselIndex === i ? '0 0 10px rgba(255,45,149,0.5)' : 'none',
-              }}
-            />
-          ))}
-        </div>
+      {/* Event cover — one event, one cover image */}
+      <div className="relative h-[320px] overflow-hidden" style={{ background: party.gradient }}>
+        <PartyPhoto
+          src={coverSrc}
+          alt={`${party.title} cover`}
+          gradient={party.gradient}
+          sizes="100vw"
+          priority
+        />
+        <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(7,7,11,0.6) 0%, transparent 50%)' }} />
         <div className="absolute bottom-3.5 left-4 z-[3]">
           <span
             className="rounded-full border px-3 py-[5px] text-xs font-bold backdrop-blur-[8px]"
@@ -348,6 +319,25 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
               <div className="text-xs" style={{ color: '#A7A8B5' }}>{party.address}</div>
             </div>
           </div>
+          {Number.isFinite(party.lat) && Number.isFinite(party.lng) && (
+            <div className="overflow-hidden rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="h-[190px]">
+                <EventMap parties={[party]} single />
+              </div>
+              <div className="flex items-center justify-between gap-2 px-3.5 py-2.5">
+                <span className="truncate text-[11px]" style={{ color: '#6B6C80' }}>{party.address}</span>
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${party.lat},${party.lng}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex-shrink-0 rounded-full px-2.5 py-1 text-[10.5px] font-semibold"
+                  style={{ background: 'rgba(0,245,212,0.08)', border: '1px solid rgba(0,245,212,0.25)', color: '#00F5D4' }}
+                >
+                  Directions
+                </a>
+              </div>
+            </div>
+          )}
           <div className="glass rounded-xl p-3.5" style={{ background: 'rgba(255,255,255,0.03)' }}>
             <div className="flex items-center gap-3 mb-2">
               <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(0,245,212,0.1)' }}>

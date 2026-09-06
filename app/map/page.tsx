@@ -9,7 +9,7 @@ import { useParties } from '@/lib/hooks/useParties';
 import { useLagosLiveStore } from '@/lib/store';
 import type { Vibe } from '@/lib/types';
 
-const LeafletMap = dynamic(() => import('@/components/LeafletMap'), { ssr: false });
+const EventMap = dynamic(() => import('@/components/EventMap'), { ssr: false });
 
 export default function MapPage() {
   const router = useRouter();
@@ -42,7 +42,7 @@ export default function MapPage() {
 
   return (
     <div className="relative overflow-hidden" style={{ height: 'calc(100vh - 84px)' }}>
-      <LeafletMap
+      <EventMap
         parties={filtered}
         userLocation={userLocation}
         onSelectParty={(id) => router.push(`/party/${id}`)}

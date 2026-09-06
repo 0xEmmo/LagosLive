@@ -32,13 +32,18 @@ function TicketCard({ ticket }: { ticket: CustomerTicket }) {
       style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
     >
       <div className="flex gap-3.5 p-3.5">
-        <div className="h-[86px] w-[86px] flex-shrink-0 overflow-hidden rounded-xl">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={partyPhoto(ticket.partyId, ticket.party.coverUrl)}
-            alt={ticket.party.title}
-            className="h-full w-full object-cover"
-          />
+        <div
+          className="h-[86px] w-[86px] flex-shrink-0 overflow-hidden rounded-xl"
+          style={{ background: ticket.party.gradient }}
+        >
+          {partyPhoto(ticket.partyId, ticket.party.coverUrl) && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={partyPhoto(ticket.partyId, ticket.party.coverUrl) ?? undefined}
+              alt={ticket.party.title}
+              className="h-full w-full object-cover"
+            />
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">

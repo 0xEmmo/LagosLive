@@ -232,15 +232,21 @@ export async function createParty(input: PartyFormInput, createdBy: string): Pro
   });
   if (input.coverImage) {
     const coverUrl = await uploadCoverImage(party.id, input.coverImage);
-    if (coverUrl) {
-      await supabase.from('parties').update({ cover_url: coverUrl }).eq('id', party.id);
-      party.coverUrl = coverUrl;
+    const { error: coverError } = await supabase.from('parties').update({ cover_url: coverUrl }).eq('id', party.id);
+    if (coverError) {
+      console.error('Cover URL save failed:', coverError.message);
+      throw new Error('Photo uploaded but could not be saved to your event. Please try again.');
     }
+    party.coverUrl = coverUrl;
   }
   return { party, promoted: !!promotedResult };
 }
 
-async function uploadCoverImage(partyId: number, file: File): Promise<string | null> {
+// Uploads the host's cover image into the public 'event-images' bucket and
+// returns its permanent public URL. Unlike the old implementation, any failure
+// here THROWS so the host is never told "uploaded" unless the file is actually
+// stored and linked to the event.
+async function uploadCoverImage(partyId: number, file: File): Promise<string> {
   try {
     const resized = await resizeImage(file, 1200);
     const ext = file.type === 'image/png' ? 'png' : 'jpg';
@@ -251,13 +257,17 @@ async function uploadCoverImage(partyId: number, file: File): Promise<string | n
     });
     if (error) {
       console.error('Cover upload failed:', error.message);
-      return null;
+      throw new Error('Image upload failed. Please try again.');
     }
     const { data } = supabase.storage.from('event-images').getPublicUrl(path);
-    return data?.publicUrl ?? null;
+    if (!data?.publicUrl) {
+      throw new Error('Image uploaded but its public URL could not be generated. Please try again.');
+    }
+    return data.publicUrl;
   } catch (err) {
+    if (err instanceof Error && err.message.startsWith('Image upload')) throw err;
     console.error('Cover image processing failed:', err);
-    return null;
+    throw new Error('Image upload failed. Please try again.');
   }
 }
 
@@ -324,8 +334,10 @@ export async function updateParty(id: number, input: PartyFormInput): Promise<Pa
 
   if (input.coverImage) {
     const coverUrl = await uploadCoverImage(id, input.coverImage);
-    if (coverUrl) {
-      await supabase.from('parties').update({ cover_url: coverUrl }).eq('id', id);
+    const { error: coverError } = await supabase.from('parties').update({ cover_url: coverUrl }).eq('id', id);
+    if (coverError) {
+      console.error('Cover URL save failed:', coverError.message);
+      throw new Error('Photo uploaded but could not be saved to your event. Please try again.');
     }
   }
   const updated = await fetchPartyById(id);

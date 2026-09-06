@@ -410,7 +410,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, submi
             ))}
           </select>
           <div className="mt-1.5 text-[11px]" style={{ color: '#6B6C80' }}>
-            Your cover image is generated automatically from the category.
+            Events without a photo use this category&apos;s gradient colors.
           </div>
         </Field>
 
@@ -748,22 +748,38 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, submi
         </div>
       </Section>
 
-      {/* 5. Cover image */}
-      <Section step={5} title="Cover Image" hint="Make your event stand out (optional)">
-        {previewUrl ? (
-          <div className="relative overflow-hidden rounded-xl" style={{ aspectRatio: '16/9' }}>
-            <img src={previewUrl} alt="Cover preview" className="h-full w-full object-cover" />
+      {/* 5. Cover image — one event, one cover image */}
+      <Section step={5} title="Cover Image" hint="One image · one cover">
+        {previewUrl || initial?.coverUrl ? (
+          <div>
+            <div className="relative overflow-hidden rounded-xl" style={{ aspectRatio: '16/9' }}>
+              <img src={previewUrl ?? initial?.coverUrl ?? ''} alt="Event cover" className="h-full w-full object-cover" />
+              {previewUrl && (
+                <button
+                  type="button"
+                  onClick={handleImageRemove}
+                  aria-label="Remove selected image"
+                  className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-200 active:opacity-70"
+                  style={{ background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.2)' }}
+                >
+                  <X size={14} strokeWidth={2.5} color="#FFFFFF" />
+                </button>
+              )}
+              <div
+                className="absolute bottom-2 left-2 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                style={{ background: 'rgba(0,0,0,0.5)', color: '#A7A8B5' }}
+              >
+                {previewUrl && coverImage ? `${(coverImage.size / 1024 / 1024).toFixed(1)} MB` : 'Current cover'}
+              </div>
+            </div>
             <button
               type="button"
-              onClick={handleImageRemove}
-              className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full transition-all active:scale-90"
-              style={{ background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.2)' }}
+              onClick={() => imageRef.current?.click()}
+              className="mt-2 w-full rounded-[10px] py-[11px] text-[12.5px] font-semibold transition-colors duration-200 active:opacity-80"
+              style={{ background: 'rgba(255,45,149,0.07)', border: '1px dashed rgba(255,45,149,0.35)', color: '#FF2D95' }}
             >
-              <X size={14} strokeWidth={2.5} color="#FFFFFF" />
+              {previewUrl ? 'Choose a different image' : 'Change image'}
             </button>
-            <div className="absolute bottom-2 left-2 rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: 'rgba(0,0,0,0.5)' , color: '#A7A8B5' }}>
-              {coverImage ? `${(coverImage.size / 1024 / 1024).toFixed(1)} MB` : ''}
-            </div>
           </div>
         ) : (
           <div
@@ -796,7 +812,8 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, submi
         />
         <FieldError message={imageError} />
         <div className="text-[11px]" style={{ color: '#6B6C80' }}>
-          If you don&apos;t upload an image, your event will use an auto-generated gradient card.
+          Upload one image for your event. If you don&apos;t, the card uses an auto-generated
+          gradient in this category&apos;s colors.
         </div>
       </Section>
 

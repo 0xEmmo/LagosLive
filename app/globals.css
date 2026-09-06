@@ -155,50 +155,6 @@ select option {
   transform: translateY(0) scale(0.98);
 }
 
-/* --- Leaflet overrides --- */
-.leaflet-popup-content-wrapper {
-  background: #171725 !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
-  border-radius: 16px !important;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.5) !important;
-  color: #fff !important;
-}
-.leaflet-popup-tip {
-  background: #171725 !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
-}
-.leaflet-popup-close-button {
-  color: #A7A8B5 !important;
-  top: 8px !important;
-  right: 8px !important;
-  font-size: 18px !important;
-}
-.leaflet-popup-content {
-  margin: 14px !important;
-}
-.leaflet-container {
-  background: #07070B !important;
-  font-family: 'Montserrat', sans-serif !important;
-}
-.leaflet-control-zoom a {
-  background: #171725 !important;
-  color: #fff !important;
-  border-color: rgba(255,255,255,0.08) !important;
-}
-.leaflet-cluster-spider-leg {
-  stroke: #8A2BE2 !important;
-  stroke-opacity: 0.55 !important;
-}
-.leaflet-marker-icon {
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease !important;
-}
-.marker-cluster {
-  transition: transform 0.25s cubic-bezier(0.22, 0.9, 0.3, 1) !important;
-}
-.marker-cluster:hover {
-  transform: scale(1.08);
-}
-
 /* --- Phase 2 check-in QR scanner ---
    The scanner renders its own <video> into a fixed-height viewfinder box;
    the feed fills the box edge-to-edge and the decorative finder corners sit

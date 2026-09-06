@@ -1,7 +1,7 @@
 import Image from 'next/image';
 
 interface PartyPhotoProps {
-  src: string;
+  src: string | null;
   alt: string;
   gradient: string;
   sizes: string;
@@ -9,6 +9,11 @@ interface PartyPhotoProps {
 }
 
 export default function PartyPhoto({ src, alt, gradient, sizes, priority }: PartyPhotoProps) {
+  if (!src) {
+    // No uploaded cover: render the event's gradient alone as a deliberate
+    // Lagos Live fallback (no broken image, no random stock photo).
+    return <div className="h-full w-full" style={{ background: gradient }} />;
+  }
   return (
     <>
       <Image

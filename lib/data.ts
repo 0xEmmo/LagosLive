@@ -59,12 +59,10 @@ export function distanceBorder(d: number) {
   return d < 5 ? 'rgba(0,245,212,0.3)' : d < 10 ? 'rgba(255,214,0,0.3)' : 'rgba(255,138,0,0.3)';
 }
 
+// Canonical cover source for an event. Returns the host-uploaded cover URL, or
+// null so callers render a deliberate gradient-only fallback — never a random
+// placeholder or a broken image.
 export function partyPhoto(id: number, coverUrl?: string | null) {
-  if (coverUrl) return coverUrl;
-  return `https://picsum.photos/seed/lagoslive-party-${id}/900/700`;
-}
-
-export function partyDetailPhoto(id: number, suffix: string, coverUrl?: string | null) {
-  if (suffix === 'b' && coverUrl) return coverUrl;
-  return `https://picsum.photos/seed/lagoslive-detail-${id}-${suffix}/900/700`;
+  void id;
+  return coverUrl ?? null;
 }

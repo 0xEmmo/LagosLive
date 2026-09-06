@@ -66,3 +66,10 @@ export function partyPhoto(id: number, coverUrl?: string | null) {
   void id;
   return coverUrl ?? null;
 }
+
+// Where the homepage "Host an Event" CTAs point. Signed-in users jump straight
+// into the create-event flow; guests go to /host, whose existing guard routes
+// them to sign in with the destination preserved (matches the app's HomeHeader).
+export function hostStartHref(user?: { id: string } | null): string {
+  return user ? '/host/new' : '/host';
+}

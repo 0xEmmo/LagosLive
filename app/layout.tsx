@@ -35,9 +35,21 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'Lagos Live — Afrobeats & Nightlife, Tonight',
-  description: 'Discover the hottest parties, clubs & events across Lagos — right now.',
+  title: 'Lagos Live — Discover & Host Events in Lagos',
+  description: 'Discover what\u2019s happening in Lagos, or create, sell and manage your next event with Lagos Live — the home of Lagos events.',
   manifest: '/manifest.json',
+  openGraph: {
+    title: 'Lagos Live — Discover & Host Events in Lagos',
+    description: 'Find your next plan or host your own event, sell tickets, check guests in and get paid.',
+    type: 'website',
+    siteName: 'Lagos Live',
+    locale: 'en_NG',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Lagos Live — Discover & Host Events in Lagos',
+    description: 'Find your next plan or host your own event, sell tickets, check guests in and get paid.',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',

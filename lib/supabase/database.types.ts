@@ -1002,6 +1002,38 @@ export type Database = {
         }
         Relationships: []
       }
+      homepage_trending_events: {
+        Row: {
+          created_at: string
+          event_id: number
+          id: number
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: number
+          id?: number
+          position: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: number
+          id?: number
+          position?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homepage_trending_events_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roles: {
         Row: {
           created_at: string

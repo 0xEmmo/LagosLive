@@ -71,7 +71,7 @@ export default function AudienceSplit() {
             Find parties, concerts, festivals, networking events and experiences happening around Lagos.
           </p>
           <Link
-            href="/explore"
+            href="/events"
             className="inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-[13px] font-bold transition-all duration-200 active:opacity-80"
             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', color: '#00BFFF' }}
           >

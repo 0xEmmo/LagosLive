@@ -2,23 +2,23 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Search, Ticket, Map as MapIcon, Heart, User } from 'lucide-react';
+import { Home, Map as MapIcon, User, CalendarDays, LogIn } from 'lucide-react';
 import { useLagosLiveStore } from '@/lib/store';
 
-const PUBLIC_ITEMS = [
+// Mobile bottom nav — hidden on desktop (md+), where the global header takes
+// over. Always exactly four destinations:
+//   signed out: Home | Events | Map | Sign in
+//   signed in:  Home | Events | Map | Profile
+// Saved and Tickets deliberately live inside Profile, not as first-class items.
+
+const BASE_ITEMS = [
   { href: '/', match: '/', label: 'Home', Icon: Home },
-  { href: '/search', match: '/search', label: 'Search', Icon: Search },
+  { href: '/events', match: '/events', label: 'Events', Icon: CalendarDays },
   { href: '/map', match: '/map', label: 'Map', Icon: MapIcon },
-  { href: '/saved', match: '/saved', label: 'Saved', Icon: Heart },
 ];
 
-const AUTH_ITEMS = [
-  { href: '/', match: '/', label: 'Home', Icon: Home },
-  { href: '/search', match: '/search', label: 'Search', Icon: Search },
-  { href: '/tickets', match: '/tickets', label: 'Tickets', Icon: Ticket },
-  { href: '/saved', match: '/saved', label: 'Saved', Icon: Heart },
-  { href: '/profile', match: '/profile', label: 'Profile', Icon: User },
-];
+const AUTH_ITEM = { href: '/profile', match: '/profile', label: 'Profile', Icon: User };
+const GUEST_ITEM = { href: '/login', match: '/login', label: 'Sign in', Icon: LogIn };
 
 const HIDDEN_PREFIXES = ['/login', '/signup', '/checkout'];
 
@@ -28,11 +28,11 @@ export default function BottomNav() {
 
   if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null;
 
-  const items = user ? AUTH_ITEMS : PUBLIC_ITEMS;
+  const items = [...BASE_ITEMS, user ? AUTH_ITEM : GUEST_ITEM];
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-50 border-t backdrop-blur-[28px] backdrop-saturate-150"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t backdrop-blur-[28px] backdrop-saturate-150 md:hidden"
       style={{ background: 'var(--c-nav)', borderColor: 'rgba(255,255,255,0.06)' }}
     >
       <div className="flex items-center justify-around px-0 pb-[10px] pt-2">
@@ -62,9 +62,7 @@ export default function BottomNav() {
                 className="h-[3px] rounded-full transition-all duration-300 ease-out"
                 style={{
                   width: active ? '20px' : '0px',
-                  background: active
-                    ? 'linear-gradient(90deg, #FF2D95, #8A2BE2)'
-                    : 'transparent',
+                  background: active ? 'linear-gradient(90deg, #FF2D95, #8A2BE2)' : 'transparent',
                   boxShadow: active ? '0 0 10px rgba(255,45,149,0.5)' : 'none',
                 }}
               />

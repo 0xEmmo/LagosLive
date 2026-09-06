@@ -72,7 +72,7 @@ export default function Pricing() {
 
         <div className="grid gap-4 md:grid-cols-3">
           {PLANS.map((plan) => {
-            const CtaHref = plan.highlight ? hostStartHref(user) : plan.tag === 'For attendees' ? '/explore' : hostStartHref(user);
+            const CtaHref = plan.highlight ? hostStartHref(user) : plan.tag === 'For attendees' ? '/events' : hostStartHref(user);
             return (
               <div
                 key={plan.tag}

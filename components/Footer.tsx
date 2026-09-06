@@ -26,7 +26,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/explore" className="text-gray-400 hover:text-[#00D9FF] transition text-sm">
+                <Link href="/events" className="text-gray-400 hover:text-[#00D9FF] transition text-sm">
                   Events
                 </Link>
               </li>

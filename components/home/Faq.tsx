@@ -96,7 +96,7 @@ export default function Faq() {
           Become a host
         </Link>{' '}
         or{' '}
-        <Link href="/explore" className="font-semibold transition-colors" style={{ color: '#00BFFF' }}>
+        <Link href="/events" className="font-semibold transition-colors" style={{ color: '#00BFFF' }}>
           explore events
         </Link>
         .

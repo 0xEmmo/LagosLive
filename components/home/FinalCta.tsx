@@ -35,7 +35,7 @@ export default function FinalCta() {
               Host an Event
             </Link>
             <Link
-              href="/explore"
+              href="/events"
               className="flex items-center justify-center gap-2 rounded-[14px] bg-white px-7 py-3.5 text-sm font-bold transition-all duration-200 active:scale-95"
               style={{ color: '#0A0A12' }}
             >

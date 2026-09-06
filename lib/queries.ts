@@ -85,6 +85,42 @@ export async function fetchPartiesByOwner(userId: string): Promise<Party[]> {
 }
 
 // ---------------------------------------------------------------------------
+// Batch 26 — homepage trending catalogue.
+// ---------------------------------------------------------------------------
+
+// Public read for the homepage "Trending now" section. The RLS on the joined
+// parties table (parties!inner) decides whether each curated event is actually
+// visible to the caller — a suspended, rejected, deleted or past event simply
+// never surfaces in this result set. If the homepage_trending_events table is
+// missing or unapplied, the thrown error is harmless (the caller just shows a
+// discovery CTA), so the homepage can never break over an unrung migration.
+export interface TrendingEventEntry {
+  rowId: number;
+  eventId: number;
+  position: number;
+  party: Party;
+}
+
+export async function fetchTrendingParties(
+  userLocation?: { lat: number; lng: number } | null
+): Promise<TrendingEventEntry[]> {
+  const { data, error } = await supabase
+    .from('homepage_trending_events')
+    .select('id, event_id, position, parties!inner(*)')
+    .eq('parties.status', 'approved')
+    .is('parties.cancelled_at', null)
+    .gte('parties.starts_at', new Date().toISOString())
+    .order('position');
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    rowId: row.id,
+    eventId: row.event_id,
+    position: row.position,
+    party: toParty((row as any).parties, userLocation),
+  }));
+}
+
+// ---------------------------------------------------------------------------
 // Batch 18 — search + reviews.
 // ---------------------------------------------------------------------------
 

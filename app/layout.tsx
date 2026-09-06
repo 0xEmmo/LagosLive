@@ -7,6 +7,7 @@ import ReminderScheduler from '@/components/ReminderScheduler';
 import NewsletterModal from '@/components/NewsletterModal';
 import Toast from '@/components/Toast';
 import BottomNav from '@/components/BottomNav';
+import AppHeader from '@/components/home/HomeNavbar';
 import Footer from '@/components/Footer';
 
 const bebasNeue = Bebas_Neue({
@@ -84,6 +85,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ReminderScheduler />
         <Toast />
         <NewsletterModal />
+        <AppHeader />
         {children}
         <Footer />
         <BottomNav />

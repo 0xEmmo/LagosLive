@@ -163,7 +163,18 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
   const capPct = Math.min(100, Math.round(((party.capacity - party.spotsLeft) / party.capacity) * 100));
   const spotsUrgent = party.spotsLeft < 100;
   const soldOut = party.spotsLeft <= 0;
-  const similarParties = parties.filter((p) => p.id !== party.id && p.vibe === party.vibe).slice(0, 4);
+  // "More events": neutral, non-personalised related list — same vibe, upcoming
+  // and not cancelled, so we never recommend a past or cancelled event.
+  const now = Date.now();
+  const similarParties = parties
+    .filter(
+      (p) =>
+        p.id !== party.id &&
+        p.vibe === party.vibe &&
+        !p.cancelledAt &&
+        new Date(p.startsAt).getTime() >= now
+    )
+    .slice(0, 4);
 
   const hasTicketTypes = ticketTypes.length > 0;
   const sellableTypes = hasTicketTypes ? ticketTypes.filter((t) => isTicketTypeSellable(t)) : [];
@@ -591,7 +602,7 @@ export default function PartyDetailPage({ params }: { params: { id: string } }) 
         {similarParties.length > 0 && (
           <div className="pb-2">
             <h3 className="mb-3.5 text-[11px] font-bold uppercase tracking-[1.5px]" style={{ color: '#A7A8B5' }}>
-              You Might Also Like
+              More events
             </h3>
             <div className="no-scrollbar flex gap-3.5 overflow-x-auto pb-1">
               {similarParties.map((sp2) => (

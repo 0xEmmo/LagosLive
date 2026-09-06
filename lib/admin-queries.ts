@@ -825,3 +825,48 @@ export async function deletePromo(promoId: string): Promise<void> {
   const { error } = await supabase.rpc('delete_promo', { p_promo_id: promoId });
   if (error) throw new Error(mapRpcError(error.message, 'delete the promo code'));
 }
+
+// ---- Homepage trending (admin-curated) ---------------------------------------
+
+export type HomepageTrendingRow = Database['public']['Tables']['homepage_trending_events']['Row'];
+
+export interface TrendingAdminJoined extends HomepageTrendingRow {
+  parties?: {
+    id: number;
+    title: string;
+    date: string;
+    time: string;
+    location: string;
+    status: string;
+    starts_at: string;
+    vibe: string;
+    fee_num: number;
+    gradient: string;
+  } | null;
+}
+
+// The whole curated catalogue, with the event joined for display. Homepage read
+// ordering is position ASC (see fetchTrendingParties in lib/queries.ts); here we
+// order by position too so the admin editor mirrors the live homepage.
+export async function fetchTrendingCatalogue(): Promise<TrendingAdminJoined[]> {
+  const { data, error } = await supabase
+    .from('homepage_trending_events')
+    .select('*, parties(id, title, date, time, location, status, starts_at, vibe, fee_num, gradient)')
+    .order('position');
+  if (error) throw error;
+  return (data ?? []) as TrendingAdminJoined[];
+}
+
+// Batch renumber: replaces the whole set with the given [eventId, position]
+// pairs. Deleting every row first (only if nothing was passed) keeps the UI
+// simple and atomic enough for a ≤6-item curator list; the UNIQUE(event_id)
+// constraint is honoured because we delete-then-insert.
+export async function saveTrendingSelection(entries: { eventId: number; position: number }[]): Promise<void> {
+  const { error: delErr } = await supabase.from('homepage_trending_events').delete().neq('event_id', -1);
+  if (delErr) throw delErr;
+  if (entries.length === 0) return;
+  const { error } = await supabase.from('homepage_trending_events').insert(
+    entries.map(({ eventId, position }) => ({ event_id: eventId, position }))
+  );
+  if (error) throw error;
+}

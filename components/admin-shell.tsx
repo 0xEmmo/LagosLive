@@ -19,6 +19,7 @@ import {
   MessageSquareQuote,
   IdCard,
   Tag,
+  Flame,
 } from 'lucide-react';
 import { useLagosLiveStore } from '@/lib/store';
 import { isAdmin, type Role } from '@/lib/authz';
@@ -35,6 +36,7 @@ export interface AdminNavItem {
 const NAV: AdminNavItem[] = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'super_admin'] },
   { href: '/admin/events', label: 'Events', icon: CalendarDays, permissions: ['events.view'] },
+  { href: '/admin/trending', label: 'Trending', icon: Flame, permissions: ['events.edit'] },
   { href: '/admin/hosts', label: 'Hosts', icon: Users, permissions: ['hosts.view'] },
   { href: '/admin/users', label: 'Users', icon: Users, permissions: ['staff.suspend'] },
   { href: '/admin/roles', label: 'Roles', icon: Shield, permissions: ['staff.permissions'] },

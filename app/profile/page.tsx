@@ -11,6 +11,7 @@ import { partyPhoto } from '@/lib/data';
 import PartyPhoto from '@/components/PartyPhoto';
 import RoleNavButtons from '@/components/RoleNavButtons';
 import type { CustomerTicket } from '@/lib/types';
+import { linkGuestOrdersOnce } from '@/lib/orders-linking';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -68,16 +69,22 @@ export default function ProfilePage() {
     let cancelled = false;
     setTicketsLoading(true);
     setTicketsError(null);
-    fetchMyTickets(user.id)
-      .then((data) => {
-        if (!cancelled) setTickets(data);
-      })
-      .catch((err) => {
-        if (!cancelled) setTicketsError(err instanceof Error ? err.message : 'Could not load your tickets.');
-      })
-      .finally(() => {
-        if (!cancelled) setTicketsLoading(false);
-      });
+    (async () => {
+      // Link guest purchases bought under the same email before fetching so the
+      // hub's ticket count is never incomplete right after sign-in.
+      await linkGuestOrdersOnce();
+      if (cancelled) return;
+      fetchMyTickets(user.id)
+        .then((data) => {
+          if (!cancelled) setTickets(data);
+        })
+        .catch((err) => {
+          if (!cancelled) setTicketsError(err instanceof Error ? err.message : 'Could not load your tickets.');
+        })
+        .finally(() => {
+          if (!cancelled) setTicketsLoading(false);
+        });
+    })();
     return () => {
       cancelled = true;
     };
@@ -132,8 +139,13 @@ export default function ProfilePage() {
 
       <RoleNavButtons variant="stack" />
 
-      <div className="mb-2.5 text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: '#A7A8B5' }}>
-        My Tickets
+      <div className="mb-2.5 flex items-center justify-between">
+        <div className="text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: '#A7A8B5' }}>
+          My Tickets
+        </div>
+        <Link href="/tickets" className="text-[11px] font-semibold" style={{ color: '#FF5A2E' }}>
+          View all →
+        </Link>
       </div>
 
       {ticketsLoading ? (
@@ -209,6 +221,9 @@ export default function ProfilePage() {
         </div>
       )}
 
+      <div className="mb-2.5 text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: '#A7A8B5' }}>
+        Notifications
+      </div>
       <div className="mb-2.5 flex items-center justify-between glass rounded-2xl px-4 py-3.5" style={{ background: 'rgba(255,255,255,0.03)' }}>
         <div>
           <div className="text-[13px] font-semibold" style={{ color: '#FFFFFF' }}>Push Notifications</div>
@@ -286,20 +301,28 @@ export default function ProfilePage() {
         </>
       )}
 
+      <div className="mb-2.5 text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: '#A7A8B5' }}>
+        Account
+      </div>
       <Link
         href="/saved"
         className="mb-2.5 flex w-full items-center justify-between glass rounded-xl px-4 py-[15px] text-sm font-medium transition-all duration-200 hover:border-[rgba(255,255,255,0.15)]"
         style={{ background: 'rgba(255,255,255,0.03)', color: '#FFFFFF' }}
       >
-        My Saved Parties
-        <span style={{ color: '#A7A8B5' }}>→</span>
+        Saved Events
+        <span className="flex items-center gap-2">
+          <span className="rounded-full px-2 py-[2px] text-[10.5px] font-bold" style={{ background: 'rgba(255,90,46,0.12)', border: '1px solid rgba(255,90,46,0.25)', color: '#FF5A2E' }}>
+            {savedParties.length}
+          </span>
+          <span style={{ color: '#A7A8B5' }}>→</span>
+        </span>
       </Link>
       <Link
         href="/host"
         className="mb-4 flex w-full items-center justify-between glass rounded-xl px-4 py-[15px] text-sm font-medium transition-all duration-200 hover:border-[rgba(255,255,255,0.15)]"
         style={{ background: 'rgba(255,255,255,0.03)', color: '#FFFFFF' }}
       >
-        List an Event
+        Host Dashboard
         <span style={{ color: '#A7A8B5' }}>→</span>
       </Link>
       <button

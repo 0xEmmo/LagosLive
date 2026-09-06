@@ -10,6 +10,7 @@ import { fetchMyTickets } from '@/lib/queries';
 import { partyPhoto } from '@/lib/data';
 import { ticketState } from '@/lib/types';
 import type { CustomerTicket, TicketState } from '@/lib/types';
+import { linkGuestOrdersOnce } from '@/lib/orders-linking';
 
 // /tickets is dual-mode (Phase 5): signed-in users get "My Tickets" (their
 // confirmed orders split into Upcoming / Past with a per-ticket state badge);
@@ -125,16 +126,22 @@ function MyTickets() {
     let cancelled = false;
     setLoading(true);
     setError(false);
-    fetchMyTickets(user.id)
-      .then((data) => {
-        if (!cancelled) setTickets(data);
-      })
-      .catch(() => {
-        if (!cancelled) setError(true);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+    (async () => {
+      // Link any guest purchases bought under the same email before fetching
+      // tickets so My Tickets never looks incomplete right after sign-in.
+      await linkGuestOrdersOnce();
+      if (cancelled) return;
+      fetchMyTickets(user.id)
+        .then((data) => {
+          if (!cancelled) setTickets(data);
+        })
+        .catch(() => {
+          if (!cancelled) setError(true);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+    })();
     setLoadedUserId(user.id);
     return () => {
       cancelled = true;

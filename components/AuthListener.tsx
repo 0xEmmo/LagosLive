@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useLagosLiveStore } from '@/lib/store';
+import { linkGuestOrdersOnce } from '@/lib/orders-linking';
 
 // Single source of truth for auth state: login/signup/logout in the store just
 // call the Supabase auth method and report errors back to the UI — this listener
@@ -37,16 +38,4 @@ export default function AuthListener() {
   }, [loadUserData, clearUserData]);
 
   return null;
-}
-
-// Runs at most once per browser session. The link endpoint is idempotent, so
-// even a rerun is harmless — this just keeps a sign-in from doing unnecessary work.
-function linkGuestOrdersOnce() {
-  if (typeof window === 'undefined') return;
-  const flag = sessionStorage.getItem('ll_guest_linked');
-  if (flag === '1') return;
-  sessionStorage.setItem('ll_guest_linked', '1');
-  fetch('/api/orders/link-guest', { method: 'POST' }).catch(() => {
-    // Best-effort only — the next sign-in retries it.
-  });
 }

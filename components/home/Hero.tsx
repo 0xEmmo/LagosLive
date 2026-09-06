@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import Image from 'next/image';
-import { Sparkles, ArrowRight, Ticket } from 'lucide-react';
+import { Sparkles, ArrowRight, Ticket, Search } from 'lucide-react';
 import Marquee from '@/components/Marquee';
 import { VC, VCB, VCT, VIBE_LABEL, partyPhoto, hostStartHref } from '@/lib/data';
 import { sortByTrending } from '@/lib/filters';
@@ -16,12 +18,20 @@ interface HeroProps {
 
 export default function Hero({ parties, loading }: HeroProps) {
   const user = useLagosLiveStore((s) => s.user);
+  const router = useRouter();
+  const [query, setQuery] = useState('');
   const featured =
     sortByTrending(parties).find((p) => !!partyPhoto(p.id, p.coverUrl)) ??
     (sortByTrending(parties)[0] as Party | undefined);
 
   const liveNow = !loading && parties.length > 0;
   const ticker = parties.slice(0, 12);
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = query.trim();
+    router.push(q ? `/events?q=${encodeURIComponent(q)}` : '/events');
+  };
 
   return (
     <section className="relative overflow-hidden">
@@ -62,6 +72,30 @@ export default function Hero({ parties, loading }: HeroProps) {
               Create your event, sell tickets, manage your guests and get paid — all from one place.
             </p>
 
+            <form
+              onSubmit={submitSearch}
+              className="mb-5 flex max-w-[440px] items-center gap-2 rounded-[14px] px-3.5 py-2.5 transition-all duration-200"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)' }}
+            >
+              <Search size={16} strokeWidth={2} style={{ color: '#6B6C80' }} />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onFocus={(e) => {
+                  e.currentTarget.parentElement!.style.borderColor = 'rgba(255,45,149,0.4)';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.parentElement!.style.borderColor = 'rgba(255,255,255,0.12)';
+                }}
+                placeholder="Search events, venues, parties…"
+                className="w-full bg-transparent text-sm outline-none"
+                style={{ color: '#FFFFFF' }}
+              />
+              <button type="submit" className="rounded-[10px] px-3.5 py-2 text-[12.5px] font-bold text-white" style={{ background: 'linear-gradient(135deg,#FF2D95,#8A2BE2)' }}>
+                Go
+              </button>
+            </form>
+
             <div className="mb-5 flex flex-col gap-2.5 sm:flex-row">
               <Link
                 href={hostStartHref(user)}
@@ -71,7 +105,7 @@ export default function Hero({ parties, loading }: HeroProps) {
                 <ArrowRight size={15} strokeWidth={2.5} />
               </Link>
               <Link
-                href="/explore"
+                href="/events"
                 className="flex items-center justify-center gap-2 rounded-[14px] px-7 py-3.5 text-sm font-bold transition-all duration-200 active:opacity-80"
                 style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', color: '#FFFFFF' }}
               >

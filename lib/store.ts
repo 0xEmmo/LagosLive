@@ -11,6 +11,8 @@ export interface User {
   email: string;
   isAdmin: boolean;
   role: 'viewer' | 'organizer' | 'support' | 'finance' | 'admin' | 'super_admin';
+  /** Atomic permissions the user's roles grant (from user_permissions RPC). */
+  permissions: string[] | null;
   accountStatus: 'active' | 'suspended' | 'flagged' | 'banned';
   phone?: string | null;
   kycStatus: 'none' | 'pending' | 'approved' | 'rejected';
@@ -119,10 +121,11 @@ export const useLagosLiveStore = create<LagosLiveState>()(
       },
 
       loadUserData: async (userId) => {
-        const [{ data: profile }, { data: saved }, { data: rem }] = await Promise.all([
+        const [{ data: profile }, { data: saved }, { data: rem }, { data: perms }] = await Promise.all([
           supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
           supabase.from('saved_parties').select('party_id').eq('user_id', userId),
           supabase.from('reminders').select('party_id, notified_at').eq('user_id', userId),
+          supabase.rpc('user_permissions', { p_user_id: userId }),
         ]);
         set({
           user: profile
@@ -132,6 +135,7 @@ export const useLagosLiveStore = create<LagosLiveState>()(
                 email: profile.email,
                 isAdmin: profile.is_admin,
                 role: profile.role as User['role'],
+                permissions: Array.isArray(perms) ? (perms as string[]) : null,
                 accountStatus: profile.account_status as User['accountStatus'],
                 phone: profile.phone,
                 kycStatus: profile.kyc_status as User['kycStatus'],

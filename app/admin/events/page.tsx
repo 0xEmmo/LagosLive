@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Eye, Pencil, Check, X, Ban, RotateCcw, Trash2, Flag, Search, Download } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
-import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, useRoleGuard, Badge } from '@/components/ui/dashboard-ui';
+import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, usePermissionGuard, Badge } from '@/components/ui/dashboard-ui';
+import { usePermission } from '@/lib/hooks/usePermission';
 import { fetchAdminEvents, type AdminEventJoined, toCsv, downloadCsv } from '@/lib/admin-queries';
 import { setEventReviewStatus, deleteParty } from '@/lib/queries';
 import { useLagosLiveStore } from '@/lib/store';
@@ -23,7 +24,12 @@ const STATUS_STYLE: Record<string, { label: string; bg: string; color: string }>
 type StatusFilter = 'all' | 'draft' | 'pending' | 'approved' | 'rejected' | 'suspended';
 
 export default function AdminEventsPage() {
-  const { ready } = useRoleGuard('admin');
+  const { ready } = usePermissionGuard('events.view');
+  const { hasPermission: canEdit } = usePermission('events.edit');
+  const { hasPermission: canApprove } = usePermission('events.approve');
+  const { hasPermission: canReject } = usePermission('events.reject');
+  const { hasPermission: canCancel } = usePermission('events.cancel');
+  const { hasPermission: canDelete } = usePermission('events.delete');
   const showToast = useLagosLiveStore((s) => s.showToast);
   const [events, setEvents] = useState<AdminEventJoined[]>([]);
   const [status, setStatus] = useState<'loading' | 'error' | 'ok'>('loading');
@@ -196,17 +202,17 @@ export default function AdminEventsPage() {
                     </div>
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       <ActionLink href={`/admin/events/${ev.id}`} label="View" icon={<Eye size={12} />} />
-                      <ActionLink href={`/host/${ev.id}/edit`} label="Edit" icon={<Pencil size={12} />} />
-                      {ev.status === 'approved' && <ActionBtn label="Suspend" icon={<Ban size={12} />} color="#FF8A00" onClick={() => setStatusOf(ev.id, 'suspended', ev.title)} />}
-                      {(ev.status === 'suspended' || ev.status === 'rejected') && <ActionBtn label="Reinstate" icon={<RotateCcw size={12} />} color="#00F5D4" onClick={() => setStatusOf(ev.id, 'approved', ev.title)} />}
+                      {canEdit && <ActionLink href={`/host/${ev.id}/edit`} label="Edit" icon={<Pencil size={12} />} />}
+                      {canCancel && ev.status === 'approved' && <ActionBtn label="Suspend" icon={<Ban size={12} />} color="#FF8A00" onClick={() => setStatusOf(ev.id, 'suspended', ev.title)} />}
+                      {canApprove && (ev.status === 'suspended' || ev.status === 'rejected') && <ActionBtn label="Reinstate" icon={<RotateCcw size={12} />} color="#00F5D4" onClick={() => setStatusOf(ev.id, 'approved', ev.title)} />}
                       {(ev.status === 'pending' || ev.status === 'draft') && (
                         <>
-                          <ActionBtn label="Submit" icon={<Check size={12} />} color="#FFD600" onClick={() => setStatusOf(ev.id, 'pending', ev.title)} />
-                          <ActionBtn label="Approve" icon={<Check size={12} />} color="#00F5D4" onClick={() => setStatusOf(ev.id, 'approved', ev.title)} />
-                          <ActionBtn label="Reject" icon={<X size={12} />} color="#FF8A00" onClick={() => setStatusOf(ev.id, 'rejected', ev.title)} />
+                          {canApprove && <ActionBtn label="Submit" icon={<Check size={12} />} color="#FFD600" onClick={() => setStatusOf(ev.id, 'pending', ev.title)} />}
+                          {canApprove && <ActionBtn label="Approve" icon={<Check size={12} />} color="#00F5D4" onClick={() => setStatusOf(ev.id, 'approved', ev.title)} />}
+                          {canReject && <ActionBtn label="Reject" icon={<X size={12} />} color="#FF8A00" onClick={() => setStatusOf(ev.id, 'rejected', ev.title)} />}
                         </>
                       )}
-                      <ActionBtn label="Delete" icon={<Trash2 size={12} />} color="#FF2D95" onClick={() => remove(ev)} />
+                      {canDelete && <ActionBtn label="Delete" icon={<Trash2 size={12} />} color="#FF2D95" onClick={() => remove(ev)} />}
                     </div>
                   </div>
                 );
@@ -246,13 +252,14 @@ export default function AdminEventsPage() {
                         <td className="border-t px-4 py-3 text-[12.5px]" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
                           <div className="flex items-center gap-1">
                             <Link href={`/admin/events/${ev.id}`} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#A7A8B5' }}>View</Link>
-                            <Link href={`/host/${ev.id}/edit`} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#A7A8B5' }}>Edit</Link>
-                            {ev.status === 'approved' && <button onClick={() => setStatusOf(ev.id, 'suspended', ev.title)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#FF8A00' }}>Suspend</button>}
+                            {canEdit && <Link href={`/host/${ev.id}/edit`} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#A7A8B5' }}>Edit</Link>}
+                            {canCancel && ev.status === 'approved' && <button onClick={() => setStatusOf(ev.id, 'suspended', ev.title)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#FF8A00' }}>Suspend</button>}
+                            {canApprove && (ev.status === 'suspended' || ev.status === 'rejected') && <button onClick={() => setStatusOf(ev.id, 'approved', ev.title)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#00F5D4' }}>Reinstate</button>}
                             {(ev.status === 'pending' || ev.status === 'draft') && <>
-                              <button onClick={() => setStatusOf(ev.id, 'approved', ev.title)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#00F5D4' }}>Approve</button>
-                              {ev.status === 'pending' && <button onClick={() => setStatusOf(ev.id, 'rejected', ev.title)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#FF8A00' }}>Reject</button>}
+                              {canApprove && <button onClick={() => setStatusOf(ev.id, 'approved', ev.title)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#00F5D4' }}>Approve</button>}
+                              {canReject && ev.status === 'pending' && <button onClick={() => setStatusOf(ev.id, 'rejected', ev.title)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#FF8A00' }}>Reject</button>}
                             </>}
-                            <button onClick={() => remove(ev)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#FF2D95' }}>Delete</button>
+                            {canDelete && <button onClick={() => remove(ev)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#FF2D95' }}>Delete</button>}
                           </div>
                         </td>
                       </tr>

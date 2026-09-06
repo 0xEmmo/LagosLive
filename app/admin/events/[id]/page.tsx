@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ArrowLeft, Check, X, Ban, RotateCcw, Flag, Download, Trash2, MapPin, Clock, Ticket, QrCode } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
-import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, useRoleGuard, Badge, StatCard } from '@/components/ui/dashboard-ui';
+import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, usePermissionGuard, Badge, StatCard } from '@/components/ui/dashboard-ui';
+import { usePermission } from '@/lib/hooks/usePermission';
 import { fetchAdminEvent, fetchEventOrders, flagEvent, updateEventNotes, fetchAdminNotes, createAdminNote, deleteAdminNote, logAudit, type AdminEventJoined, type AdminOrderJoined, type NoteRow, toCsv, downloadCsv } from '@/lib/admin-queries';
 import { setEventReviewStatus } from '@/lib/queries';
 import { useLagosLiveStore } from '@/lib/store';
@@ -19,7 +20,15 @@ const PAYMENT_BADGE: Record<string, { label: string; bg: string; color: string }
 };
 
 export default function AdminEventDetailPage() {
-  const { ready } = useRoleGuard('admin');
+  const { ready } = usePermissionGuard('events.view');
+  const { hasPermission: canEdit } = usePermission('events.edit');
+  const { hasPermission: canApprove } = usePermission('events.approve');
+  const { hasPermission: canReject } = usePermission('events.reject');
+  const { hasPermission: canCancel } = usePermission('events.cancel');
+  const { hasPermission: canExport } = usePermission('attendees.export');
+  const { hasPermission: canCheckin } = usePermission('attendees.checkin');
+  const { hasPermission: canWriteNotes } = usePermission('support.reply');
+  const { hasPermission: canDeleteNotes } = usePermission('staff.suspend');
   const routeParams = useParams<{ id: string }>();
   const showToast = useLagosLiveStore((s) => s.showToast);
 
@@ -168,7 +177,7 @@ export default function AdminEventDetailPage() {
               subtitle={`${event.date} · ${event.time} · ${event.location}`}
               right={
                 <div className="flex flex-wrap gap-2">
-                  {event.status === 'approved' && (
+                  {event.status === 'approved' && canCheckin && (
                     <Link
                       href={`/check-in/${event.id}`}
                       className="flex items-center gap-1.5 rounded-[9px] border px-2.5 py-1.5 text-[11.5px] font-semibold"
@@ -177,12 +186,12 @@ export default function AdminEventDetailPage() {
                       <QrCode size={13} /> Check In
                     </Link>
                   )}
-                  {event.status === 'approved' && <ActionBtn label="Suspend" icon={<Ban size={13} />} color="#FF8A00" onClick={() => setStatusOf('suspended')} />}
-                  {(event.status === 'suspended' || event.status === 'rejected') && <ActionBtn label="Reinstate" icon={<RotateCcw size={13} />} color="#00F5D4" onClick={() => setStatusOf('approved')} />}
+                  {event.status === 'approved' && canCancel && <ActionBtn label="Suspend" icon={<Ban size={13} />} color="#FF8A00" onClick={() => setStatusOf('suspended')} />}
+                  {(event.status === 'suspended' || event.status === 'rejected') && canApprove && <ActionBtn label="Reinstate" icon={<RotateCcw size={13} />} color="#00F5D4" onClick={() => setStatusOf('approved')} />}
                   {event.status === 'pending' && (
                     <>
-                      <ActionBtn label="Approve" icon={<Check size={13} />} color="#00F5D4" onClick={() => setStatusOf('approved')} />
-                      <ActionBtn label="Reject" icon={<X size={13} />} color="#FF8A00" onClick={() => setStatusOf('rejected')} />
+                      {canApprove && <ActionBtn label="Approve" icon={<Check size={13} />} color="#00F5D4" onClick={() => setStatusOf('approved')} />}
+                      {canReject && <ActionBtn label="Reject" icon={<X size={13} />} color="#FF8A00" onClick={() => setStatusOf('rejected')} />}
                     </>
                   )}
                 </div>
@@ -220,7 +229,8 @@ export default function AdminEventDetailPage() {
                     </div>
                     <button
                       onClick={toggleFlag}
-                      className="flex items-center gap-1.5 rounded-[9px] border px-3 py-1.5 text-[12px] font-semibold"
+                      disabled={!canEdit}
+                      className="flex items-center gap-1.5 rounded-[9px] border px-3 py-1.5 text-[12px] font-semibold disabled:opacity-50"
                       style={{
                         background: event.flagged ? 'rgba(255,214,0,0.12)' : 'rgba(255,255,255,0.03)',
                         borderColor: event.flagged ? 'rgba(255,214,0,0.35)' : 'rgba(255,255,255,0.1)',
@@ -233,6 +243,7 @@ export default function AdminEventDetailPage() {
                 </div>
 
                 {/* Export */}
+                {canExport && (
                 <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
                   <div className="text-[12px] font-bold" style={{ color: '#FFFFFF' }}>Export Attendees</div>
                   <div className="text-[11px] mt-0.5 mb-3" style={{ color: '#A7A8B5' }}>Download the attendee list as CSV</div>
@@ -245,6 +256,7 @@ export default function AdminEventDetailPage() {
                     <Download size={13} /> Export CSV ({confirmed.length} attendees)
                   </button>
                 </div>
+              )}
               </div>
             </div>
 
@@ -280,6 +292,7 @@ export default function AdminEventDetailPage() {
             </div>
 
             {/* Admin Notes */}
+            {canWriteNotes && (
             <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <div className="mb-3 text-[12px] font-bold" style={{ color: '#FFFFFF' }}>Admin Notes</div>
               {notes.length > 0 && (
@@ -290,9 +303,11 @@ export default function AdminEventDetailPage() {
                         <div className="text-[12.5px]" style={{ color: '#D5D6E0' }}>{n.body}</div>
                         <div className="mt-1 text-[10.5px]" style={{ color: '#6B6C80' }}>{new Date(n.created_at).toLocaleString()}</div>
                       </div>
-                      <button onClick={() => removeNote(n.id)} className="shrink-0" style={{ color: '#FF2D95' }}>
-                        <Trash2 size={12} />
-                      </button>
+                      {canDeleteNotes && (
+                        <button onClick={() => removeNote(n.id)} className="shrink-0" style={{ color: '#FF2D95' }}>
+                          <Trash2 size={12} />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -316,6 +331,7 @@ export default function AdminEventDetailPage() {
                 </button>
               </div>
             </div>
+            )}
           </div>
         )}
       </div>

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Ban, RotateCcw, Search, Eye } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
-import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, Badge, useRoleGuard } from '@/components/ui/dashboard-ui';
+import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, Badge, usePermissionGuard } from '@/components/ui/dashboard-ui';
 import { fetchAllProfiles, fetchPayouts, updateProfileStatus, type HostProfile, type PayoutRow } from '@/lib/admin-queries';
 import { ROLE_LABEL, ACCOUNT_STATUS_LABEL, ACCOUNT_STATUS_COLOR, HOST_VERIFICATION_LABEL, HOST_VERIFICATION_COLOR, type Role, type AccountStatus, type HostVerification } from '@/lib/authz';
 import { useLagosLiveStore } from '@/lib/store';
@@ -15,7 +15,7 @@ const HOST_ROLES: Role[] = ['organizer', 'admin', 'super_admin', 'finance', 'sup
 type StatusFilter = 'all' | 'active' | 'suspended' | 'flagged' | 'banned';
 
 export default function AdminHostsPage() {
-  const { ready } = useRoleGuard('admin');
+  const { ready } = usePermissionGuard('hosts.view');
   const showToast = useLagosLiveStore((s) => s.showToast);
   const [profiles, setProfiles] = useState<HostProfile[]>([]);
   const [payouts, setPayouts] = useState<PayoutRow[]>([]);

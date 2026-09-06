@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
-import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, Badge, useRoleGuard } from '@/components/ui/dashboard-ui';
+import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, Badge, usePermissionGuard } from '@/components/ui/dashboard-ui';
 import { fetchAllProfiles, setUserRole, type HostProfile } from '@/lib/admin-queries';
 import { ROLE_LABEL, type Role } from '@/lib/authz';
 import { useLagosLiveStore } from '@/lib/store';
@@ -20,7 +20,7 @@ const ROLE_COLOR: Record<Role, { bg: string; color: string }> = {
 };
 
 export default function AdminRolesPage() {
-  const { ready, user } = useRoleGuard('admin');
+  const { ready, user } = usePermissionGuard('staff.permissions');
   const showToast = useLagosLiveStore((s) => s.showToast);
   const currentUserId = user?.id;
   const [profiles, setProfiles] = useState<HostProfile[]>([]);

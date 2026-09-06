@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Trash2, Save, AlertTriangle } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
-import { PageHeader, LoadingBlock, ErrorBlock, useRoleGuard } from '@/components/ui/dashboard-ui';
+import { PageHeader, LoadingBlock, ErrorBlock, usePermissionGuard } from '@/components/ui/dashboard-ui';
 import { fetchCannedResponses, fetchFaqs, upsertCannedResponses, upsertFaqs, type CannedRow, type FaqRow } from '@/lib/admin-queries';
 
 interface EditableCanned extends CannedRow {
@@ -15,7 +15,7 @@ interface EditableFaq extends FaqRow {
 }
 
 export default function SupportSettingsPage() {
-  const { user, ready } = useRoleGuard('admin');
+  const { user, ready } = usePermissionGuard('settings.view');
   const [canned, setCanned] = useState<EditableCanned[]>([]);
   const [faqs, setFaqs] = useState<EditableFaq[]>([]);
   const [activeTab, setActiveTab] = useState<'canned' | 'faqs'>('canned');

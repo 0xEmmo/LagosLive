@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { ShieldCheck, Mail, BadgeCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AdminShell from '@/components/admin-shell';
-import { PageHeader, LoadingBlock, ErrorBlock, TableShell, Cell, useRoleGuard, Badge } from '@/components/ui/dashboard-ui';
+import { PageHeader, LoadingBlock, ErrorBlock, TableShell, Cell, usePermissionGuard, Badge } from '@/components/ui/dashboard-ui';
 import { fetchAllProfiles, updateProfileRole, updateProfileStatus, type HostProfile } from '@/lib/admin-queries';
 import { ROLE_LABEL, ADMIN_ROLES, type Role } from '@/lib/authz';
 import { useLagosLiveStore } from '@/lib/store';
@@ -16,7 +16,7 @@ const ACCOUNT_BADGE: Record<string, { label: string; bg: string; color: string }
 };
 
 export default function AdminSettingsPage() {
-  const { user, ready } = useRoleGuard('admin');
+  const { user, ready } = usePermissionGuard('settings.view');
   const router = useRouter();
   const showToast = useLagosLiveStore((s) => s.showToast);
   const [profiles, setProfiles] = useState<HostProfile[]>([]);

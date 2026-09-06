@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ArrowLeft, Mail, Phone, CalendarDays, Wallet, Ticket, Building2, Shield, Ban, RotateCcw, Trash2, ShieldCheck, Check, X } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
-import { PageHeader, StatCard, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, Badge, useRoleGuard } from '@/components/ui/dashboard-ui';
+import { PageHeader, StatCard, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, Badge, usePermissionGuard } from '@/components/ui/dashboard-ui';
 import { fetchHostDetail, updateProfileStatus, deleteAdminNote, fetchAdminNotes, createAdminNote, logAudit, type HostDetail, type NoteRow } from '@/lib/admin-queries';
 import { formatNaira } from '@/lib/filters';
 import { useLagosLiveStore } from '@/lib/store';
@@ -21,7 +21,7 @@ const STATUS_STYLE: Record<string, { label: string; bg: string; color: string }>
 
 export default function AdminHostDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { ready } = useRoleGuard('admin');
+  const { ready } = usePermissionGuard('hosts.view');
   const showToast = useLagosLiveStore((s) => s.showToast);
 
   const [host, setHost] = useState<HostDetail | null>(null);

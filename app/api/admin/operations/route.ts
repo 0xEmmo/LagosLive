@@ -31,6 +31,20 @@ async function issuePaystackRefund(paymentRef: string, totalNaira: number): Prom
   }
 }
 
+// Permission gate: routes use the server-side permission model
+// (user_has_permission) rather than the legacy single role value.
+async function permOk(
+  supabase: ReturnType<typeof createServerSupabase>,
+  userId: string,
+  permission: string
+): Promise<boolean> {
+  const { data } = await supabase.rpc('user_has_permission', {
+    p_user_id: userId,
+    p_permission_name: permission,
+  });
+  return data === true;
+}
+
 // Server route for staff operations that need a service client (RLS for staff
 // already allows most reads/writes, but payment-related transitions and audit
 // trails are channeled here to keep them on one audited path).
@@ -42,14 +56,14 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
 
-    // Staff gate.
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle();
-    const role: string = profile?.role ?? 'viewer';
-    const isStaff = ['support', 'finance', 'admin', 'super_admin'].includes(role);
+    // Staff gate: any of the staff-facing read/money permissions.
+    const isStaff = (
+      await Promise.all(
+        ['orders.view', 'support.view', 'staff.view', 'hosts.view', 'revenue.view', 'payouts.view'].map((p) =>
+          permOk(supabase, user.id, p)
+        )
+      )
+    ).some(Boolean);
     if (!isStaff) return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
 
     const body = (await request.json()) as Op;
@@ -57,6 +71,9 @@ export async function POST(request: Request) {
 
     if (body.action === 'set_refund') {
       const op = body as Extract<Op, { action: 'set_refund' }>;
+      if (!(await permOk(supabase, user.id, 'orders.refund'))) {
+        return NextResponse.json({ error: 'You need refund permission to do this.' }, { status: 403 });
+      }
       const { data: order } = await service.from('orders').select('id, total').eq('id', op.orderId).maybeSingle();
       if (!order) return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
       await service.from('orders').update({ refund_status: op.refundStatus, refund_amount: op.refundAmount }).eq('id', op.orderId);
@@ -72,6 +89,9 @@ export async function POST(request: Request) {
     if (body.action === 'issue_refund') {
       // Retry a failed real-money refund for a cancelled event.
       const op = body as Extract<Op, { action: 'issue_refund' }>;
+      if (!(await permOk(supabase, user.id, 'transactions.refund'))) {
+        return NextResponse.json({ error: 'You need transaction refund permission to do this.' }, { status: 403 });
+      }
       const { data: order } = await service
         .from('orders')
         .select('id, total, payment_ref, refund_status')
@@ -106,6 +126,9 @@ export async function POST(request: Request) {
     if (body.action === 'resend_email') {
       // Best-effort: re-run the confirmation email for a confirmed order.
       const op = body as Extract<Op, { action: 'resend_email' }>;
+      if (!(await permOk(supabase, user.id, 'orders.resend_ticket'))) {
+        return NextResponse.json({ error: 'You need resend permission to do this.' }, { status: 403 });
+      }
       const { data: order } = await service
         .from('orders')
         .select('id, customer_email, order_ref, party_id, ticket_type_id, quantity, total, ticket_access_token')
@@ -138,9 +161,9 @@ export async function POST(request: Request) {
       if (!validRoles.includes(op.role)) {
         return NextResponse.json({ error: 'Invalid role.' }, { status: 400 });
       }
-      // Only admin and super_admin can promote/demote
-      if (!['admin', 'super_admin'].includes(role)) {
-        return NextResponse.json({ error: 'Only admins can change roles.' }, { status: 403 });
+      // Only staff with staff.permissions can promote/demote
+      if (!(await permOk(supabase, user.id, 'staff.permissions'))) {
+        return NextResponse.json({ error: 'You need staff permission management to do this.' }, { status: 403 });
       }
       // Cannot demote super_admin via UI
       const { data: target } = await service

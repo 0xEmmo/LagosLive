@@ -5,14 +5,14 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, DollarSign, Ticket, TrendingUp, Download } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
-import { StatCard, PageHeader, Badge, TableShell, Cell, LoadingBlock, ErrorBlock, useRoleGuard } from '@/components/ui/dashboard-ui';
+import { StatCard, PageHeader, Badge, TableShell, Cell, LoadingBlock, ErrorBlock, usePermissionGuard } from '@/components/ui/dashboard-ui';
 import { RevenueLineChart, VerticalBarChart, ChartCard } from '@/components/ui/charts';
 import { fetchEventOrders, fetchAdminEvent, toCsv, downloadCsv, type AdminOrderJoined, type AdminEventJoined } from '@/lib/admin-queries';
 import { formatNaira } from '@/lib/filters';
 
 export default function EventAnalyticsPage() {
   const params = useParams();
-  const { user, ready } = useRoleGuard('admin');
+  const { user, ready } = usePermissionGuard('analytics.events');
   const eventId = Number(params.id);
 
   const [event, setEvent] = useState<AdminEventJoined | null>(null);

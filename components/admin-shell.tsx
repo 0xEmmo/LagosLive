@@ -17,41 +17,54 @@ import {
   Shield,
   ShieldCheck,
   MessageSquareQuote,
-  Activity,
+  IdCard,
 } from 'lucide-react';
 import { useLagosLiveStore } from '@/lib/store';
 import { isAdmin, type Role } from '@/lib/authz';
+import { rolePermissions } from '@/lib/rbac';
 
 export interface AdminNavItem {
   href: string;
   label: string;
   icon: LucideIcon;
   roles?: Role[];
+  permissions?: readonly string[];
 }
 
 const NAV: AdminNavItem[] = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'super_admin'] },
-  { href: '/admin/events', label: 'Events', icon: CalendarDays, roles: ['admin', 'super_admin'] },
-  { href: '/admin/hosts', label: 'Hosts', icon: Users, roles: ['admin', 'super_admin'] },
-  { href: '/admin/users', label: 'Users', icon: Users, roles: ['support', 'admin', 'super_admin'] },
-  { href: '/admin/roles', label: 'Roles', icon: Shield, roles: ['admin', 'super_admin'] },
-  { href: '/admin/orders', label: 'Orders', icon: ShoppingBag, roles: ['finance', 'admin', 'super_admin'] },
-  { href: '/admin/reviews', label: 'Reviews', icon: MessageSquareQuote, roles: ['support', 'admin', 'super_admin'] },
-  { href: '/admin/revenue', label: 'Revenue', icon: Wallet, roles: ['finance', 'admin', 'super_admin'] },
-  { href: '/admin/analytics', label: 'Analytics', icon: BarChart3, roles: ['admin', 'super_admin'] },
-  { href: '/admin/support', label: 'Support', icon: LifeBuoy, roles: ['support', 'admin', 'super_admin'] },
-  { href: '/admin/logs', label: 'Audit Logs', icon: ScrollText, roles: ['admin', 'super_admin'] },
-  { href: '/admin/settings', label: 'Settings', icon: Settings, roles: ['admin', 'super_admin'] },
+  { href: '/admin/events', label: 'Events', icon: CalendarDays, permissions: ['events.view'] },
+  { href: '/admin/hosts', label: 'Hosts', icon: Users, permissions: ['hosts.view'] },
+  { href: '/admin/users', label: 'Users', icon: Users, permissions: ['staff.suspend'] },
+  { href: '/admin/roles', label: 'Roles', icon: Shield, permissions: ['staff.permissions'] },
+  { href: '/admin/staff', label: 'Staff', icon: IdCard, permissions: ['staff.view'] },
+  { href: '/admin/orders', label: 'Orders', icon: ShoppingBag, permissions: ['orders.view'] },
+  { href: '/admin/reviews', label: 'Reviews', icon: MessageSquareQuote, permissions: ['reviews.view'] },
+  { href: '/admin/revenue', label: 'Revenue', icon: Wallet, permissions: ['revenue.view'] },
+  { href: '/admin/analytics', label: 'Analytics', icon: BarChart3, permissions: ['analytics.view'] },
+  { href: '/admin/support', label: 'Support', icon: LifeBuoy, permissions: ['support.view'] },
+  { href: '/admin/logs', label: 'Audit Logs', icon: ScrollText, permissions: ['audit.view'] },
+  { href: '/admin/settings', label: 'Settings', icon: Settings, permissions: ['settings.view'] },
 ];
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const user = useLagosLiveStore((s) => s.user);
 
-  const items = useMemo(
-    () => NAV.filter((i) => !i.roles || (user && (i.roles.includes(user.role) || isAdmin(user.role)))),
-    [user]
-  );
+  const items = useMemo(() => {
+    if (!user) return [];
+    const effectivePerms = user.permissions ?? rolePermissions(user.role);
+    return NAV.filter((item) => {
+      // super_admin sees everything; legacy role lists still work for items
+      // that haven't been mapped to permissions yet.
+      const hasRole = item.roles?.length ? item.roles.includes(user.role) || isAdmin(user.role) : false;
+      const hasPerm = item.permissions?.length ? item.permissions.some((p) => effectivePerms.includes(p)) : false;
+      if (user.role === 'super_admin') return true;
+      if (item.permissions?.length) return hasPerm;
+      if (item.roles?.length) return hasRole;
+      return true;
+    });
+  }, [user]);
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row" style={{ paddingBottom: 0 }}>

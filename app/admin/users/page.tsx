@@ -3,13 +3,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Ban, RotateCcw, Search } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
-import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, Badge, useRoleGuard } from '@/components/ui/dashboard-ui';
+import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, Badge, usePermissionGuard } from '@/components/ui/dashboard-ui';
 import { fetchAllProfiles, updateProfileStatus, logAudit, type HostProfile } from '@/lib/admin-queries';
 import { ACCOUNT_STATUS_LABEL, ACCOUNT_STATUS_COLOR, type AccountStatus } from '@/lib/authz';
 import { useLagosLiveStore } from '@/lib/store';
 
 export default function AdminUsersPage() {
-  const { ready } = useRoleGuard('support');
+  const { ready } = usePermissionGuard('staff.suspend');
   const showToast = useLagosLiveStore((s) => s.showToast);
   const [profiles, setProfiles] = useState<HostProfile[]>([]);
   const [status, setStatus] = useState<'loading' | 'error' | 'ok'>('loading');

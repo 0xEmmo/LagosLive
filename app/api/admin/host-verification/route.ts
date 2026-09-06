@@ -35,16 +35,16 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
 
-    const service = createServiceSupabase();
-    const { data: actor } = await service
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle();
-    if (!['admin', 'super_admin'].includes(actor?.role ?? '')) {
-      return NextResponse.json({ error: 'Only admins can resolve verification requests.' }, { status: 403 });
+    // Only staff with host verification permission may resolve a request.
+    const { data: canVerify } = await supabase.rpc('user_has_permission', {
+      p_user_id: user.id,
+      p_permission_name: 'hosts.verify',
+    });
+    if (canVerify !== true) {
+      return NextResponse.json({ error: 'Only staff with host verification access can resolve these requests.' }, { status: 403 });
     }
 
+    const service = createServiceSupabase();
     const { data: target, error: targetError } = await service
       .from('profiles')
       .select('id, name, email, account_status, host_verification_status, host_verification_reason')

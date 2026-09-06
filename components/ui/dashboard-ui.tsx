@@ -6,6 +6,9 @@ import type { LucideIcon } from 'lucide-react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { useLagosLiveStore } from '@/lib/store';
 import { isStaff } from '@/lib/authz';
+import { usePermissionGuard as _usePermissionGuard } from '@/lib/hooks/usePermission';
+
+export { _usePermissionGuard as usePermissionGuard };
 
 export const CARD = {
   background: 'rgba(255,255,255,0.03)',

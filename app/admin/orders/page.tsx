@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { RefreshCw, Search, Download } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
-import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, Badge, useRoleGuard } from '@/components/ui/dashboard-ui';
+import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, Badge, usePermissionGuard } from '@/components/ui/dashboard-ui';
 import { fetchAllOrders, type AdminOrderJoined, toCsv, downloadCsv } from '@/lib/admin-queries';
 import { useRealtimeOrders } from '@/lib/hooks/useRealtimeOrders';
 import { formatNaira } from '@/lib/filters';
@@ -20,7 +20,7 @@ const PAYMENT_STYLE: Record<string, { label: string; bg: string; color: string }
 };
 
 export default function AdminOrdersPage() {
-  const { ready } = useRoleGuard('finance');
+  const { ready } = usePermissionGuard('orders.view');
   const showToast = useLagosLiveStore((s) => s.showToast);
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');

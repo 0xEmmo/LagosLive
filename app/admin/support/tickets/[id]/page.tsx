@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Send, LifeBuoy, ShieldCheck } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
-import { useRoleGuard } from '@/components/ui/dashboard-ui';
+import { usePermissionGuard } from '@/components/ui/dashboard-ui';
 import { supabase } from '@/lib/supabase/client';
 import { fetchSupportMessages, createSupportMessage, updateSupportTicket, type SupportMessageRow, type TicketRow } from '@/lib/admin-queries';
 
@@ -33,7 +33,7 @@ const CANNED_RESPONSES = [
 export default function AdminTicketDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, ready } = useRoleGuard('support');
+  const { user, ready } = usePermissionGuard('support.view');
   const ticketId = Number(params.id);
 
   const [ticket, setTicket] = useState<TicketRow | null>(null);

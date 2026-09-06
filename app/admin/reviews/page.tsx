@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Star, ShieldCheck, EyeOff, Ban, Eye } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
-import { PageHeader, Badge, TableShell, Cell, LoadingBlock, ErrorBlock, EmptyBlock, useRoleGuard } from '@/components/ui/dashboard-ui';
+import { PageHeader, Badge, TableShell, Cell, LoadingBlock, ErrorBlock, EmptyBlock, usePermissionGuard } from '@/components/ui/dashboard-ui';
+import { usePermission } from '@/lib/hooks/usePermission';
 import { fetchAllReviews, moderateReview, type ReviewRow, type ReviewModStatus } from '@/lib/admin-queries';
 
 const STAT_COLORS: Record<ReviewModStatus, { bg: string; color: string }> = {
@@ -20,7 +21,8 @@ const FILTERS: { key: ReviewModStatus | 'all'; label: string }[] = [
 ];
 
 export default function AdminReviewsPage() {
-  const { user, ready } = useRoleGuard('support');
+  const { user, ready } = usePermissionGuard('reviews.view');
+  const { hasPermission: canModerate } = usePermission('reviews.moderate');
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
   const [status, setStatus] = useState<'loading' | 'error' | 'ok'>('loading');
   const [attempt, setAttempt] = useState(0);
@@ -144,6 +146,7 @@ export default function AdminReviewsPage() {
                   )}
                 </Cell>
                 <Cell>
+                  {canModerate ? (
                   <div className="flex items-center gap-1.5">
                     {review.moderation_status !== 'visible' && (
                       <button
@@ -179,6 +182,7 @@ export default function AdminReviewsPage() {
                       </button>
                     )}
                   </div>
+                  ) : (<span className="text-[11px]" style={{ color: '#6B6C80' }}>—</span>)}
                 </Cell>
               </tr>
             ))}

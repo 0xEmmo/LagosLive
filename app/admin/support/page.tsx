@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { LifeBuoy, ExternalLink, Settings, Search } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
-import { PageHeader, Badge, TableShell, Cell, LoadingBlock, ErrorBlock, EmptyBlock, useRoleGuard } from '@/components/ui/dashboard-ui';
+import { PageHeader, Badge, TableShell, Cell, LoadingBlock, ErrorBlock, EmptyBlock, usePermissionGuard } from '@/components/ui/dashboard-ui';
 import { fetchSupportTickets, updateSupportTicket, type TicketRow } from '@/lib/admin-queries';
 
 const PRIORITY_STYLE: Record<string, { bg: string; color: string }> = {
@@ -24,7 +24,7 @@ const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
 const STATUS_FILTERS = ['all', 'open', 'in_progress', 'resolved', 'closed'];
 
 export default function SupportPage() {
-  const { user, ready } = useRoleGuard('support');
+  const { user, ready } = usePermissionGuard('support.view');
   const [tickets, setTickets] = useState<TicketRow[]>([]);
   const [status, setStatus] = useState<'loading' | 'error' | 'ok'>('loading');
   const [attempt, setAttempt] = useState(0);

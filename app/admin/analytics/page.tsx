@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { DollarSign, Ticket, TrendingUp, AlertTriangle, Download, ExternalLink } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
-import { StatCard, PageHeader, Badge, LoadingBlock, ErrorBlock, useRoleGuard } from '@/components/ui/dashboard-ui';
+import { StatCard, PageHeader, Badge, LoadingBlock, ErrorBlock, usePermissionGuard } from '@/components/ui/dashboard-ui';
 import { RevenueLineChart, PieChartDisplay, VerticalBarChart, ChartCard } from '@/components/ui/charts';
 import { fetchAllOrders, filterOrdersByDays, toCsv, downloadCsv, type AdminOrderJoined } from '@/lib/admin-queries';
 import { supabase } from '@/lib/supabase/client';
@@ -28,7 +28,7 @@ const RANGES = [
 ];
 
 export default function AnalyticsPage() {
-  const { user, ready } = useRoleGuard('admin');
+  const { user, ready } = usePermissionGuard('analytics.view');
   const [orders, setOrders] = useState<AdminOrderJoined[]>([]);
   const [parties, setParties] = useState<PartyRow[]>([]);
   const [status, setStatus] = useState<'loading' | 'error' | 'ok'>('loading');

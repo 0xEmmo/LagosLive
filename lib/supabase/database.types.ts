@@ -918,6 +918,150 @@ export type Database = {
           },
         ]
       }
+      permissions: {
+        Row: {
+          action: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          resource: string
+          sensitive: boolean
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          resource: string
+          sensitive?: boolean
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          resource?: string
+          sensitive?: boolean
+        }
+        Relationships: []
+      }
+      roles: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_builtin: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_builtin?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_builtin?: boolean
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roles_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "auth.users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_permissions: {
+        Row: {
+          created_at: string
+          permission_id: string
+          role_id: string
+        }
+        Insert: {
+          created_at?: string
+          permission_id: string
+          role_id: string
+        }
+        Update: {
+          created_at?: string
+          permission_id?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "role_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          reason: string | null
+          role_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          reason?: string | null
+          role_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          reason?: string | null
+          role_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "auth.users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -930,6 +1074,19 @@ export type Database = {
           p_review_text: string
         }
         Returns: undefined
+      }
+      check_permission: {
+        Args: {
+          p_permission_name: string
+        }
+        Returns: boolean
+      }
+      create_custom_role: {
+        Args: {
+          p_name: string
+          p_description?: string
+        }
+        Returns: string
       }
       confirm_order_payment: {
         Args: {
@@ -958,6 +1115,13 @@ export type Database = {
           p_party_id: number
           p_status: string
           p_reason?: string
+        }
+        Returns: undefined
+      }
+      set_user_account_status: {
+        Args: {
+          p_user_id: string
+          p_account_status: string
         }
         Returns: undefined
       }
@@ -1003,6 +1167,20 @@ export type Database = {
           review_count: number
         }[]
       }
+      set_role_permissions: {
+        Args: {
+          p_role_id: string
+          p_permissions: string[]
+        }
+        Returns: undefined
+      }
+      set_user_roles: {
+        Args: {
+          p_user_id: string
+          p_role_ids: string[]
+        }
+        Returns: undefined
+      }
       staff_check_in: {
         Args: {
           p_party_id: number
@@ -1010,6 +1188,19 @@ export type Database = {
           p_gate?: string
         }
         Returns: Json
+      }
+      user_has_permission: {
+        Args: {
+          p_user_id: string
+          p_permission_name: string
+        }
+        Returns: boolean
+      }
+      user_permissions: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: unknown
       }
       write_audit_log: {
         Args: {

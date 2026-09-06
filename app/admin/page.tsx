@@ -6,6 +6,7 @@ import { CalendarDays, Users, Wallet, Ticket, Clock, ShoppingBag, ArrowRight, Fl
 import AdminShell from '@/components/admin-shell';
 import { StatCard, PageHeader, LoadingBlock, ErrorBlock, TableShell, Cell, Badge, useRoleGuard } from '@/components/ui/dashboard-ui';
 import { RevenueLineChart, PieChartDisplay, VerticalBarChart, ChartCard } from '@/components/ui/charts';
+import { usePermission } from '@/lib/hooks/usePermission';
 import { formatNaira } from '@/lib/filters';
 import {
   fetchOverviewMetrics,
@@ -26,6 +27,7 @@ const PAYMENT_STYLE: Record<string, { label: string; bg: string; color: string }
 
 export default function AdminDashboardPage() {
   const { user, ready } = useRoleGuard('admin');
+  const { hasPermission: canSeeRevenue } = usePermission('revenue.view');
   const [metrics, setMetrics] = useState<OverviewMetrics | null>(null);
   const [revenueTrend, setRevenueTrend] = useState<{ label: string; value: number }[]>([]);
   const [eventsByCategory, setEventsByCategory] = useState<{ label: string; value: number }[]>([]);
@@ -37,9 +39,12 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     if (!ready) return;
     setStatus('loading');
+    const trendPromise: Promise<{ label: string; value: number }[]> = canSeeRevenue
+      ? fetchRevenueTrend()
+      : Promise.resolve([]);
     Promise.all([
       fetchOverviewMetrics(),
-      fetchRevenueTrend(),
+      trendPromise,
       fetchEventsByCategory(),
       fetchOrdersByStatus(),
       fetchRecentOrders(),
@@ -53,7 +58,7 @@ export default function AdminDashboardPage() {
         setStatus('ok');
       })
       .catch(() => setStatus('error'));
-  }, [ready, attempt]);
+  }, [ready, attempt, canSeeRevenue]);
 
   if (!ready || !user) return null;
 
@@ -84,7 +89,9 @@ export default function AdminDashboardPage() {
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <StatCard label="Active Events" value={String(metrics.totalEvents)} icon={CalendarDays} color="#FF2D95" sub={`${metrics.pendingEvents} pending review`} />
               <StatCard label="Hosts" value={String(metrics.totalHosts)} icon={Users} color="#B06AFF" />
-              <StatCard label="Revenue" value={formatNaira(metrics.totalRevenue)} icon={Wallet} color="#00F5D4" sub="confirmed sales" />
+              {canSeeRevenue && (
+                <StatCard label="Revenue" value={formatNaira(metrics.totalRevenue)} icon={Wallet} color="#00F5D4" sub="confirmed sales" />
+              )}
               <StatCard label="Tickets Sold" value={String(metrics.totalTicketsSold)} icon={Ticket} color="#FFD600" />
               <StatCard label="Upcoming Events" value={String(metrics.upcomingEvents)} icon={Clock} color="#00BFFF" />
               <StatCard label="Total Orders" value={String(metrics.recentOrders)} icon={ShoppingBag} color="#FFFFFF" />
@@ -92,9 +99,11 @@ export default function AdminDashboardPage() {
 
             {/* Charts Row */}
             <div className="grid gap-4 lg:grid-cols-2">
-              <ChartCard title="30-Day Revenue Trend">
-                <RevenueLineChart data={revenueTrend} />
-              </ChartCard>
+              {canSeeRevenue && (
+                <ChartCard title="30-Day Revenue Trend">
+                  <RevenueLineChart data={revenueTrend} />
+                </ChartCard>
+              )}
               <ChartCard title="Events by Category">
                 <PieChartDisplay data={eventsByCategory} />
               </ChartCard>
@@ -140,17 +149,19 @@ export default function AdminDashboardPage() {
                   </div>
                   <ArrowRight size={18} className="text-[#00F5D4] transition-transform group-hover:translate-x-1" />
                 </Link>
-                <Link
-                  href="/admin/revenue"
-                  className="group flex items-center justify-between rounded-2xl p-5 transition-transform active:scale-[0.99]"
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,45,149,0.2)' }}
-                >
-                  <div>
-                    <div className="text-[11px] font-bold uppercase tracking-[1px]" style={{ color: '#FF2D95' }}>Revenue</div>
-                    <div className="mt-1 font-display text-[20px]" style={{ color: '#FFFFFF' }}>{formatNaira(metrics.totalRevenue)}</div>
-                  </div>
-                  <ArrowRight size={18} className="text-[#FF2D95] transition-transform group-hover:translate-x-1" />
-                </Link>
+                {canSeeRevenue && (
+                  <Link
+                    href="/admin/revenue"
+                    className="group flex items-center justify-between rounded-2xl p-5 transition-transform active:scale-[0.99]"
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,45,149,0.2)' }}
+                  >
+                    <div>
+                      <div className="text-[11px] font-bold uppercase tracking-[1px]" style={{ color: '#FF2D95' }}>Revenue</div>
+                      <div className="mt-1 font-display text-[20px]" style={{ color: '#FFFFFF' }}>{formatNaira(metrics.totalRevenue)}</div>
+                    </div>
+                    <ArrowRight size={18} className="text-[#FF2D95] transition-transform group-hover:translate-x-1" />
+                  </Link>
+                )}
               </div>
             </div>
 

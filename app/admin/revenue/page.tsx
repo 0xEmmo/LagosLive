@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Wallet, ArrowDownRight, ArrowUpRight, Clock, RotateCcw, RefreshCw } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
-import { StatCard, PageHeader, Badge, TableShell, Cell, LoadingBlock, ErrorBlock, EmptyBlock, useRoleGuard } from '@/components/ui/dashboard-ui';
+import { StatCard, PageHeader, Badge, TableShell, Cell, LoadingBlock, ErrorBlock, EmptyBlock, usePermissionGuard } from '@/components/ui/dashboard-ui';
 import { RevenueLineChart, HorizontalBarChart, ChartCard } from '@/components/ui/charts';
 import { fetchAllOrders, fetchPayouts, fetchRevenueTrend, fetchEventsByCategory, updatePayoutStatus, logAudit, type AdminOrderJoined, type PayoutRow } from '@/lib/admin-queries';
 import { formatNaira } from '@/lib/filters';
@@ -36,7 +36,7 @@ const ACTION_LABEL: Record<string, string> = {
 };
 
 export default function RevenuePage() {
-  const { user, ready } = useRoleGuard('finance');
+  const { user, ready } = usePermissionGuard('revenue.view');
   const [orders, setOrders] = useState<AdminOrderJoined[]>([]);
   const [payouts, setPayouts] = useState<PayoutRow[]>([]);
   const [revenueTrend, setRevenueTrend] = useState<{ label: string; value: number }[]>([]);

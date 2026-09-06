@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { ScrollText, Search } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
-import { PageHeader, Badge, TableShell, Cell, LoadingBlock, ErrorBlock, EmptyBlock, useRoleGuard } from '@/components/ui/dashboard-ui';
+import { PageHeader, Badge, TableShell, Cell, LoadingBlock, ErrorBlock, EmptyBlock, usePermissionGuard } from '@/components/ui/dashboard-ui';
 import { fetchAuditLogs, type AuditRow } from '@/lib/admin-queries';
 
 const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
@@ -13,7 +13,7 @@ const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
 };
 
 export default function LogsPage() {
-  const { user, ready } = useRoleGuard('admin');
+  const { user, ready } = usePermissionGuard('audit.view');
   const [logs, setLogs] = useState<AuditRow[]>([]);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<'loading' | 'error' | 'ok'>('loading');

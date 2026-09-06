@@ -172,8 +172,12 @@ export async function fetchAllProfiles(): Promise<HostProfile[]> {
   return (data ?? []) as HostProfile[];
 }
 
+/** Activate/suspend an account through the staff-gated RPC (audit-logged). */
 export async function updateProfileStatus(userId: string, accountStatus: string): Promise<void> {
-  const { error } = await supabase.from('profiles').update({ account_status: accountStatus }).eq('id', userId);
+  const { error } = await supabase.rpc('set_user_account_status', {
+    p_user_id: userId,
+    p_account_status: accountStatus,
+  });
   if (error) throw error;
 }
 
@@ -672,4 +676,101 @@ export async function moderateReview(reviewId: string, status: ReviewModStatus, 
     // Surface the human-readable RPC rejection for reasons that can be fixed.
     throw new Error(message.includes('Reason') ? message : `Couldn't ${status} this review.`);
   }
+}
+
+// ---- RBAC: permissions, roles & user-role assignment --------------------------
+
+export type PermissionRow = Database['public']['Tables']['permissions']['Row'];
+export type RoleRow = Database['public']['Tables']['roles']['Row'];
+export type UserRoleRow = Database['public']['Tables']['user_roles']['Row'];
+
+export interface RoleJoined extends RoleRow {
+  permission_names?: string[];
+  member_count?: number;
+}
+
+export interface ProfileWithRoles extends HostProfile {
+  user_roles?: { role_id: string; roles: { id: string; name: string; description?: string } | null }[];
+  assigned_roles?: string[];
+}
+
+export async function fetchAllPermissions(): Promise<PermissionRow[]> {
+  const { data, error } = await supabase.from('permissions').select('*').order('resource').order('action');
+  if (error) throw error;
+  return (data ?? []) as PermissionRow[];
+}
+
+export async function fetchAllRoles(): Promise<RoleJoined[]> {
+  const { data, error } = await supabase.from('roles').select(
+    '*, permission_names:role_permissions(permissions(name)), member_count:user_roles(count)'
+  );
+  if (error) throw error;
+  return (data ?? []).map((r) => {
+    const countAgg = Array.isArray(r.member_count)
+      ? (r.member_count as unknown as { count: number }[])
+      : [];
+    return {
+      ...r,
+      member_count: countAgg.length > 0 ? Number(countAgg[0].count ?? 0) : 0,
+      permission_names: (r.permission_names ?? [])
+        .map((p: { permissions: { name: string } | null }) => p.permissions?.name)
+        .filter(Boolean) as string[],
+    } as RoleJoined;
+  });
+}
+
+export async function fetchProfilesWithRoles(): Promise<ProfileWithRoles[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*, user_roles(role_id, roles(id, name, description))');
+  if (error) throw error;
+  return (data ?? []).map((p) => {
+    const ur = (p.user_roles ?? []) as ProfileWithRoles['user_roles'];
+    return {
+      ...p,
+      user_roles: ur,
+      assigned_roles: (ur ?? []).map((x) => x.roles?.name).filter(Boolean) as string[],
+    };
+  }) as ProfileWithRoles[];
+}
+
+/** Assign a user's role set through the staff-gated, audit-logged RPC. */
+export async function setUserRoles(userId: string, roleIds: string[]): Promise<void> {
+  const { error } = await supabase.rpc('set_user_roles', {
+    p_user_id: userId,
+    p_role_ids: roleIds,
+  });
+  if (error) {
+    throw new Error(mapRpcError(error.message, 'assign roles'));
+  }
+}
+
+/** Create a custom role through the staff-gated, audit-logged RPC. */
+export async function createCustomRole(name: string, description: string): Promise<string> {
+  const { data, error } = await supabase.rpc('create_custom_role', {
+    p_name: name,
+    p_description: description,
+  });
+  if (error) throw new Error(mapRpcError(error.message, 'create the role'));
+  return data as string;
+}
+
+/** Set a custom role's permission set through the staff-gated, audit-logged RPC. */
+export async function setRolePermissions(roleId: string, permissions: string[]): Promise<void> {
+  const { error } = await supabase.rpc('set_role_permissions', {
+    p_role_id: roleId,
+    p_permissions: permissions,
+  });
+  if (error) throw new Error(mapRpcError(error.message, 'update permissions'));
+}
+
+function mapRpcError(message: string, fallback: string): string {
+  if (message.includes('Forbidden')) return 'You need staff permission management access.';
+  if (message.includes('super_admin') || message.includes('owner')) return 'The platform owner role is protected.';
+  if (message.includes('staff access')) return message;
+  if (message.includes('Built-in')) return 'Built-in roles cannot be modified.';
+  if (message.includes('already exists')) return message;
+  if (message.includes('Invalid role')) return message;
+  if (message.includes('Profile not found')) return 'That profile no longer exists.';
+  return `Couldn't ${fallback}.`;
 }

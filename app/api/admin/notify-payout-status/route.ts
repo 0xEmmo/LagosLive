@@ -14,14 +14,18 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle();
-    const role: string = profile?.role ?? 'viewer';
-    const isStaff = ['support', 'finance', 'admin', 'super_admin'].includes(role);
-    if (!isStaff) return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
+    const isFinance = (
+      await Promise.all(
+        ['payouts.view', 'payouts.approve', 'payouts.process'].map(async (p) => {
+          const { data } = await supabase.rpc('user_has_permission', {
+            p_user_id: user.id,
+            p_permission_name: p,
+          });
+          return data === true;
+        })
+      )
+    ).some(Boolean);
+    if (!isFinance) return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
 
     const { payoutId, status } = (await request.json()) as { payoutId: number; status: string };
     if (!['pending', 'processing', 'approved', 'paid', 'rejected'].includes(status)) {

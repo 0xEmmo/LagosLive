@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ArrowLeft, Send, Mail, CalendarDays, Wallet, Ticket, ClipboardCheck, RotateCcw } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
-import { PageHeader, StatCard, LoadingBlock, ErrorBlock, EmptyBlock, Badge, useRoleGuard } from '@/components/ui/dashboard-ui';
+import { PageHeader, StatCard, LoadingBlock, ErrorBlock, EmptyBlock, Badge, usePermissionGuard } from '@/components/ui/dashboard-ui';
+import { usePermission } from '@/lib/hooks/usePermission';
 import { fetchOrderById, fetchAdminNotes, createAdminNote, type AdminOrderJoined } from '@/lib/admin-queries';
 import { formatNaira } from '@/lib/filters';
 import { useLagosLiveStore } from '@/lib/store';
@@ -36,7 +37,12 @@ interface Note {
 export default function AdminOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const orderId = Array.isArray(id) ? id[0] : id;
-  const { ready } = useRoleGuard('finance');
+  const { ready } = usePermissionGuard('orders.view');
+  const { hasPermission: canRefund } = usePermission('orders.refund');
+  const { hasPermission: canRefundTx } = usePermission('transactions.refund');
+  const { hasPermission: canResend } = usePermission('orders.resend_ticket');
+  const { hasPermission: canWriteNotes } = usePermission('support.reply');
+  const canRefundOrder = canRefund || canRefundTx;
   const showToast = useLagosLiveStore((s) => s.showToast);
 
   const [order, setOrder] = useState<AdminOrderJoined | null>(null);
@@ -205,6 +211,7 @@ export default function AdminOrderDetailPage() {
             )}
 
             <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              {canRefundOrder && (
               <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <div className="mb-3 text-[12px] font-bold" style={{ color: '#FFFFFF' }}>Refund</div>
                 <div className="mb-4">
@@ -235,12 +242,14 @@ export default function AdminOrderDetailPage() {
                   )}
                 </div>
               </div>
+              )}
 
               <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <div className="mb-3 text-[12px] font-bold" style={{ color: '#FFFFFF' }}>Customer email</div>
                 <p className="mb-4 text-[12.5px]" style={{ color: '#A7A8B5' }}>
                   Resend the ticket confirmation email to {order.customer_email ?? 'the customer'}.
                 </p>
+                {canResend && (
                 <button
                   onClick={resendEmail}
                   disabled={emailBusy}
@@ -249,9 +258,11 @@ export default function AdminOrderDetailPage() {
                 >
                   <Send size={13} /> {emailBusy ? 'Sending…' : 'Resend email'}
                 </button>
+                )}
               </div>
             </div>
 
+            {canWriteNotes && (
             <div className="mt-5 rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <div className="mb-3 text-[12px] font-bold" style={{ color: '#FFFFFF' }}>Admin notes</div>
               {notes.length === 0 ? (
@@ -287,6 +298,7 @@ export default function AdminOrderDetailPage() {
                 </button>
               </div>
             </div>
+            )}
           </>
         )}
       </div>

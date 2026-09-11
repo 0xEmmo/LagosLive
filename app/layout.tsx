@@ -9,6 +9,7 @@ import Toast from '@/components/Toast';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/home/HomeNavbar';
 import Footer from '@/components/Footer';
+import { appUrl, DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGE_HEIGHT, DEFAULT_OG_IMAGE_WIDTH } from '@/lib/seo';
 
 const bebasNeue = Bebas_Neue({
   weight: '400',
@@ -36,20 +37,34 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  // Resolves relative canonical paths and og:image URLs against the public
+  // origin so shared links always carry an absolute URL.
+  metadataBase: new URL(appUrl()),
   title: 'Lagos Live — Discover & Host Events in Lagos',
   description: 'Discover what\u2019s happening in Lagos, or create, sell and manage your next event with Lagos Live — the home of Lagos events.',
   manifest: '/manifest.json',
+  alternates: { canonical: '/' },
   openGraph: {
     title: 'Lagos Live — Discover & Host Events in Lagos',
     description: 'Find your next plan or host your own event, sell tickets, check guests in and get paid.',
     type: 'website',
     siteName: 'Lagos Live',
     locale: 'en_NG',
+    url: '/',
+    images: [
+      {
+        url: DEFAULT_OG_IMAGE,
+        width: DEFAULT_OG_IMAGE_WIDTH,
+        height: DEFAULT_OG_IMAGE_HEIGHT,
+        alt: 'Lagos Live',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Lagos Live — Discover & Host Events in Lagos',
     description: 'Find your next plan or host your own event, sell tickets, check guests in and get paid.',
+    images: [DEFAULT_OG_IMAGE],
   },
   appleWebApp: {
     capable: true,

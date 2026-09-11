@@ -3,14 +3,17 @@ import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/serv
 import { paystackVerifyTransaction } from '@/lib/paystack-server';
 import { buildTicketUrl } from '@/lib/ticket-access';
 import { sendTicketConfirmation } from '@/lib/resend';
+import { claimNotification, recordNotificationOutcome } from '@/lib/notify';
 import type { Database } from '@/lib/supabase/database.types';
 
 type OrderRow = Database['public']['Tables']['orders']['Row'];
 
 // Best-effort delivery after a confirmed group payment — one email per order
-// line. Needs extra reads (party, ticket type name) purely for the email; if
-// anything is missing we log and skip; the confirmation already happened and
-// must not be rolled back.
+// line. Each delivery is claimed against the dedupe log BEFORE sending so a
+// replay/retry of this verification can never double-email a buyer; the outcome
+// (sent/failed) is then recorded for the admin delivery view. Needs extra reads
+// (party, ticket type name) purely for the email; if anything is missing we log
+// and skip; the confirmation already happened and must not be rolled back.
 async function notifyConfirmedOrder(order: OrderRow): Promise<boolean> {
   const to = order.customer_email;
   if (!to) {
@@ -29,7 +32,16 @@ async function notifyConfirmedOrder(order: OrderRow): Promise<boolean> {
       console.warn('[verify] party not found for order', order.id, '— skipping ticket email');
       return false;
     }
-    return await sendTicketConfirmation({
+
+    const claimed = await claimNotification(service, {
+      userId: order.user_id,
+      email: to,
+      type: 'ticket_confirmation',
+      refId: order.id,
+    });
+    if (!claimed) return false;
+
+    const sent = await sendTicketConfirmation({
       to,
       guestName: order.guest_name ?? undefined,
       guestPhone: order.guest_phone ?? undefined,
@@ -45,6 +57,14 @@ async function notifyConfirmedOrder(order: OrderRow): Promise<boolean> {
       promoCode: order.promo_code ?? undefined,
       promoDiscount: order.promo_discount ?? undefined,
     });
+
+    await recordNotificationOutcome(service, {
+      email: to,
+      type: 'ticket_confirmation',
+      refId: order.id,
+      status: sent ? 'sent' : 'failed',
+    });
+    return sent;
   } catch (err) {
     console.warn('[verify] could not build ticket email for order', order.id, err);
     return false;

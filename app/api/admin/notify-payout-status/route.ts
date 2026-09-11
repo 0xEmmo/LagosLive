@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/server';
 import { sendPayoutStatusEmail } from '@/lib/resend';
+import { claimNotification, recordNotificationOutcome } from '@/lib/notify';
 
 // Sends a payout status notification email to the host. Resolves the host's
 // email/name from the payout record server-side (so the client never passes
@@ -47,12 +48,30 @@ export async function POST(request: Request) {
       .maybeSingle();
     if (!owner?.email) return NextResponse.json({ error: 'Host has no email.' }, { status: 400 });
 
-    await sendPayoutStatusEmail({
+    const statusCode = status as 'pending' | 'processing' | 'approved' | 'paid' | 'rejected';
+
+    // Dedupe by payout id + status: re-triggering a notification for the same
+    // transition (admin double-click, retry) can never email the host twice.
+    const claimed = await claimNotification(service, {
+      userId: payout.organizer_id,
+      email: owner.email,
+      type: 'host_payout',
+      refId: `${payout.id}:${status}`,
+    });
+    if (!claimed) return NextResponse.json({ ok: true, deduped: true });
+
+    const sent = await sendPayoutStatusEmail({
       to: owner.email,
       hostName: owner.name ?? 'there',
       amount: payout.amount,
-      status: status as 'pending' | 'processing' | 'approved' | 'paid' | 'rejected',
+      status: statusCode,
       payoutDate: payout.paid_at ? new Date(payout.paid_at).toLocaleDateString() : undefined,
+    });
+    await recordNotificationOutcome(service, {
+      email: owner.email,
+      type: 'host_payout',
+      refId: `${payout.id}:${status}`,
+      status: sent ? 'sent' : 'failed',
     });
 
     return NextResponse.json({ ok: true });

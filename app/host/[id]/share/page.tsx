@@ -43,7 +43,7 @@ export default function EventSharePage() {
 
   if (!party) notFound();
 
-  const url = partyShareUrl(party.id);
+  const url = partyShareUrl(party);
   const shareText = `${party.title} on Lagos Live! ${party.date} @ ${party.location}`;
 
   const copy = async () => {

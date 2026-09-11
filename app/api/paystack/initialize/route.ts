@@ -3,6 +3,7 @@ import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/serv
 import { generatePaymentRef, paystackInitialize } from '@/lib/paystack-server';
 import { buildTicketUrl, generateTicketAccessToken, isValidEmail } from '@/lib/ticket-access';
 import { sendTicketConfirmation } from '@/lib/resend';
+import { claimNotification, recordNotificationOutcome } from '@/lib/notify';
 import { lineDiscount, MAX_QTY_PER_TYPE } from '@/lib/tickets';
 
 interface CheckoutLine {
@@ -276,11 +277,23 @@ export async function POST(request: Request) {
 
     // Best-effort per-line ticket emails after confirmation. A failed send must
     // never unconfirm an order — the guest can always find their tickets in the
-    // confirmation screen instead.
+    // confirmation screen instead. Each line is claimed against the dedupe log
+    // first (per order id), so retrying this free-order flow can never send a
+    // buyer two tickets for the same purchase.
     const sendLineEmails = async (): Promise<boolean> => {
       try {
+        let anySent = false;
         for (let i = 0; i < plans.length; i++) {
-          await sendTicketConfirmation({
+          const lineOrder = orders[i];
+          const claimed = await claimNotification(service, {
+            userId,
+            email,
+            type: 'ticket_confirmation',
+            refId: lineOrder.id,
+          });
+          if (!claimed) continue;
+
+          const sent = await sendTicketConfirmation({
             to: email,
             guestName: guestName || undefined,
             guestPhone: guestPhone || undefined,
@@ -291,13 +304,21 @@ export async function POST(request: Request) {
             ticketTypeName: plans[i].ticketTypeName,
             quantity: plans[i].quantity,
             total: plans[i].netTotal,
-            orderRef: orders[i].order_ref,
-            ticketUrl: buildTicketUrl(orders[i].id, orders[i].ticket_access_token),
+            orderRef: lineOrder.order_ref,
+            ticketUrl: buildTicketUrl(lineOrder.id, lineOrder.ticket_access_token),
             promoCode: promoCode ?? undefined,
             promoDiscount: plans[i].discount > 0 ? plans[i].discount : undefined,
           });
+
+          await recordNotificationOutcome(service, {
+            email,
+            type: 'ticket_confirmation',
+            refId: lineOrder.id,
+            status: sent ? 'sent' : 'failed',
+          });
+          if (sent) anySent = true;
         }
-        return true;
+        return anySent;
       } catch {
         return false;
       }

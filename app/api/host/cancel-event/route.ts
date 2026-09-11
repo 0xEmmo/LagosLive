@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/server';
 import { sendEventCancellationEmail } from '@/lib/resend';
+import { claimNotification, recordNotificationOutcome } from '@/lib/notify';
 
 const PAYSTACK_API = 'https://api.paystack.co';
 
@@ -111,7 +112,11 @@ export async function POST(request: Request) {
     for (const order of orders ?? []) {
       const alreadyFinal = ['refunded', 'requested', 'processing', 'rejected'].includes(order.refund_status);
       const shouldRetry = order.refund_status === 'failed';
+      // Whether the guest's money is actually on its way: only a refunded
+      // (or newly accepted) order claims a refund was processed in the email.
+      const refundedOk = order.refund_status === 'refunded';
 
+      let refundAccepted = false;
       if (alreadyFinal && !shouldRetry) {
         // Nothing to refund; just make sure the guest sees why the event is gone.
         if (order.refund_status !== 'refunded') {
@@ -121,7 +126,7 @@ export async function POST(request: Request) {
             .eq('id', order.id);
         }
       } else {
-        const refundAccepted = await issuePaystackRefund(order.payment_ref ?? '', order.total);
+        refundAccepted = await issuePaystackRefund(order.payment_ref ?? '', order.total);
         if (refundAccepted) {
           refundedCount += 1;
           spotsLeft = Math.min(party.capacity, spotsLeft + order.quantity);
@@ -138,16 +143,33 @@ export async function POST(request: Request) {
           })
           .eq('id', order.id);
       }
+      const wasRefunded = refundedOk || refundAccepted;
 
       if (order.customer_email) {
-        const sent = await sendEventCancellationEmail({
-          to: order.customer_email,
-          guestName: order.customer_email.split('@')[0] || 'there',
-          partyTitle: party.title,
-          reason,
-          amountNaira: order.total,
+        // Dedupe per order: retrying this endpoint (or an overlapping host
+        // click) can never email the same guest twice about one cancellation.
+        const claimed = await claimNotification(service, {
+          userId: order.user_id,
+          email: order.customer_email,
+          type: 'event_cancellation',
+          refId: order.id,
         });
-        if (sent) notifiedCount += 1;
+        if (claimed) {
+          const sent = await sendEventCancellationEmail({
+            to: order.customer_email,
+            guestName: order.customer_email.split('@')[0] || 'there',
+            partyTitle: party.title,
+            reason,
+            amountNaira: wasRefunded ? order.total : 0,
+          });
+          if (sent) notifiedCount += 1;
+          await recordNotificationOutcome(service, {
+            email: order.customer_email,
+            type: 'event_cancellation',
+            refId: order.id,
+            status: sent ? 'sent' : 'failed',
+          });
+        }
       }
     }
 

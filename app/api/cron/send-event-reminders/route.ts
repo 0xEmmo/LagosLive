@@ -12,7 +12,7 @@ import { buildTicketUrl } from '@/lib/ticket-access';
 // each delivery so an overlapping run can never email the same person twice
 // for the same event.
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const APP_URL = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
 
 type PrefsRow = {
   user_id: string;

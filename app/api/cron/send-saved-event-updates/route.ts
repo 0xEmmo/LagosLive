@@ -8,7 +8,7 @@ import { sendAlmostSoldOutEmail } from '@/lib/resend';
 // preference (a saved event is the explicit signal for wanting these), and
 // claimed through record_notification_send() so one email per saved event.
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const APP_URL = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
 
 export const dynamic = 'force-dynamic';
 

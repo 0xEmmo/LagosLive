@@ -3,7 +3,7 @@ import { createServiceSupabase } from '@/lib/supabase/server';
 import { sendNewsletterCampaignEmail } from '@/lib/resend';
 import { partyPhoto } from '@/lib/data';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const APP_URL = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
 
 export async function GET(request: Request) {
   const secret = request.headers.get('authorization')?.replace('Bearer ', '');

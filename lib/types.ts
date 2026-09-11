@@ -19,6 +19,7 @@ export interface TicketType {
 export interface Party {
   id: number;
   title: string;
+  slug: string | null;
   date: string;
   time: string;
   startsAt: string;

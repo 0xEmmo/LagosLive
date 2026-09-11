@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/server';
+import { sendRefundProcessedEmail, sendTicketConfirmation } from '@/lib/resend';
+import { claimNotification, recordNotificationOutcome } from '@/lib/notify';
+import { buildTicketUrl } from '@/lib/ticket-access';
 
 type Op =
   | { action: 'set_refund'; orderId: string; refundStatus: string; refundAmount: number }
@@ -28,6 +31,66 @@ async function issuePaystackRefund(paymentRef: string, totalNaira: number): Prom
     );
   } catch {
     return false;
+  }
+}
+
+// Tells the guest their money is on its way after a refund actually went out
+// (manual set_refund to 'refunded' or a successful issue_refund retry). Deduped
+// per order id so a re-set or re-issue cannot double-email; best-effort so a
+// missing email/party never fails the refund itself.
+async function sendRefundEmailIfDue({
+  service,
+  orderId,
+  customerEmail,
+  guestName,
+  partyId,
+  orderRef,
+  amountNaira,
+}: {
+  service: ReturnType<typeof createServiceSupabase>;
+  orderId: string;
+  customerEmail: string | null;
+  guestName?: string;
+  partyId: number;
+  orderRef: string;
+  amountNaira: number;
+}): Promise<void> {
+  if (!customerEmail) {
+    console.warn('[refund-email] order has no customer_email', orderId, '— skipping');
+    return;
+  }
+  try {
+    const { data: party } = await service
+      .from('parties')
+      .select('title')
+      .eq('id', partyId)
+      .single();
+    if (!party) {
+      console.warn('[refund-email] party not found', partyId, '— skipping');
+      return;
+    }
+    const claimed = await claimNotification(service, {
+      email: customerEmail,
+      type: 'refund_update',
+      refId: orderId,
+    });
+    if (!claimed) return;
+
+    const sent = await sendRefundProcessedEmail({
+      to: customerEmail,
+      guestName: guestName ?? customerEmail.split('@')[0] ?? 'there',
+      partyTitle: party.title,
+      amountNaira,
+      orderRef,
+    });
+    await recordNotificationOutcome(service, {
+      email: customerEmail,
+      type: 'refund_update',
+      refId: orderId,
+      status: sent ? 'sent' : 'failed',
+    });
+  } catch (err) {
+    console.warn('[refund-email] could not send for order', orderId, err);
   }
 }
 
@@ -74,7 +137,11 @@ export async function POST(request: Request) {
       if (!(await permOk(supabase, user.id, 'orders.refund'))) {
         return NextResponse.json({ error: 'You need refund permission to do this.' }, { status: 403 });
       }
-      const { data: order } = await service.from('orders').select('id, total').eq('id', op.orderId).maybeSingle();
+      const { data: order } = await service
+        .from('orders')
+        .select('id, total, customer_email, guest_name, order_ref, party_id')
+        .eq('id', op.orderId)
+        .maybeSingle();
       if (!order) return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
       await service.from('orders').update({ refund_status: op.refundStatus, refund_amount: op.refundAmount }).eq('id', op.orderId);
       await service.rpc('write_audit_log', {
@@ -83,6 +150,19 @@ export async function POST(request: Request) {
         p_target_id: op.orderId,
         p_details: { refund_amount: op.refundAmount },
       } as never);
+
+      // When a manual refund is marked as actually refunded, tell the guest.
+      if (op.refundStatus === 'refunded' && op.refundAmount > 0) {
+        await sendRefundEmailIfDue({
+          service,
+          orderId: op.orderId,
+          customerEmail: order.customer_email,
+          guestName: order.guest_name ?? undefined,
+          partyId: order.party_id,
+          orderRef: order.order_ref,
+          amountNaira: op.refundAmount,
+        });
+      }
       return NextResponse.json({ ok: true });
     }
 
@@ -94,7 +174,7 @@ export async function POST(request: Request) {
       }
       const { data: order } = await service
         .from('orders')
-        .select('id, total, payment_ref, refund_status')
+        .select('id, total, payment_ref, refund_status, customer_email, guest_name, order_ref, party_id')
         .eq('id', op.orderId)
         .eq('payment_status', 'confirmed')
         .maybeSingle();
@@ -120,18 +200,32 @@ export async function POST(request: Request) {
         // Best-effort auditing.
       }
       if (!accepted) return NextResponse.json({ error: 'Paystack did not accept the refund. Please try again.' }, { status: 502 });
+      await sendRefundEmailIfDue({
+        service,
+        orderId: op.orderId,
+        customerEmail: order.customer_email,
+        guestName: order.guest_name ?? undefined,
+        partyId: order.party_id,
+        orderRef: order.order_ref,
+        amountNaira: order.total,
+      });
       return NextResponse.json({ ok: true });
     }
 
     if (body.action === 'resend_email') {
-      // Best-effort: re-run the confirmation email for a confirmed order.
+      // Best-effort: re-run the confirmation email for a confirmed order. An
+      // admin resend is allowed to bypass the original purchase time claim by
+      // using a distinct dedupe key (":resend"), though repeats of the same
+      // resend are still deduped.
       const op = body as Extract<Op, { action: 'resend_email' }>;
       if (!(await permOk(supabase, user.id, 'orders.resend_ticket'))) {
         return NextResponse.json({ error: 'You need resend permission to do this.' }, { status: 403 });
       }
       const { data: order } = await service
         .from('orders')
-        .select('id, customer_email, order_ref, party_id, ticket_type_id, quantity, total, ticket_access_token')
+        .select(
+          'id, user_id, customer_email, guest_name, guest_phone, order_ref, party_id, ticket_type_id, quantity, total, ticket_access_token, promo_code, promo_discount'
+        )
         .eq('id', op.orderId)
         .eq('payment_status', 'confirmed')
         .maybeSingle();
@@ -141,6 +235,49 @@ export async function POST(request: Request) {
         p_target_type: 'order',
         p_target_id: op.orderId,
       } as never);
+
+      if (!order.customer_email) {
+        return NextResponse.json({ error: 'Order has no customer email to send to.' }, { status: 400 });
+      }
+      const [{ data: party }, tt] = await Promise.all([
+        service.from('parties').select('title, date, time, location').eq('id', order.party_id).single(),
+        order.ticket_type_id
+          ? service.from('ticket_types').select('name').eq('id', order.ticket_type_id).maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
+      if (!party) return NextResponse.json({ error: 'Event no longer exists.' }, { status: 404 });
+
+      const claimed = await claimNotification(service, {
+        userId: order.user_id,
+        email: order.customer_email,
+        type: 'ticket_confirmation',
+        refId: `${order.id}:resend`,
+      });
+      if (!claimed) return NextResponse.json({ ok: true, deduped: true });
+
+      const sent = await sendTicketConfirmation({
+        to: order.customer_email,
+        guestName: order.guest_name ?? undefined,
+        guestPhone: order.guest_phone ?? undefined,
+        partyTitle: party.title,
+        partyDate: party.date,
+        partyTime: party.time,
+        partyLocation: party.location,
+        ticketTypeName: tt?.data?.name ?? 'General Entry',
+        quantity: order.quantity,
+        total: order.total,
+        orderRef: order.order_ref,
+        ticketUrl: buildTicketUrl(order.id, order.ticket_access_token),
+        promoCode: order.promo_code ?? undefined,
+        promoDiscount: order.promo_discount ?? undefined,
+      });
+      await recordNotificationOutcome(service, {
+        email: order.customer_email,
+        type: 'ticket_confirmation',
+        refId: `${order.id}:resend`,
+        status: sent ? 'sent' : 'failed',
+      });
+      if (!sent) return NextResponse.json({ error: 'Email provider rejected the resend.' }, { status: 502 });
       return NextResponse.json({ ok: true });
     }
 

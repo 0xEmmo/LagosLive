@@ -4,6 +4,7 @@
 // informational — a confirmed payment stays confirmed either way.
 
 import { formatNaira } from './filters';
+import { appUrl } from './seo';
 
 const RESEND_API = 'https://api.resend.com/emails';
 
@@ -173,7 +174,7 @@ function ticketEmailHtml(d: TicketConfirmationData): string {
             <div style="font-size:11px;line-height:18px;color:#A7A8B5;">Open your Lagos Live ticket and present the QR code to be scanned. Save your ticket to your phone before heading out so you don't need an internet connection at the venue.</div>
           </div>
           <div style="text-align:center;padding-top:22px;">
-            <div style="font-size:11px;color:#6B6C80;line-height:17px;">Didn't purchase this ticket? <a href="https://lagos-live.vercel.app/support" target="_blank" style="color:#FF2D95;text-decoration:none;font-weight:700;">Contact Lagos Live</a></div>
+            <div style="font-size:11px;color:#6B6C80;line-height:17px;">Didn't purchase this ticket? <a href="${RESEND_SITE_URL}/support" target="_blank" style="color:#FF2D95;text-decoration:none;font-weight:700;">Contact Lagos Live</a></div>
           </div>
         </div>
 
@@ -418,7 +419,7 @@ export async function sendEventCancellationEmail(data: EventCancellationEmailDat
   });
 }
 
-const RESEND_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://lagos-live.vercel.app';
+const RESEND_SITE_URL = appUrl();
 
 export interface HostVerificationEmailData {
   to: string;
@@ -728,6 +729,78 @@ export async function sendAlmostSoldOutEmail(data: AlmostSoldOutEmailData): Prom
   return sendHtmlEmail({
     to: data.to,
     subject: `Hurry · ${data.partyTitle} is almost sold out`,
+    html,
+  });
+}
+
+export interface RefundProcessedEmailData {
+  to: string;
+  guestName: string;
+  partyTitle: string;
+  amountNaira: number;
+  orderRef: string;
+}
+
+// Sent to a guest once an admin-issued (or retried) refund actually went out.
+// Deduped per order by the callers in the admin operations route.
+export async function sendRefundProcessedEmail(data: RefundProcessedEmailData): Promise<boolean> {
+  const html = notificationShellHtml({
+    badge: 'Refund processed',
+    heading: 'Your refund is on its way',
+    greeting: `Hi ${data.guestName},`,
+    paragraphs: [
+      `Your payment for ${data.partyTitle} has been refunded. It typically lands back on your original payment method within 1-2 business days.`,
+    ],
+    details: [
+      { label: 'Event', value: data.partyTitle },
+      { label: 'Refund amount', value: formatNaira(data.amountNaira) },
+      { label: 'Order reference', value: data.orderRef },
+    ],
+    note: 'If the money hasn\u2019t appeared after a few days, reply to this email and our team will chase it for you.',
+  });
+  return sendHtmlEmail({
+    to: data.to,
+    subject: `Refund processed · ${data.partyTitle}`,
+    html,
+  });
+}
+
+export interface CheckInSummaryEmailData {
+  to: string;
+  hostName: string;
+  partyTitle: string;
+  partyDate: string;
+  partyLocation: string;
+  sold: number;
+  checkedIn: number;
+  noShow: number;
+  revenueNaira: number;
+  dashboardUrl: string;
+}
+
+// Sent to hosts shortly after one of their approved events wraps up, with the
+// door report. The cron waits until the event has ended, then claims + sends.
+export async function sendCheckInSummaryEmail(data: CheckInSummaryEmailData): Promise<boolean> {
+  const html = notificationShellHtml({
+    badge: 'Event wrap-up',
+    heading: `${data.partyTitle} — the numbers are in`,
+    greeting: `Hi ${data.hostName},`,
+    paragraphs: ['Thanks for hosting. Here\u2019s how the door went, at a glance.'],
+    details: [
+      { label: 'Event', value: data.partyTitle },
+      { label: 'Date', value: data.partyDate },
+      { label: 'Venue', value: data.partyLocation },
+      { label: 'Tickets sold', value: `${data.sold}` },
+      { label: 'Checked in', value: `${data.checkedIn}` },
+      { label: 'No-shows', value: `${data.noShow}` },
+      { label: 'Door revenue', value: formatNaira(data.revenueNaira) },
+    ],
+    ctaUrl: data.dashboardUrl,
+    ctaLabel: 'View Event Dashboard',
+  });
+  return sendHtmlEmail({
+    to: data.to,
+    subject: `Wrap-up · ${data.partyTitle} door report`,
     html,
   });
 }

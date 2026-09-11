@@ -222,7 +222,8 @@ export type Database = {
           organizer: string
           organizer_email: string | null
           organizer_phone: string | null
-          page_views: number
+page_views: number
+          slug: string | null
           spots_left: number
           starts_at: string
           status: string
@@ -265,6 +266,7 @@ export type Database = {
           organizer_email?: string | null
           organizer_phone?: string | null
           page_views?: number
+          slug?: string | null
           spots_left: number
           starts_at: string
           status?: string
@@ -307,6 +309,7 @@ export type Database = {
           organizer_email?: string | null
           organizer_phone?: string | null
           page_views?: number
+          slug?: string | null
           spots_left?: number
           starts_at?: string
           status?: string
@@ -483,6 +486,9 @@ export type Database = {
           channel: string
           type: string
           ref_id: string
+          status: string
+          provider_message_id: string | null
+          sent_at: string | null
           created_at: string
         }
         Insert: {
@@ -492,6 +498,9 @@ export type Database = {
           channel?: string
           type: string
           ref_id: string
+          status?: string
+          provider_message_id?: string | null
+          sent_at?: string | null
           created_at?: string
         }
         Update: {
@@ -501,6 +510,9 @@ export type Database = {
           channel?: string
           type?: string
           ref_id?: string
+          status?: string
+          provider_message_id?: string | null
+          sent_at?: string | null
           created_at?: string
         }
         Relationships: []
@@ -1261,8 +1273,19 @@ export type Database = {
           p_channel: string
           p_type: string
           p_ref_id: string
+          p_status?: string
         }
         Returns: boolean
+      }
+      update_notification_send_status: {
+        Args: {
+          p_email: string
+          p_type: string
+          p_ref_id: string
+          p_status: string
+          p_provider_message_id?: string | null
+        }
+        Returns: undefined
       }
       moderate_review: {
         Args: {

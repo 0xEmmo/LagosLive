@@ -11,7 +11,7 @@ import { sendEventChangeEmail } from '@/lib/resend';
 // record_notification_send(). The email links back to the event page rather than
 // embedding the diff, so the host's latest details are always authoritative.
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const APP_URL = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
 
 export const dynamic = 'force-dynamic';
 

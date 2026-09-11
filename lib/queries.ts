@@ -3,6 +3,7 @@ import type { Database } from './supabase/database.types';
 import type { CustomerTicket, Party, PartyStatus, Review, TicketType, Vibe } from './types';
 import { formatNaira } from './filters';
 import { haversineKm } from './geo';
+import { appUrl, slugify } from './seo';
 
 type PartyRow = Database['public']['Tables']['parties']['Row'];
 type PartyInsert = Database['public']['Tables']['parties']['Insert'];
@@ -23,6 +24,7 @@ function toParty(row: PartyRow, userLocation?: { lat: number; lng: number } | nu
   return {
     id: row.id,
     title: row.title,
+    slug: row.slug ?? null,
     date: row.date,
     time: row.time,
     startsAt: row.starts_at,
@@ -225,6 +227,24 @@ function formatClock(d: Date) {
   return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: d.getMinutes() === 0 ? undefined : '2-digit' });
 }
 
+// Builds a globally unique slug for a new event by appending a numeric suffix
+// to the title's slug while any collision exists. The DB's partial unique index
+// is the backstop; renames never change a slug so saved links stay valid.
+async function buildUniqueSlug(title: string): Promise<string> {
+  const base = slugify(title);
+  const { data, error } = await supabase
+    .from('parties')
+    .select('slug')
+    .like('slug', `${base}%`)
+    .not('slug', 'is', null);
+  if (error) throw error;
+  const existing = new Set((data ?? []).map((r) => r.slug).filter((s): s is string => !!s));
+  if (!existing.has(base)) return base;
+  let n = 2;
+  while (existing.has(`${base}-${n}`)) n += 1;
+  return `${base}-${n}`;
+}
+
 function toRow(input: PartyFormInput, createdBy: string): PartyInsert {
   const startsAt = new Date(input.startsAt);
   const endsAt = new Date(input.endsAt);
@@ -259,7 +279,11 @@ function toRow(input: PartyFormInput, createdBy: string): PartyInsert {
 }
 
 export async function createParty(input: PartyFormInput, createdBy: string): Promise<{ party: Party; promoted: boolean }> {
-  const { data, error } = await supabase.from('parties').insert({ ...toRow(input, createdBy), status: 'draft' }).select().single();
+  const { data, error } = await supabase
+    .from('parties')
+    .insert({ ...toRow(input, createdBy), status: 'draft', slug: await buildUniqueSlug(input.title) })
+    .select()
+    .single();
   if (error) throw error;
   const party = toParty(data);
   await savePartyTicketTypes(party.id, input.ticketTypes ?? [], input.feeNum === 0);
@@ -771,8 +795,9 @@ export async function fetchOrganizerEventAnalytics(partyId: number): Promise<Org
 
 // Public URL for an event's guest-facing page. Centralised so the host share
 // QR code, the copyable link and any social share all point at the same place.
-export function partyShareUrl(partyId: number): string {
-  return `https://lagoslive.ng/party/${partyId}`;
+// Prefers the pretty /events/{slug} page; falls back to the stable /party/{id}.
+export function partyShareUrl(party: Pick<Party, 'id' | 'slug'>): string {
+  return party.slug ? `${appUrl()}/events/${party.slug}` : `${appUrl()}/party/${party.id}`;
 }
 
 // ---------------------------------------------------------------------------

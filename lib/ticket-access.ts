@@ -5,6 +5,7 @@
 // id or payment reference.
 
 import { randomBytes } from 'node:crypto';
+import { appUrl } from './seo';
 
 export function generateTicketAccessToken(): string {
   return randomBytes(32).toString('hex');
@@ -15,7 +16,7 @@ export function generateTicketAccessToken(): string {
 // unguessable token appended, otherwise the ticket page would have no way to
 // prove who is asking.
 export function buildTicketUrl(orderId: string, token?: string | null): string {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://lagos-live.vercel.app';
+  const base = appUrl();
   return token ? `${base}/ticket/${orderId}?token=${token}` : `${base}/ticket/${orderId}`;
 }
 

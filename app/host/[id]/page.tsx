@@ -360,7 +360,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
             <div className="text-[12px] font-bold" style={{ color: '#FFFFFF' }}>Promote Your Event</div>
             <Share2 size={14} strokeWidth={2} color="#FF2D95" />
           </div>
-          <div className="mb-3 truncate text-[11px]" style={{ color: '#A7A8B5' }}>{partyShareUrl(party.id)}</div>
+          <div className="mb-3 truncate text-[11px]" style={{ color: '#A7A8B5' }}>{partyShareUrl(party)}</div>
           <Link
             href={`/host/${party.id}/share`}
             className="flex w-full items-center justify-center gap-1.5 rounded-[9px] py-2.5 text-[12px] font-bold transition-all duration-200"

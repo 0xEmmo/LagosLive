@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase/server';
 import { sendAlmostSoldOutEmail } from '@/lib/resend';
+import { appUrl } from '@/lib/seo';
 
 // Cron (CRON_SECRET): for approved, un-cancelled, upcoming events that are
 // nearly full (≤15% of capacity left and still unsold), nudges the users who
@@ -8,7 +9,7 @@ import { sendAlmostSoldOutEmail } from '@/lib/resend';
 // preference (a saved event is the explicit signal for wanting these), and
 // claimed through record_notification_send() so one email per saved event.
 
-const APP_URL = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
+const APP_URL = appUrl();
 
 export const dynamic = 'force-dynamic';
 

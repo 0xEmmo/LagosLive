@@ -16,13 +16,15 @@ export const DEFAULT_OG_IMAGE_HEIGHT = 941;
 // The public origin shared by canonical URLs, share links and email CTAs.
 // NEXT_PUBLIC_SITE_URL is the canonical production variable; NEXT_PUBLIC_APP_URL
 // is kept as a back-compat alias, then the production host is the fallback.
-// The trailing-slash strip keeps every caller safe from double slashes.
+// The trailing-slash strip keeps every caller safe from double slashes, and a
+// missing protocol is repaired so `new URL(appUrl())` never throws ERR_INVALID_URL.
 export function appUrl(): string {
-  return (
+  const raw =
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.NEXT_PUBLIC_APP_URL ||
-    'https://lagoslive.com.ng'
-  ).replace(/\/+$/, '');
+    'https://lagoslive.com.ng';
+  const stripped = raw.replace(/\/+$/, '');
+  return /^[a-z][a-z0-9+.-]*:\/\//i.test(stripped) ? stripped : `https://${stripped}`;
 }
 
 // SQL/IP-agnostic slug for an event title: lowercase, non-alphanumerics become

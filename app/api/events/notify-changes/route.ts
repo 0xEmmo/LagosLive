@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/server';
 import { sendEventChangeEmail } from '@/lib/resend';
+import { appUrl } from '@/lib/seo';
 
 // Host-triggered event change notice (Phase 5). Called by the host event editor
 // after a successful save that changed venue/date/time details. The host is
@@ -11,7 +12,7 @@ import { sendEventChangeEmail } from '@/lib/resend';
 // record_notification_send(). The email links back to the event page rather than
 // embedding the diff, so the host's latest details are always authoritative.
 
-const APP_URL = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
+const APP_URL = appUrl();
 
 export const dynamic = 'force-dynamic';
 

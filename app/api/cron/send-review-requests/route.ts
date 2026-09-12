@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase/server';
 import { sendReviewRequestEmail } from '@/lib/resend';
+import { appUrl } from '@/lib/seo';
 
-const APP_URL = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
+const APP_URL = appUrl();
 
 export async function GET(request: Request) {
   const secret = request.headers.get('authorization')?.replace('Bearer ', '');

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase/server';
 import { sendCheckInSummaryEmail } from '@/lib/resend';
 import { claimNotification, recordNotificationOutcome } from '@/lib/notify';
+import { appUrl } from '@/lib/seo';
 
 // Hourly-ish cron (CRON_SECRET): sends each host a door report for an approved,
 // un-cancelled event that ended within the last ~3 hours. The summary is
@@ -108,7 +109,7 @@ export async function GET(request: Request) {
       checkedIn,
       noShow,
       revenueNaira: revenue,
-      dashboardUrl: `${(process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/+$/, '')}/host/${party.id}`,
+      dashboardUrl: `${appUrl()}/host/${party.id}`,
     });
     await recordNotificationOutcome(service, {
       email: profile.email,

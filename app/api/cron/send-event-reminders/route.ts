@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase/server';
 import { sendEventReminderEmail } from '@/lib/resend';
 import { buildTicketUrl } from '@/lib/ticket-access';
+import { appUrl } from '@/lib/seo';
 
 // Hourly-ish cron (CRON_SECRET): sends a "happening soon" reminder email to
 // everyone attending an approved, un-cancelled event that starts within the
@@ -12,7 +13,7 @@ import { buildTicketUrl } from '@/lib/ticket-access';
 // each delivery so an overlapping run can never email the same person twice
 // for the same event.
 
-const APP_URL = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
+const APP_URL = appUrl();
 
 type PrefsRow = {
   user_id: string;

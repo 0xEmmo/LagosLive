@@ -3,10 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, CalendarPlus, ShieldCheck, CalendarDays, Clock, Ticket, Wallet, Settings, ListOrdered, Activity, AlertTriangle, RefreshCw, BadgeCheck, type LucideIcon } from 'lucide-react';
-import BackButton from '@/components/BackButton';
+import { CalendarPlus, CalendarDays, Clock, Ticket, Wallet, AlertTriangle, RefreshCw, BadgeCheck, type LucideIcon } from 'lucide-react';
 import PartyPhoto from '@/components/PartyPhoto';
-import HostBottomNav from '@/components/HostBottomNav';
+import HostDashboardNav from '@/components/HostDashboardNav';
 import { RevenueLineChart, PieChartDisplay, ChartCard } from '@/components/ui/charts';
 import { fetchPartiesByOwner, fetchOrganizerOrderStats, type OrganizerPartyStats } from '@/lib/queries';
 import { fetchHostOrders, type AdminOrderJoined } from '@/lib/admin-queries';
@@ -138,60 +137,7 @@ export default function HostDashboardPage() {
 
   return (
     <div className="mx-auto max-w-[600px] animate-fade-in pb-24 md:max-w-[1000px]">
-      <div
-        className="sticky top-0 z-40 flex items-center justify-between border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150"
-        style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}
-      >
-        <div className="flex items-center gap-3">
-          <BackButton href="/profile" />
-          <span className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>
-            Dashboard
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          {user.isAdmin && (
-            <Link
-              href="/admin"
-              className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[13px] font-semibold glass glass-hover"
-              style={{ color: '#A7A8B5' }}
-            >
-              <ShieldCheck size={14} strokeWidth={2} />
-              Admin
-            </Link>
-          )}
-          <Link
-            href="/host/orders"
-            className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[13px] font-semibold glass glass-hover"
-            style={{ color: '#A7A8B5' }}
-          >
-            <ListOrdered size={14} strokeWidth={2} />
-            Orders
-          </Link>
-          <Link
-            href="/host/payouts"
-            className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[13px] font-semibold glass glass-hover"
-            style={{ color: '#A7A8B5' }}
-          >
-            <Wallet size={14} strokeWidth={2} />
-            Payouts
-          </Link>
-          <Link
-            href="/host/analytics"
-            className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[13px] font-semibold glass glass-hover"
-            style={{ color: '#A7A8B5' }}
-          >
-            <Activity size={14} strokeWidth={2} />
-            Analytics
-          </Link>
-          <Link
-            href="/host/new"
-            className="btn-primary flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-semibold"
-          >
-            <Plus size={14} strokeWidth={2.5} />
-            New
-          </Link>
-        </div>
-      </div>
+      <HostDashboardNav title="Dashboard" />
 
       <div className="flex flex-col gap-4 p-5">
         {/* Host verification callout — Phase 3 trust */}
@@ -376,7 +322,6 @@ export default function HostDashboardPage() {
           </>
         )}
       </div>
-      <HostBottomNav />
     </div>
   );
 }

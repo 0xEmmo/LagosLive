@@ -3,77 +3,22 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useMemo } from 'react';
-import type { LucideIcon } from 'lucide-react';
-import {
-  LayoutDashboard,
-  CalendarDays,
-  Users,
-  ShoppingBag,
-  Wallet,
-  BarChart3,
-  Settings,
-  LifeBuoy,
-  ScrollText,
-  Shield,
-  ShieldCheck,
-  MessageSquareQuote,
-  IdCard,
-  Tag,
-  Flame,
-} from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
+import AdminDashboardNav, { filterAdminNav, type AdminNavItem } from '@/components/AdminDashboardNav';
 import { useLagosLiveStore } from '@/lib/store';
-import { isAdmin, type Role } from '@/lib/authz';
-import { rolePermissions } from '@/lib/rbac';
 
-export interface AdminNavItem {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-  roles?: Role[];
-  permissions?: readonly string[];
-}
-
-const NAV: AdminNavItem[] = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'super_admin'] },
-  { href: '/admin/events', label: 'Events', icon: CalendarDays, permissions: ['events.view'] },
-  { href: '/admin/trending', label: 'Trending', icon: Flame, permissions: ['events.edit'] },
-  { href: '/admin/hosts', label: 'Hosts', icon: Users, permissions: ['hosts.view'] },
-  { href: '/admin/users', label: 'Users', icon: Users, permissions: ['staff.suspend'] },
-  { href: '/admin/roles', label: 'Roles', icon: Shield, permissions: ['staff.permissions'] },
-  { href: '/admin/staff', label: 'Staff', icon: IdCard, permissions: ['staff.view'] },
-  { href: '/admin/orders', label: 'Orders', icon: ShoppingBag, permissions: ['orders.view'] },
-  { href: '/admin/reviews', label: 'Reviews', icon: MessageSquareQuote, permissions: ['reviews.view'] },
-  { href: '/admin/promos', label: 'Promos', icon: Tag, permissions: ['promos.view'] },
-  { href: '/admin/revenue', label: 'Revenue', icon: Wallet, permissions: ['revenue.view'] },
-  { href: '/admin/analytics', label: 'Analytics', icon: BarChart3, permissions: ['analytics.view'] },
-  { href: '/admin/support', label: 'Support', icon: LifeBuoy, permissions: ['support.view'] },
-  { href: '/admin/logs', label: 'Audit Logs', icon: ScrollText, permissions: ['audit.view'] },
-  { href: '/admin/settings', label: 'Settings', icon: Settings, permissions: ['settings.view'] },
-];
+export { type AdminNavItem, ADMIN_NAV } from '@/components/AdminDashboardNav';
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const user = useLagosLiveStore((s) => s.user);
 
-  const items = useMemo(() => {
-    if (!user) return [];
-    const effectivePerms = user.permissions ?? rolePermissions(user.role);
-    return NAV.filter((item) => {
-      // super_admin sees everything; legacy role lists still work for items
-      // that haven't been mapped to permissions yet.
-      const hasRole = item.roles?.length ? item.roles.includes(user.role) || isAdmin(user.role) : false;
-      const hasPerm = item.permissions?.length ? item.permissions.some((p) => effectivePerms.includes(p)) : false;
-      if (user.role === 'super_admin') return true;
-      if (item.permissions?.length) return hasPerm;
-      if (item.roles?.length) return hasRole;
-      return true;
-    });
-  }, [user]);
+  const items = useMemo(() => filterAdminNav(user), [user]);
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row" style={{ paddingBottom: 0 }}>
       <aside
-        className="sticky top-0 z-40 flex w-full shrink-0 border-b backdrop-blur-[22px] md:h-[100dvh] md:w-[220px] md:flex-col md:border-b-0 md:border-r"
+        className="sticky top-0 z-40 hidden w-full shrink-0 border-b backdrop-blur-[22px] md:flex md:h-[100dvh] md:w-[220px] md:flex-col md:border-b-0 md:border-r"
         style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.06)' }}
       >
         <div className="hidden items-center gap-2.5 px-5 py-5 md:flex">
@@ -86,7 +31,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           </div>
         </div>
 
-        <nav className="flex gap-1 overflow-x-auto px-3 py-2.5 md:flex-1 md:flex-col md:gap-1 md:overflow-visible md:px-3 md:py-2">
+        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-2">
           {items.map((item) => {
             const active = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
             const Icon = item.icon;
@@ -116,15 +61,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       </aside>
 
       <main className="min-w-0 flex-1">
-        <div className="md:hidden sticky top-0 z-30 flex items-center gap-3 border-b px-4 py-3 backdrop-blur-[22px]" style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}>
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: 'linear-gradient(135deg,#FF2D95,#8A2BE2)' }}>
-              <ShieldCheck size={14} strokeWidth={2.2} color="#FFFFFF" />
-            </div>
-            <span className="font-heading text-[12px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>Admin</span>
-          </div>
-          <Link href="/" className="ml-auto text-[11px] font-semibold" style={{ color: '#6B6C80' }}>Back to site</Link>
-        </div>
+        <AdminDashboardNav />
         {children}
       </main>
     </div>

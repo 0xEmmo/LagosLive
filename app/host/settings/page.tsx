@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle, RefreshCw, Save, Building2, User, Phone, FileText } from 'lucide-react';
-import BackButton from '@/components/BackButton';
+import HostDashboardNav from '@/components/HostDashboardNav';
 import { useLagosLiveStore } from '@/lib/store';
 import { updateHostProfile } from '@/lib/admin-queries';
 
@@ -73,20 +73,19 @@ export default function HostSettingsPage() {
 
   return (
     <div className="mx-auto max-w-[600px] animate-fade-in md:max-w-[1000px]">
-      <div className="sticky top-0 z-40 flex items-center justify-between border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150" style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}>
-        <div className="flex items-center gap-3">
-          <BackButton href="/host" />
-          <span className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>Settings</span>
-        </div>
-        <button
-          onClick={save}
-          disabled={saving}
-          className="flex items-center gap-1.5 rounded-[10px] px-3.5 py-2 text-[13px] font-semibold btn-primary disabled:opacity-50"
-        >
-          <Save size={13} strokeWidth={2.5} />
-          {saving ? 'Saving...' : 'Save'}
-        </button>
-      </div>
+      <HostDashboardNav
+        title="Settings"
+        action={
+          <button
+            onClick={save}
+            disabled={saving}
+            className="flex items-center gap-1.5 rounded-[10px] px-3.5 py-2 text-[13px] font-semibold btn-primary disabled:opacity-50"
+          >
+            <Save size={13} strokeWidth={2.5} />
+            {saving ? 'Saving...' : 'Save'}
+          </button>
+        }
+      />
 
       <div className="flex flex-col gap-5 p-5">
         {status === 'loading' ? (

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, notFound } from 'next/navigation';
 import { AlertTriangle, CalendarDays, Loader2, Users } from 'lucide-react';
-import BackButton from '@/components/BackButton';
+import HostDashboardNav from '@/components/HostDashboardNav';
 import { useParty } from '@/lib/hooks/useParty';
 import { fetchOrganizerOrderStats, type OrganizerPartyStats } from '@/lib/queries';
 import { formatNaira } from '@/lib/filters';
@@ -88,15 +88,7 @@ export default function CancelEventPage({ params }: { params: { id: string } }) 
 
   return (
     <div className="mx-auto max-w-[600px] animate-fade-in pb-24 md:max-w-[1000px]">
-      <div
-        className="sticky top-0 z-40 flex items-center gap-3 border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150"
-        style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}
-      >
-        <BackButton href={`/host/${party.id}`} />
-        <span className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>
-          Cancel Event
-        </span>
-      </div>
+      <HostDashboardNav title="Cancel Event" backHref={`/host/${party.id}`} />
 
       <div className="flex flex-col gap-5 p-5">
         {party.cancelledAt ? (

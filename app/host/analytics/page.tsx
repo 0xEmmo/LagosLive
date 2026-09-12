@@ -3,8 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { DollarSign, Ticket, TrendingUp, CalendarDays, AlertTriangle } from 'lucide-react';
-import BackButton from '@/components/BackButton';
-import HostBottomNav from '@/components/HostBottomNav';
+import HostDashboardNav from '@/components/HostDashboardNav';
 import { useLagosLiveStore } from '@/lib/store';
 import { fetchHostOrders, fetchHostAnalytics, type AdminOrderJoined } from '@/lib/admin-queries';
 import { RevenueLineChart, PieChartDisplay, ChartCard } from '@/components/ui/charts';
@@ -92,10 +91,7 @@ export default function HostAnalyticsPage() {
 
   return (
     <div className="mx-auto max-w-[600px] animate-fade-in pb-24 md:max-w-[1000px]">
-      <div className="sticky top-0 z-40 flex items-center gap-3 border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150" style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}>
-        <BackButton href="/host" />
-        <span className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>Analytics</span>
-      </div>
+      <HostDashboardNav title="Analytics" />
 
       <div className="flex flex-col gap-5 p-5">
         {status === 'loading' ? (
@@ -170,7 +166,6 @@ export default function HostAnalyticsPage() {
           </>
         )}
       </div>
-      <HostBottomNav />
     </div>
   );
 }

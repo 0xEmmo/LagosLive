@@ -25,7 +25,7 @@ import {
   PenLine,
   type LucideIcon,
 } from 'lucide-react';
-import BackButton from '@/components/BackButton';
+import HostDashboardNav from '@/components/HostDashboardNav';
 import PartyPhoto from '@/components/PartyPhoto';
 import SalesChart from '@/components/SalesChart';
 import { fetchOrganizerEventAnalytics, partyShareUrl, fetchEventReviews, submitEventForReview, withdrawEvent, fetchPartyHostVerified, type OrganizerEventAnalytics } from '@/lib/queries';
@@ -202,51 +202,48 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
 
   return (
     <div className="mx-auto max-w-[600px] animate-fade-in md:max-w-[1000px]">
-      <div
-        className="sticky top-0 z-40 flex items-center gap-3 border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150"
-        style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}
-      >
-        <BackButton href="/host" />
-        <span className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>
-          Event Performance
-        </span>
-        <div className="ml-auto flex items-center gap-2">
-          <Link
-            href={`/party/${party.id}`}
-            className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-semibold glass glass-hover"
-            style={{ color: '#A7A8B5' }}
-          >
-            <Eye size={13} strokeWidth={2} />
-            View
-          </Link>
-          <Link
-            href={`/host/${party.id}/edit`}
-            className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-semibold glass glass-hover"
-            style={{ color: '#A7A8B5' }}
-          >
-            <Pencil size={13} strokeWidth={2} />
-            Edit
-          </Link>
-          {!party.cancelledAt && (
+      <HostDashboardNav
+        title="Event Performance"
+        backHref="/host"
+        action={
+          <div className="flex items-center gap-2">
             <Link
-              href={`/host/${party.id}/cancel`}
-              className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-bold"
-              style={{ background: 'rgba(255,45,149,0.12)', border: '1px solid rgba(255,45,149,0.35)', color: '#FF2D95' }}
+              href={`/party/${party.id}`}
+              className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-semibold glass glass-hover"
+              style={{ color: '#A7A8B5' }}
             >
-              <XCircle size={13} strokeWidth={2} />
-              Cancel
+              <Eye size={13} strokeWidth={2} />
+              View
             </Link>
-          )}
-          <Link
-            href={`/check-in/${party.id}`}
-            className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-bold"
-            style={{ background: 'linear-gradient(135deg, #FF9B3E 0%, #FF6A00 100%)', color: '#FFFFFF', boxShadow: '0 8px 24px rgba(255,106,0,0.28)' }}
-          >
-            <QrCode size={13} strokeWidth={2} />
-            Check-in
-          </Link>
-        </div>
-      </div>
+            <Link
+              href={`/host/${party.id}/edit`}
+              className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-semibold glass glass-hover"
+              style={{ color: '#A7A8B5' }}
+            >
+              <Pencil size={13} strokeWidth={2} />
+              Edit
+            </Link>
+            {!party.cancelledAt && (
+              <Link
+                href={`/host/${party.id}/cancel`}
+                className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-bold"
+                style={{ background: 'rgba(255,45,149,0.12)', border: '1px solid rgba(255,45,149,0.35)', color: '#FF2D95' }}
+              >
+                <XCircle size={13} strokeWidth={2} />
+                Cancel
+              </Link>
+            )}
+            <Link
+              href={`/check-in/${party.id}`}
+              className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-bold"
+              style={{ background: 'linear-gradient(135deg, #FF9B3E 0%, #FF6A00 100%)', color: '#FFFFFF', boxShadow: '0 8px 24px rgba(255,106,0,0.28)' }}
+            >
+              <QrCode size={13} strokeWidth={2} />
+              Check-in
+            </Link>
+          </div>
+        }
+      />
 
       <div className="flex flex-col gap-4 p-5">
         {party.cancelledAt && (

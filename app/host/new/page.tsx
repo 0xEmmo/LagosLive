@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2, Loader2 } from 'lucide-react';
-import BackButton from '@/components/BackButton';
+import HostDashboardNav from '@/components/HostDashboardNav';
 import PartyForm from '@/components/PartyForm';
 import { createParty, type PartyFormInput } from '@/lib/queries';
 import { useLagosLiveStore } from '@/lib/store';
@@ -45,15 +45,7 @@ export default function NewEventPage() {
   if (submittedTitle) {
     return (
       <div className="mx-auto flex min-h-screen max-w-[520px] flex-col animate-fade-in md:max-w-[900px]">
-        <div
-          className="sticky top-0 z-40 flex items-center gap-3 border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150"
-          style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}
-        >
-          <BackButton href="/host" />
-          <span className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>
-            Event Submitted
-          </span>
-        </div>
+        <HostDashboardNav title="Event Submitted" />
         <div className="flex flex-1 flex-col items-center px-6 py-[52px] text-center">
           <div
             className="mb-5 flex h-[72px] w-[72px] items-center justify-center rounded-full"
@@ -117,15 +109,7 @@ export default function NewEventPage() {
 
   return (
     <div className="mx-auto max-w-[520px] animate-fade-in md:max-w-[900px]">
-      <div
-        className="sticky top-0 z-40 flex items-center gap-3 border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150"
-        style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}
-      >
-        <BackButton href="/host" />
-        <span className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>
-          List a New Event
-        </span>
-      </div>
+      <HostDashboardNav title="List a New Event" />
       <div className="flex flex-col gap-4 p-5">
         <div
           className="rounded-2xl px-4 py-3.5 text-[13px] leading-[1.6]"

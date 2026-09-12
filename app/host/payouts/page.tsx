@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AlertTriangle, RefreshCw, Wallet, Landmark, CalendarDays, XCircle, Plus, ShieldCheck } from 'lucide-react';
-import BackButton from '@/components/BackButton';
-import HostBottomNav from '@/components/HostBottomNav';
+import HostDashboardNav from '@/components/HostDashboardNav';
 import { useLagosLiveStore } from '@/lib/store';
 import { fetchPayouts, fetchHostOrders, requestPayout, type PayoutRow, type AdminOrderJoined } from '@/lib/admin-queries';
 import { formatNaira } from '@/lib/filters';
@@ -89,10 +88,7 @@ export default function HostPayoutsPage() {
 
   return (
     <div className="mx-auto max-w-[600px] animate-fade-in pb-24 md:max-w-[1000px]">
-      <div className="sticky top-0 z-40 flex items-center gap-3 border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150" style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}>
-        <BackButton href="/host" />
-        <span className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>Payouts</span>
-      </div>
+      <HostDashboardNav title="Payouts" />
 
       <div className="flex flex-col gap-4 p-5">
         <div className="grid grid-cols-3 gap-2.5">
@@ -239,7 +235,6 @@ export default function HostPayoutsPage() {
           </div>
         )}
       </div>
-      <HostBottomNav />
     </div>
   );
 }

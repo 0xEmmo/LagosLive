@@ -3,8 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle, RefreshCw, Search, Download, CheckCircle, XCircle } from 'lucide-react';
-import BackButton from '@/components/BackButton';
-import HostBottomNav from '@/components/HostBottomNav';
+import HostDashboardNav from '@/components/HostDashboardNav';
 import { useLagosLiveStore } from '@/lib/store';
 import { fetchHostOrders, setOrderCheckIn, type AdminOrderJoined, toCsv, downloadCsv } from '@/lib/admin-queries';
 import { useRealtimeOrders } from '@/lib/hooks/useRealtimeOrders';
@@ -75,20 +74,19 @@ export default function HostOrdersPage() {
 
   return (
     <div className="mx-auto max-w-[600px] animate-fade-in pb-24 md:max-w-[1000px]">
-      <div className="sticky top-0 z-40 flex items-center justify-between border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150" style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}>
-        <div className="flex items-center gap-3">
-          <BackButton href="/host" />
-          <span className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>Orders</span>
-        </div>
-        <button
-          onClick={exportCsv}
-          disabled={filtered.length === 0}
-          className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-semibold disabled:opacity-50"
-          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#A7A8B5' }}
-        >
-          <Download size={12} /> Export
-        </button>
-      </div>
+      <HostDashboardNav
+        title="Orders"
+        action={
+          <button
+            onClick={exportCsv}
+            disabled={filtered.length === 0}
+            className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-semibold disabled:opacity-50"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#A7A8B5' }}
+          >
+            <Download size={12} /> Export
+          </button>
+        }
+      />
 
       <div className="flex flex-col gap-4 p-5">
         <div className="flex items-center gap-2 rounded-xl px-3.5 py-2.5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -191,7 +189,6 @@ export default function HostOrdersPage() {
           </div>
         )}
       </div>
-      <HostBottomNav />
     </div>
   );
 }

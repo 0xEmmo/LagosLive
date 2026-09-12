@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, notFound, useParams } from 'next/navigation';
 import QRCode from 'react-qr-code';
 import { Copy, Download, Check, Share2 } from 'lucide-react';
-import BackButton from '@/components/BackButton';
+import HostDashboardNav from '@/components/HostDashboardNav';
 import { useParty } from '@/lib/hooks/useParty';
 import { partyShareUrl } from '@/lib/queries';
 import { useLagosLiveStore } from '@/lib/store';
@@ -34,7 +34,6 @@ export default function EventSharePage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-[600px] animate-fade-in p-5 md:max-w-[1000px]">
-        <div className="mb-4"><BackButton href="/host" /></div>
         <div className="h-[52px] animate-pulse rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }} />
         <div className="mt-4 h-[380px] animate-pulse rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }} />
       </div>
@@ -85,17 +84,7 @@ export default function EventSharePage() {
 
   return (
     <div className="mx-auto max-w-[600px] animate-fade-in md:max-w-[1000px]">
-      <div
-        className="sticky top-0 z-40 flex items-center justify-between border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150"
-        style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}
-      >
-        <div className="flex items-center gap-3">
-          <BackButton href={`/host/${party.id}`} />
-          <span className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>
-            Share Event
-          </span>
-        </div>
-      </div>
+      <HostDashboardNav title="Share Event" backHref={`/host/${party.id}`} />
 
       <div className="flex flex-col gap-4 p-5">
         <div className="flex items-center gap-3">

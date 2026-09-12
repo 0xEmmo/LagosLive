@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, notFound } from 'next/navigation';
 import { Loader2, AlertTriangle, RefreshCw, Search, CheckCircle2, Clock, Users } from 'lucide-react';
-import BackButton from '@/components/BackButton';
+import HostDashboardNav from '@/components/HostDashboardNav';
 import { useParty } from '@/lib/hooks/useParty';
 import { useLagosLiveStore } from '@/lib/store';
 import { fetchEventOrders, setOrderCheckIn, type AdminOrderJoined } from '@/lib/admin-queries';
@@ -87,10 +87,7 @@ export default function HostCheckInPage({ params }: { params: { id: string } }) 
 
   return (
     <div className="mx-auto max-w-[600px] animate-fade-in md:max-w-[1000px]">
-      <div className="sticky top-0 z-40 flex items-center gap-3 border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150" style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}>
-        <BackButton href={`/host/${party.id}`} />
-        <span className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>Check-in</span>
-      </div>
+      <HostDashboardNav title="Check-in" backHref={`/host/${party.id}`} />
 
       <div className="flex flex-col gap-4 p-5">
         <div>

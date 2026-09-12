@@ -38,19 +38,29 @@ export async function claimNotification(
   service: ServiceSupabase,
   { userId, email, type, refId }: ClaimNotificationInput
 ): Promise<boolean> {
-  const { data, error } = await service.rpc('record_notification_send', {
-    p_user_id: userId ?? null,
-    p_email: email,
-    p_channel: 'email',
-    p_type: type,
-    p_ref_id: refId,
-    p_status: 'pending',
-  });
-  if (error) {
-    console.warn('[notify] claim failed', { email, type, refId, error: error.message });
-    return false;
-  }
-  return data === true;
+  const claimOnce = async (includeStatus: boolean): Promise<boolean | null> => {
+    const { data, error } = await service.rpc('record_notification_send', {
+      p_user_id: userId ?? null,
+      p_email: email,
+      p_channel: 'email',
+      p_type: type,
+      p_ref_id: refId,
+      ...(includeStatus ? { p_status: 'pending' } : {}),
+    });
+    if (error) {
+      console.warn('[notify] claim failed', { email, type, refId, includeStatus, error: error.message });
+      return null;
+    }
+    return data === true;
+  };
+
+  // Pre-00027 databases ship a 5-arg record_notification_send (no p_status), so
+  // a 6-arg call fails with a schema-cache "function not found" error. Retry the
+  // 5-arg signature so a claim never blocks ticket delivery on either schema.
+  const withStatus = await claimOnce(true);
+  if (withStatus !== null) return withStatus;
+  const withoutStatus = await claimOnce(false);
+  return withoutStatus === true;
 }
 
 // Records the send outcome on the claim opened by claimNotification(). The

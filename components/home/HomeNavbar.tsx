@@ -33,7 +33,7 @@ export default function AppHeader() {
         className="sticky top-0 z-40 border-b backdrop-blur-[22px] backdrop-saturate-150"
         style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}
       >
-        <div className="mx-auto flex max-w-[1080px] items-center justify-between gap-3 px-4 py-3 md:px-5 md:py-3">
+        <div className="flex items-center justify-between gap-3 px-4 py-3 md:px-8 md:py-3">
           <Link href="/" className="flex items-center" aria-label="Lagos Live — home">
             <SiteLogo />
           </Link>

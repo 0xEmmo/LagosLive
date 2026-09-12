@@ -59,7 +59,7 @@ export default function Pricing() {
 
   return (
     <section id="pricing" className="scroll-mt-20 py-14 md:py-16">
-      <div className="mx-auto max-w-[1080px] px-5">
+      <div className="w-full px-5 md:px-8">
         <div className="mb-9 flex flex-col items-center text-center">
           <div className="mb-3 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)' }}>
             <span className="text-[10px] font-bold uppercase tracking-[1.2px]" style={{ color: '#A7A8B5' }}>
@@ -74,7 +74,7 @@ export default function Pricing() {
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="mx-auto grid max-w-[1200px] gap-4 md:grid-cols-3">
           {PLANS.map((plan) => {
             const href = plan.href === 'whatsapp' ? WHATSAPP_URL : hostStartHref(user);
             const external = plan.href === 'whatsapp';

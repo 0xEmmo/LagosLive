@@ -43,7 +43,7 @@ export default function Hero({ parties, loading }: HeroProps) {
         }}
       />
 
-      <div className="relative z-[1] mx-auto max-w-[1080px] px-5 pb-10 pt-[40px] md:pt-[64px]">
+      <div className="relative z-[1] w-full px-5 pb-10 pt-[40px] md:px-8 md:pt-[64px]">
         <div className="grid items-center gap-10 md:grid-cols-[1.05fr_0.95fr] md:gap-14">
           {/* Copy */}
           <div>

@@ -115,7 +115,7 @@ function EventsPageContent() {
         className="sticky top-0 z-40 border-b px-4 py-3 backdrop-blur-[22px] backdrop-saturate-150"
         style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}
       >
-        <div className="mx-auto max-w-[1080px]">
+<div className="mx-auto w-full">
           <div className="mb-3 flex items-center gap-2.5">
             <div>
               <h1 className="font-display text-[26px] leading-none tracking-[0.5px]" style={{ color: '#FFFFFF' }}>
@@ -231,7 +231,7 @@ function EventsPageContent() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1080px]">
+      <div className="mx-auto w-full">
         <div className="flex items-center justify-between border-b px-5 py-[11px]" style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
           <span className="text-[13px]" style={{ color: '#6B6C80' }}>
             Showing <span style={{ color: '#FF2D95', fontWeight: 600 }}>{filtered.length}</span> events

@@ -38,7 +38,7 @@ export default function FeaturedEvents({ parties, loading, error, retry }: Featu
   }, [active, status, filtered.length]);
 
   return (
-    <section className="mx-auto max-w-[1080px] px-5 pb-10 pt-6 md:pt-10">
+    <section className="w-full px-5 pb-10 pt-6 md:px-8 md:pt-10">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="mb-2 flex items-center gap-2">

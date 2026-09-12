@@ -82,7 +82,7 @@ export default function Faq() {
   const user = useLagosLiveStore((s) => s.user);
 
   return (
-    <section className="mx-auto max-w-[760px] px-5 py-14 md:py-16">
+    <section className="w-full px-5 py-14 md:px-8 md:py-16">
       <div className="mb-8 flex flex-col items-center text-center">
         <h2 className="font-display text-[34px] leading-[1] tracking-[1px] md:text-[46px]" style={{ color: '#FFFFFF' }}>
           Questions, <span className="gradient-text">answered</span>
@@ -92,7 +92,7 @@ export default function Faq() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-2.5">
+      <div className="mx-auto flex max-w-[800px] flex-col gap-2.5">
         {FAQS.map(({ q, a }) => (
           <FaqItem key={q} q={q} a={a} />
         ))}

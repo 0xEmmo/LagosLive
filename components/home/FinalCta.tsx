@@ -9,7 +9,7 @@ export default function FinalCta() {
   const user = useLagosLiveStore((s) => s.user);
 
   return (
-    <section className="mx-auto max-w-[1080px] px-5 pb-14 pt-4 md:pb-16">
+    <section className="w-full px-5 pb-14 pt-4 md:px-8 md:pb-16">
       <div
         className="relative overflow-hidden rounded-[30px] px-6 py-14 text-center md:py-20"
         style={{

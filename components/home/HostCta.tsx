@@ -9,7 +9,7 @@ export default function HostCta() {
   const user = useLagosLiveStore((s) => s.user);
 
   return (
-    <section className="mx-auto max-w-[1080px] px-5 py-6 md:py-10">
+    <section className="w-full px-5 py-6 md:px-8 md:py-10">
       <Link
         href={hostStartHref(user)}
         className="group relative block overflow-hidden rounded-[28px] p-7 transition-all duration-300 hover:border-[#FF2D95]/50 md:p-12"

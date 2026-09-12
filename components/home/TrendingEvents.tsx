@@ -23,7 +23,7 @@ export default function TrendingEvents({ entries, loading }: TrendingEventsProps
 
   if (loading) {
     return (
-      <section className="mx-auto max-w-[1080px] px-5 pb-10 pt-6 md:pt-10">
+      <section className="w-full px-5 pb-10 pt-6 md:px-8 md:pt-10">
         <SectionHeader />
         <EventCardGridSkeleton count={3} />
       </section>
@@ -32,7 +32,7 @@ export default function TrendingEvents({ entries, loading }: TrendingEventsProps
 
   if (count === 0) {
     return (
-      <section className="mx-auto max-w-[1080px] px-5 pb-10 pt-6 md:pt-10">
+      <section className="w-full px-5 pb-10 pt-6 md:px-8 md:pt-10">
         <SectionHeader />
         <div className="flex flex-col items-center gap-4 rounded-[20px] border px-6 py-[52px] text-center" style={{ borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.015)' }}>
           <div className="flex h-[64px] w-[64px] items-center justify-center rounded-full" style={{ background: 'rgba(255,45,149,0.08)', border: '1px solid rgba(255,45,149,0.18)' }}>
@@ -58,7 +58,7 @@ export default function TrendingEvents({ entries, loading }: TrendingEventsProps
   }
 
   return (
-    <section className="mx-auto max-w-[1080px] px-5 pb-10 pt-6 md:pt-10">
+    <section className="w-full px-5 pb-10 pt-6 md:px-8 md:pt-10">
       <SectionHeader />
       <TrendingGrid parties={parties} />
     </section>
@@ -96,7 +96,7 @@ function TrendingGrid({ parties }: { parties: Party[] }) {
   // One featured / wide hero card.
   if (count === 1) {
     return (
-      <div className="mx-auto max-w-[520px]">
+      <div className="mx-auto w-full max-w-[680px]">
         <PartyCard party={parties[0]} index={0} imageHeight={260} />
       </div>
     );
@@ -105,7 +105,7 @@ function TrendingGrid({ parties }: { parties: Party[] }) {
   // Two strong cards.
   if (count === 2) {
     return (
-      <div className="mx-auto grid max-w-[680px] gap-4 sm:grid-cols-2">
+      <div className="mx-auto grid w-full max-w-[900px] gap-4 sm:grid-cols-2">
         {parties.map((p, i) => (
           <PartyCard key={p.id} party={p} index={i} />
         ))}
@@ -116,7 +116,7 @@ function TrendingGrid({ parties }: { parties: Party[] }) {
   // Three → three columns (stack on small screens).
   if (count === 3) {
     return (
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="mx-auto grid w-full max-w-[1200px] gap-4 md:grid-cols-3">
         {parties.map((p, i) => (
           <PartyCard key={p.id} party={p} index={i} />
         ))}
@@ -140,7 +140,7 @@ function RowedBlock({ parties, rowSize }: { parties: Party[]; rowSize: number })
   return (
     <div className="flex flex-col gap-4">
       {rows.map((row, r) => (
-        <div key={r} className="grid gap-4 md:grid-cols-2">
+        <div key={r} className="mx-auto grid w-full max-w-[900px] gap-4 md:grid-cols-2">
           {row.map((p, i) => (
             <PartyCard key={p.id} party={p} index={r * rowSize + i} />
           ))}
@@ -161,12 +161,12 @@ function TwoRowBlock({
   const second = parties.slice(rowSizes[0], rowSizes[0] + rowSizes[1]);
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="mx-auto grid w-full max-w-[1200px] gap-4 md:grid-cols-3">
         {first.map((p, i) => (
           <PartyCard key={p.id} party={p} index={i} />
         ))}
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="mx-auto grid w-full max-w-[900px] gap-4 md:grid-cols-2">
         {second.map((p, i) => (
           <PartyCard key={p.id} party={p} index={rowSizes[0] + i} />
         ))}

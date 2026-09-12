@@ -40,7 +40,7 @@ export default function OrganizerFeatures() {
             'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(138,43,226,0.12) 0%, transparent 60%), radial-gradient(ellipse 40% 40% at 90% 80%, rgba(255,45,149,0.06) 0%, transparent 60%)',
         }}
       />
-      <div className="relative z-[1] mx-auto max-w-[1080px] px-5">
+      <div className="relative z-[1] w-full px-5 md:px-8">
         <div className="mb-10 flex flex-col items-center text-center">
           <div className="mb-3 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5" style={{ background: 'rgba(255,45,149,0.1)', border: '1px solid rgba(255,45,149,0.22)' }}>
             <span className="text-[10px] font-bold uppercase tracking-[1.2px]" style={{ color: '#FF5CAD' }}>
@@ -55,7 +55,7 @@ export default function OrganizerFeatures() {
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURES.map(({ icon: Icon, title, body }) => (
             <div
               key={title}

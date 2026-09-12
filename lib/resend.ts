@@ -39,8 +39,9 @@ export interface TicketConfirmationData {
 // Company color palette is dark-only: the site never renders a light theme, so
 // emails must match. Declaring `color-scheme: dark` stops clients (Gmail, Apple
 // Mail, Outlook) from auto-inverting or re-skinning the design when the phone
-// is in light mode. Inline colors already carry the palette; this shell just
-// sets the document-level defaults.
+// is in light mode. Both the meta tags AND the CSS+inline forms are set because
+// different clients honour different flavours; the @media light guard re-asserts
+// the dark background even in clients that strip the meta tags.
 function emailDocument(innerHtml: string, bg = '#0B0B10'): string {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -52,9 +53,13 @@ function emailDocument(innerHtml: string, bg = '#0B0B10'): string {
     <style>
       :root { color-scheme: dark; supported-color-schemes: dark; }
       body { margin:0; padding:0; background-color:${bg} !important; color:#FFFFFF !important; }
+      @media (prefers-color-scheme: light) {
+        :root { color-scheme: dark !important; }
+        body { background-color:${bg} !important; color:#FFFFFF !important; }
+      }
     </style>
   </head>
-  <body bgcolor="${bg}" text="#FFFFFF" style="background-color:${bg};color:#FFFFFF;margin:0;padding:0;">
+  <body bgcolor="${bg}" text="#FFFFFF" style="color-scheme:dark;background-color:${bg};color:#FFFFFF;margin:0;padding:0;">
     ${innerHtml}
   </body>
 </html>`;

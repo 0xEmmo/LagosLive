@@ -2,7 +2,7 @@
 from PIL import Image, ImageDraw
 import os
 
-SRC = r"public\Lagos Live Skyline Bridge Logo.png"
+SRC = r"public\Lagoslivelogo.png"
 OUT = "public"
 
 # Brand colors

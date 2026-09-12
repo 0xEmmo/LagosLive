@@ -3,10 +3,10 @@ import Image from 'next/image';
 export function SiteLogo({ className = '' }: { className?: string }) {
   return (
     <Image
-      src="/Lagos Live Skyline Bridge Logo.png"
+      src="/Lagoslivelogo.png"
       alt="Lagos Live"
-      width={180}
-      height={102}
+      width={1536}
+      height={1024}
       className={`h-auto w-auto max-h-[52px] ${className}`}
       priority
     />

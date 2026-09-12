@@ -146,10 +146,10 @@ export default function Hero({ parties, loading }: HeroProps) {
                     style={{ background: `radial-gradient(circle at 30% 20%, rgba(255,255,255,0.18), transparent 55%), ${featured.gradient}` }}
                   >
                     <Image
-                      src="/Lagos Live Skyline Bridge Logo.png"
+                      src="/Lagoslivelogo.png"
                       alt=""
-                      width={180}
-                      height={102}
+                      width={1536}
+                      height={1024}
                       className="h-auto w-[52%] opacity-40"
                     />
                   </div>

@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import BackButton from '@/components/BackButton';
-import { LogoMark } from '@/components/Logo';
+import { SiteLogo } from '@/components/Logo';
 import { useLagosLiveStore } from '@/lib/store';
 
 function LoginPageContent() {
@@ -58,8 +58,8 @@ function LoginPageContent() {
       </div>
       <div className="mx-auto flex w-full max-w-[400px] flex-1 flex-col justify-center px-7 pb-[60px]">
         <div className="mb-8 text-center">
-          <LogoMark size={56} />
-          <h1 className="font-display mb-1.5 mt-[18px] text-[38px] tracking-[1px]" style={{ color: '#FFFFFF' }}>
+          <div className="flex justify-center"><SiteLogo /></div>
+          <h1 className="font-display mb-1.5 mt-2 text-[38px] tracking-[1px]" style={{ color: '#FFFFFF' }}>
             Welcome Back
           </h1>
           <p className="text-sm" style={{ color: '#A7A8B5' }}>

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { SiteLogo } from '@/components/Logo';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -9,8 +10,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-8">
           <div className="md:col-span-1">
             <div className="flex items-center gap-2 mb-3">
-              <span className="flex items-center justify-center w-8 h-8 bg-[#FF2D95] rounded-full text-base">🎉</span>
-              <span className="font-heading font-bold text-white">Lagos Live</span>
+              <SiteLogo />
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
               Discover & buy tickets to Lagos&apos;s hottest events.

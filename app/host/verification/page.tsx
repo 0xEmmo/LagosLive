@@ -123,7 +123,7 @@ export default function HostVerificationPage() {
           {suspended && (
             <div className="mt-4 rounded-xl border p-3.5 text-[12.5px] leading-[1.6]" style={{ background: 'rgba(255,90,46,0.07)', borderColor: 'rgba(255,90,46,0.2)', color: '#A7A8B5' }}>
               <span className="flex items-center gap-1.5" style={{ color: '#FF5A2E', fontWeight: 700 }}><AlertTriangle size={13} strokeWidth={2.2} /> Account suspended</span>
-              Your account is suspended. Contact <Link href="mailto:support@lagoslive.ng" className="underline">support@lagoslive.ng</Link>.
+              Your account is suspended. Contact <Link href="mailto:support@lagoslive.com.ng" className="underline">support@lagoslive.com.ng</Link>.
             </div>
           )}
         </div>

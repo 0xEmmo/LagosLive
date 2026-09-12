@@ -1685,7 +1685,7 @@ class Component extends DCLogic {
       openWhatsApp: () => sp && window.open(`https://wa.me/${sp.whatsapp.replace(/\D/g,'')}`,'_blank'),
       openIG: () => sp && window.open(`https://instagram.com/${sp.instagram.replace('@','')}`,'_blank'),
       shareWhatsApp: () => sp && window.open(`https://wa.me/?text=${encodeURIComponent(sp.title+' on Lagos Live! '+sp.date+' @ '+sp.location)}`,'_blank'),
-      copyLink: () => { try { navigator.clipboard.writeText('https://lagoslive.ng/party/'+sp.id); } catch(e) {} },
+      copyLink: () => { try { navigator.clipboard.writeText('https://lagoslive.com.ng/party/'+sp.id); } catch(e) {} },
       spVibeBadgeStyle: { background:VCB[sp?.vibe]||'rgba(109,90,153,0.18)', color:VCT[sp?.vibe]||'#A896C9', border:'1px solid rgba(255,255,255,0.12)', padding:'5px 12px', borderRadius:'20px', fontSize:'12px', fontWeight:'700', backdropFilter:'blur(8px)' },
       spDistStyle: { fontSize:'14px', fontWeight:'600', color: sp&&sp.distance<5?'#6FA88A':sp&&sp.distance<10?'#C2954F':'#B85C5C' },
       capBarStyle: { height:'100%', borderRadius:'3px', background:`linear-gradient(90deg,${capPct>80?'#B85C5C':th.primary},${capPct>80?'#C2954F':th.secondary})`, width:`${capPct}%`, transition:'width 0.5s ease' },

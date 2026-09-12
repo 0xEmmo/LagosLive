@@ -103,10 +103,10 @@ export default function Footer() {
           <div className="md:col-span-1">
             <h4 className="font-heading font-bold text-white mb-4 text-sm uppercase tracking-[1px]">Contact</h4>
             <a
-              href="mailto:hello@lagoslive.ng"
+              href="mailto:hello@lagoslive.com.ng"
               className="text-gray-400 hover:text-[#00D9FF] transition text-sm block mb-4"
             >
-              hello@lagoslive.ng
+              hello@lagoslive.com.ng
             </a>
             <Link
               href="/support"

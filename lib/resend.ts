@@ -433,7 +433,7 @@ export async function sendEventCancellationEmail(data: EventCancellationEmailDat
             <div style="font-size:14px;color:#FFFFFF;">${escapeHtml(data.reason)}</div>
           </div>
           ${payoutCopy}
-          <p style="font-size:13px;color:#A7A8B5;line-height:20px;margin:18px 0 0;">Refunds typically appear within 1-2 business days. If you don't see it, email <a href="mailto:support@lagoslive.ng" style="color:#FF2D95;text-decoration:none;font-weight:700;">support@lagoslive.ng</a>.</p>
+          <p style="font-size:13px;color:#A7A8B5;line-height:20px;margin:18px 0 0;">Refunds typically appear within 1-2 business days. If you don't see it, email <a href="mailto:support@lagoslive.com.ng" style="color:#FF2D95;text-decoration:none;font-weight:700;">support@lagoslive.com.ng</a>.</p>
           <p style="font-size:12px;color:#6B6C80;margin:22px 0 0;line-height:18px;">— Lagos Live Team</p>
         </div>
       </div>
@@ -466,7 +466,7 @@ const VERIFICATION_COPY: Record<HostVerificationEmailData['decision'], string> =
   rejected:
     'An admin reviewed your details. Update your host profile with accurate business information and request verification again.',
   suspended:
-    'You can no longer list new events or request payouts while suspended. If you believe this is a mistake, reply to this email or contact support@lagoslive.ng.',
+    'You can no longer list new events or request payouts while suspended. If you believe this is a mistake, reply to this email or contact support@lagoslive.com.ng.',
 };
 
 // Sent to hosts when an admin resolves their verification request. Best-effort.
@@ -671,7 +671,7 @@ function notificationShellHtml(s: NotificationShell): string {
           ${bullets ? `<div style="margin-top:18px;background:#0B0B10;border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:13px 16px;">${bullets}</div>` : ''}
           ${cta}
           ${note}
-          <p style="font-size:12px;color:#6B6C80;margin:24px 0 0;line-height:18px;">— Lagos Live Team · <a href="mailto:support@lagoslive.ng" style="color:#6B6C80;text-decoration:none;">support@lagoslive.ng</a></p>
+          <p style="font-size:12px;color:#6B6C80;margin:24px 0 0;line-height:18px;">— Lagos Live Team · <a href="mailto:support@lagoslive.com.ng" style="color:#6B6C80;text-decoration:none;">support@lagoslive.com.ng</a></p>
         </div>
       </div>
     </div>`;

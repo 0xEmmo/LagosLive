@@ -144,8 +144,6 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   const [promoError, setPromoError] = useState('');
   const [ticketToken, setTicketToken] = useState('');
   const [emailSent, setEmailSent] = useState<boolean | null>(null);
-  const [resending, setResending] = useState(false);
-  const [resendStatus, setResendStatus] = useState<'idle' | 'sent' | 'error'>('idle');
   const [lineTickets, setLineTickets] = useState<LineTicket[]>([]);
   const [successLines, setSuccessLines] = useState<SuccessLine[]>([]);
   const [promoDismissed, setPromoDismissed] = useState(false);
@@ -473,29 +471,6 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
     }
   };
 
-  const resendTickets = async () => {
-    if (resending) return;
-    setResending(true);
-    setResendStatus('idle');
-    const refs = [...new Set((lineTickets.length ? lineTickets.map((lt) => lt.orderRef) : [orderRef]).filter(Boolean))];
-    try {
-      const results = await Promise.all(
-        refs.map((ref) =>
-          fetch('/api/tickets/resend', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, orderRef: ref }),
-          })
-        )
-      );
-      setResendStatus(results.every((r) => r.ok) ? 'sent' : 'error');
-    } catch {
-      setResendStatus('error');
-    } finally {
-      setResending(false);
-    }
-  };
-
   const headerLabel = step === 'success' ? 'Confirmed' : 'Checkout';
   const ctaLabel =
     payState === 'starting' || payState === 'paying' || payState === 'verifying'
@@ -805,31 +780,11 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
 
           {isGuest && emailSent === false && (
             <div
-              className="mb-4 flex w-full max-w-[340px] flex-col items-start gap-2.5 rounded-[10px] px-3.5 py-3 text-left text-[13px]"
+              className="mb-4 flex w-full max-w-[340px] items-start gap-2.5 rounded-[10px] px-3.5 py-3 text-left text-[13px]"
               style={{ background: 'rgba(255,90,46,0.08)', border: '1px solid rgba(255,90,46,0.25)', color: '#FF5A2E' }}
             >
-              <div className="flex items-start gap-2.5">
-                <AlertTriangle size={16} strokeWidth={2} className="mt-0.5 flex-shrink-0" />
-                <span>Email delivery failed. Save these links — they&apos;re the only way to reach your tickets.</span>
-              </div>
-              <button
-                onClick={resendTickets}
-                disabled={resending}
-                className="mt-1 w-full rounded-[9px] py-2.5 text-[13px] font-semibold"
-                style={{ background: 'rgba(255,90,46,0.14)', border: '1px solid rgba(255,90,46,0.4)', color: '#FF5A2E' }}
-              >
-                {resending ? (
-                  <span className="inline-flex items-center gap-2">
-                    <Loader2 size={14} className="animate-spin" /> Resending…
-                  </span>
-                ) : resendStatus === 'sent' ? (
-                  `Resent! Check ${email}`
-                ) : resendStatus === 'error' ? (
-                  'Resend failed — try again in a minute'
-                ) : (
-                  'Resend My Tickets'
-                )}
-              </button>
+              <AlertTriangle size={16} strokeWidth={2} className="mt-0.5 flex-shrink-0" />
+              <span>Email delivery failed. Save these links — they&apos;re the only way to reach your tickets.</span>
             </div>
           )}
 

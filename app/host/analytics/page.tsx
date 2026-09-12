@@ -91,7 +91,7 @@ export default function HostAnalyticsPage() {
   if (!user) return null;
 
   return (
-    <div className="mx-auto max-w-[600px] animate-fade-in pb-24">
+    <div className="mx-auto max-w-[600px] animate-fade-in pb-24 md:max-w-[1000px]">
       <div className="sticky top-0 z-40 flex items-center gap-3 border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150" style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}>
         <BackButton href="/host" />
         <span className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>Analytics</span>

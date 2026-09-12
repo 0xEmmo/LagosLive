@@ -85,7 +85,7 @@ export default function HostVerificationPage() {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-[520px] animate-fade-in pb-24">
+    <div className="mx-auto min-h-screen max-w-[520px] animate-fade-in pb-24 md:max-w-[900px]">
       <div className="sticky top-0 z-40 flex items-center gap-3 border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150" style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}>
         <BackButton href="/host" />
         <span className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>Host Verification</span>

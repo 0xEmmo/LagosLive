@@ -103,7 +103,7 @@ export default function SupportPage() {
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-[520px] flex-1 p-5">
+      <div className="mx-auto w-full max-w-[520px] flex-1 p-5 md:max-w-[900px]">
         <div className="mb-5">
           <h1 className="font-heading text-[20px] font-bold" style={{ color: '#FFFFFF' }}>Get Help</h1>
           <p className="mt-1 text-[13px]" style={{ color: '#A7A8B5' }}>Submit a support ticket and our team will respond as soon as possible.</p>

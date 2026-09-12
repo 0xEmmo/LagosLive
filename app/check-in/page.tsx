@@ -90,7 +90,7 @@ export default function CheckInHomePage() {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-[520px] animate-fade-in" style={{ background: ci.surface }}>
+    <div className="mx-auto min-h-screen max-w-[520px] animate-fade-in md:max-w-[900px]" style={{ background: ci.surface }}>
       <header className="sticky top-0 z-40 border-b px-5 py-3.5" style={{ background: 'rgba(19,19,22,0.9)', borderColor: ci.line, backdropFilter: 'blur(22px)' }}>
         <div className="flex items-center gap-3">
           <BackButton href="/host" label="" />

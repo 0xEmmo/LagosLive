@@ -137,7 +137,7 @@ export default function HostDashboardPage() {
   };
 
   return (
-    <div className="mx-auto max-w-[600px] animate-fade-in pb-24">
+    <div className="mx-auto max-w-[600px] animate-fade-in pb-24 md:max-w-[1000px]">
       <div
         className="sticky top-0 z-40 flex items-center justify-between border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150"
         style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}

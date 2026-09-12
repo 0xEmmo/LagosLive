@@ -492,7 +492,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
       : '/profile';
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-[520px] flex-col animate-fade-in">
+    <div className="mx-auto flex min-h-screen max-w-[520px] flex-col animate-fade-in md:max-w-[900px]">
       <div
         className="sticky top-0 z-40 flex items-center gap-2.5 border-b px-5 py-4 backdrop-blur-[22px] backdrop-saturate-150"
         style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}

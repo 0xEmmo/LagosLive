@@ -33,7 +33,7 @@ export default function EventSharePage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-[600px] animate-fade-in p-5">
+      <div className="mx-auto max-w-[600px] animate-fade-in p-5 md:max-w-[1000px]">
         <div className="mb-4"><BackButton href="/host" /></div>
         <div className="h-[52px] animate-pulse rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }} />
         <div className="mt-4 h-[380px] animate-pulse rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }} />
@@ -84,7 +84,7 @@ export default function EventSharePage() {
   };
 
   return (
-    <div className="mx-auto max-w-[600px] animate-fade-in">
+    <div className="mx-auto max-w-[600px] animate-fade-in md:max-w-[1000px]">
       <div
         className="sticky top-0 z-40 flex items-center justify-between border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150"
         style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}

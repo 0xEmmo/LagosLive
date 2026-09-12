@@ -334,7 +334,7 @@ export default function TicketPage({ params }: { params: { id: string } }) {
   if (!user && !token) return null;
 
   return (
-    <div className="relative mx-auto flex min-h-screen max-w-[520px] flex-col animate-fade-in">
+    <div className="relative mx-auto flex min-h-screen max-w-[520px] flex-col animate-fade-in md:max-w-[900px]">
       <div
         className="sticky top-0 z-40 flex items-center gap-3 border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150"
         style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}

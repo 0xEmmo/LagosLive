@@ -87,7 +87,7 @@ export default function SupportTicketPage() {
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-[600px] flex-1 flex flex-col p-5">
+      <div className="mx-auto w-full max-w-[600px] flex-1 flex flex-col p-5 md:max-w-[1000px]">
         {status === 'loading' ? (
           <div className="flex flex-col gap-3">
             {[0, 1, 2].map((i) => (

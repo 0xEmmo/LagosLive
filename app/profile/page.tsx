@@ -103,7 +103,7 @@ export default function ProfilePage() {
   const reminderList = parties.filter((p) => reminders.includes(p.id));
 
   return (
-    <div className="mx-auto max-w-[480px] p-5 animate-fade-in">
+    <div className="mx-auto max-w-[480px] p-5 animate-fade-in md:max-w-[900px]">
       <div className="flex flex-col items-center px-5 py-9 pb-7 text-center">
         <div
           className="flex h-[86px] w-[86px] items-center justify-center rounded-full font-display text-[32px] tracking-[1px] text-white"

@@ -250,7 +250,7 @@ export default function TicketsPage() {
   const label = user ? 'My Tickets' : 'Find My Ticket';
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-[520px] flex-col animate-fade-in">
+    <div className="mx-auto flex min-h-screen max-w-[520px] flex-col animate-fade-in md:max-w-[900px]">
       <div
         className="sticky top-0 z-40 flex items-center gap-3 border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150"
         style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}

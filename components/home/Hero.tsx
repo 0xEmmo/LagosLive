@@ -182,19 +182,6 @@ export default function Hero({ parties, loading }: HeroProps) {
               </Link>
             )}
 
-            {/* Floating ticket chip */}
-            <div
-              className="absolute -left-3 -top-4 z-[2] flex items-center gap-2 rounded-2xl px-3.5 py-2.5"
-              style={{ background: 'rgba(23,23,37,0.92)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 12px 30px rgba(0,0,0,0.45)', backdropFilter: 'blur(10px)' }}
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: 'linear-gradient(135deg,#FF2D95,#8A2BE2)' }}>
-                <Ticket size={15} strokeWidth={2} color="#FFFFFF" />
-              </div>
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-[0.6px]" style={{ color: '#00F5D4' }}>Sell tickets</div>
-                <div className="text-[11px]" style={{ color: '#A7A8B5' }}>5% + ₦100 per paid ticket</div>
-              </div>
-            </div>
             {/* Floating price chip — real event data only */}
             {featured && (
               <div

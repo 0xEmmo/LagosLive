@@ -619,15 +619,24 @@ function notificationShellHtml(s: NotificationShell): string {
       </tr>`
     )
     .join('');
+  // Changed-detail bullets. Built as tables with a text checkmark (no SVG/data
+  // URIs — Gmail strips those and the whole list item disappears).
   const bullets =
     s.bullets && s.bullets.length > 0
-      ? `<ul style="margin:0;padding:0;list-style:none;">
-          ${s.bullets
-            .map(
-              (b) => `<li style="font-size:13px;line-height:20px;color:#FFFFFF;padding:7px 0 7px 22px;background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="%23FF9B3E" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>') left center no-repeat;">${escapeHtml(b)}</li>`
-            )
-            .join('')}
-        </ul>`
+      ? s.bullets
+          .map(
+            (b) => `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+            <tr>
+              <td width="26" valign="top" style="padding:9px 0;">
+                <span style="display:inline-block;font-size:12px;font-weight:900;line-height:20px;color:#FF9B3E;">&#10003;</span>
+              </td>
+              <td valign="top" style="padding:9px 0;">
+                <div style="font-size:13px;line-height:20px;color:#FFFFFF;">${escapeHtml(b)}</div>
+              </td>
+            </tr>
+          </table>`
+          )
+          .join('')
       : '';
   const cta =
     s.ctaUrl && s.ctaLabel

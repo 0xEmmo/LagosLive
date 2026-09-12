@@ -8,6 +8,17 @@ import { appUrl } from './seo';
 
 const RESEND_API = 'https://api.resend.com/emails';
 
+// Resend account address that works on every account without a verified
+// domain. Used both as the default sender and as the retry fallback when the
+// configured RESEND_FROM_EMAIL domain isn't verified yet.
+const FALLBACK_FROM = 'onboarding@resend.dev';
+
+function isFromDomainError(status: number, bodyText: string): boolean {
+  if (status < 400 || status >= 500) return false;
+  const text = bodyText.toLowerCase();
+  return text.includes('verified') || text.includes('domain') || text.includes('validation');
+}
+
 export interface TicketConfirmationData {
   to: string;
   partyTitle: string;
@@ -195,9 +206,9 @@ export async function sendTicketConfirmation(data: TicketConfirmationData): Prom
   const apiKey = process.env.RESEND_API_KEY;
 
   // Sender is configurable via RESEND_FROM_EMAIL. Falls back to the Resend
-  // onboarding address (guaranteed to exist on every account) so a hardcoded or
-  // unverified domain never silently blocks delivery.
-  const from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  // onboarding address (guaranteed to exist on every account). Even when a
+  // domain isn't verified yet, sendHtmlEmail retries from the fallback sender.
+  const from = process.env.RESEND_FROM_EMAIL || FALLBACK_FROM;
 
   console.log('[resend] starting ticket email send', {
     to: data.to,
@@ -215,44 +226,14 @@ export async function sendTicketConfirmation(data: TicketConfirmationData): Prom
     return false;
   }
 
-  try {
-    const response = await fetch(RESEND_API, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from,
-        to: [data.to],
-        subject: `Your ${data.partyTitle} ticket is confirmed — Lagos Live`,
-        html: ticketEmailHtml(data),
-      }),
-    });
-
-    const bodyText = await response.text();
-    if (!response.ok) {
-      console.error('[resend] send failed', {
-        status: response.status,
-        to: data.to,
-        from,
-        responseBody: bodyText,
-      });
-      return false;
-    }
-
-    let id: string | undefined;
-    try {
-      id = (JSON.parse(bodyText) as { id?: string }).id;
-    } catch {
-      /* non-JSON success body — fine */
-    }
-    console.log('[resend] send succeeded', { to: data.to, id });
-    return true;
-  } catch (err) {
-    console.error('[resend] unexpected error sending to', data.to, err);
-    return false;
-  }
+  // Sends through the same resilient path as the other emails: the configured
+  // sender is tried first, and if Resend rejects it because its domain isn't
+  // verified yet, the ticket email is retried from the account default address.
+  return sendHtmlEmail({
+    to: data.to,
+    subject: `Your ${data.partyTitle} ticket is confirmed — Lagos Live`,
+    html: ticketEmailHtml(data),
+  });
 }
 
 export interface PayoutStatusEmailData {
@@ -277,7 +258,7 @@ export async function sendPayoutStatusEmail(data: PayoutStatusEmailData): Promis
     console.warn('[resend] RESEND_API_KEY is not configured — skipping payout email to', data.to);
     return false;
   }
-  const from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  const from = process.env.RESEND_FROM_EMAIL || FALLBACK_FROM;
   const line = `<tr>
     <td style="padding:8px 0;"><span style="color:#6B6C80;">Amount</span><br/><strong style="color:#FFFFFF;">${formatNaira(data.amount)}</strong></td>
     <td style="padding:8px 0;"><span style="color:#6B6C80;">Status</span><br/><strong style="color:#00F5D4;text-transform:uppercase;">${data.status}</strong></td>
@@ -336,40 +317,56 @@ interface SendHtmlEmailArgs {
 }
 
 // Shared best-effort sender for the Batch 18 emails. Never throws: every
-// delivery problem is logged and the caller gets a boolean back.
+// delivery problem is logged and the caller gets a boolean back. When Resend
+// rejects the configured sender (typically a domain that isn't verified yet),
+// the message is retried from the account default address so delivery never
+// silently depends on a pending DNS verification.
 async function sendHtmlEmail({ to, subject, html, scheduledAt }: SendHtmlEmailArgs): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.warn('[resend] RESEND_API_KEY is not configured — skipping email to', to);
     return false;
   }
-  const from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
-  try {
-    const response = await fetch(RESEND_API, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from,
-        to: [to],
-        subject,
-        html,
-        ...(scheduledAt ? { scheduled_at: scheduledAt } : {}),
-      }),
-    });
-    const bodyText = await response.text();
-    if (!response.ok) {
-      console.error('[resend] send failed', { status: response.status, to, subject, responseBody: bodyText });
+  const senders = [process.env.RESEND_FROM_EMAIL || FALLBACK_FROM, FALLBACK_FROM];
+  for (const from of senders) {
+    try {
+      const response = await fetch(RESEND_API, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from,
+          to: [to],
+          subject,
+          html,
+          ...(scheduledAt ? { scheduled_at: scheduledAt } : {}),
+        }),
+      });
+      const bodyText = await response.text();
+      if (!response.ok) {
+        const shouldRetryFromFallback = from !== FALLBACK_FROM && isFromDomainError(response.status, bodyText);
+        if (shouldRetryFromFallback) {
+          console.warn('[resend] sender domain rejected, retrying from', FALLBACK_FROM, {
+            to,
+            from,
+            status: response.status,
+            responseBody: bodyText,
+          });
+          continue;
+        }
+        console.error('[resend] send failed', { status: response.status, to, from, subject, responseBody: bodyText });
+        return false;
+      }
+      console.log('[resend] send succeeded', { to, subject, from });
+      return true;
+    } catch (err) {
+      console.error('[resend] unexpected error sending to', to, err);
       return false;
     }
-    console.log('[resend] send succeeded', { to, subject });
-    return true;
-  } catch (err) {
-    console.error('[resend] unexpected error sending to', to, err);
-    return false;
   }
+  return false;
 }
 
 export interface EventCancellationEmailData {

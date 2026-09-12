@@ -36,6 +36,30 @@ export interface TicketConfirmationData {
   promoDiscount?: number;
 }
 
+// Company color palette is dark-only: the site never renders a light theme, so
+// emails must match. Declaring `color-scheme: dark` stops clients (Gmail, Apple
+// Mail, Outlook) from auto-inverting or re-skinning the design when the phone
+// is in light mode. Inline colors already carry the palette; this shell just
+// sets the document-level defaults.
+function emailDocument(innerHtml: string, bg = '#0B0B10'): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <meta name="supported-color-schemes" content="dark">
+    <style>
+      :root { color-scheme: dark; supported-color-schemes: dark; }
+      body { margin:0; padding:0; background-color:${bg} !important; color:#FFFFFF !important; }
+    </style>
+  </head>
+  <body bgcolor="${bg}" text="#FFFFFF" style="background-color:${bg};color:#FFFFFF;margin:0;padding:0;">
+    ${innerHtml}
+  </body>
+</html>`;
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -289,7 +313,7 @@ export async function sendPayoutStatusEmail(data: PayoutStatusEmailData): Promis
         from,
         to: [data.to],
         subject: `Lagos Live — Payout ${data.status.toUpperCase()}`,
-        html,
+        html: emailDocument(html, '#07070B'),
       }),
     });
     const bodyText = await response.text();
@@ -336,13 +360,13 @@ async function sendHtmlEmail({ to, subject, html, scheduledAt }: SendHtmlEmailAr
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          from,
-          to: [to],
-          subject,
-          html,
-          ...(scheduledAt ? { scheduled_at: scheduledAt } : {}),
-        }),
+body: JSON.stringify({
+        from,
+        to: [to],
+        subject,
+        html: emailDocument(html),
+        ...(scheduledAt ? { scheduled_at: scheduledAt } : {}),
+      }),
       });
       const bodyText = await response.text();
       if (!response.ok) {

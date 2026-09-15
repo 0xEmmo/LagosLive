@@ -55,15 +55,19 @@ function esc(value: string) {
 }
 
 function toGeoJSON(parties: Party[]) {
+  const seen = new Map<number, Party>();
+  for (const p of parties) {
+    if (!Number.isFinite(p.lat) || !Number.isFinite(p.lng)) continue;
+    if (!seen.has(p.id)) seen.set(p.id, p);
+  }
   return {
     type: 'FeatureCollection' as const,
-    features: parties
-      .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng))
-      .map((p) => ({
-        type: 'Feature' as const,
-        geometry: { type: 'Point' as const, coordinates: [p.lng, p.lat] as [number, number] },
-        properties: { id: p.id, vibe: p.vibe, label: VIBE_LABEL[p.vibe] },
-      })),
+    features: [...seen.values()].map((p) => ({
+      type: 'Feature' as const,
+      id: p.id,
+      geometry: { type: 'Point' as const, coordinates: [p.lng, p.lat] as [number, number] },
+      properties: { id: p.id, vibe: p.vibe, label: VIBE_LABEL[p.vibe] },
+    })),
   };
 }
 

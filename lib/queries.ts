@@ -62,7 +62,12 @@ function toParty(row: PartyRow, userLocation?: { lat: number; lng: number } | nu
 }
 
 export async function fetchParties(userLocation?: { lat: number; lng: number } | null): Promise<Party[]> {
-  const { data, error } = await supabase.from('parties').select('*').order('id');
+  const { data, error } = await supabase
+    .from('parties')
+    .select('*')
+    .eq('status', 'approved')
+    .is('cancelled_at', null)
+    .order('id');
   if (error) throw error;
   return data.map((row) => toParty(row, userLocation));
 }

@@ -3,6 +3,7 @@
 import { useTrendingEvents } from '@/lib/hooks/useTrendingEvents';
 import Hero from '@/components/home/Hero';
 import TrendingEvents from '@/components/home/TrendingEvents';
+import LagosLiveSound from '@/components/home/LagosLiveSound';
 import OrganizerFeatures from '@/components/home/OrganizerFeatures';
 import HowItWorks from '@/components/home/HowItWorks';
 import HostCta from '@/components/home/HostCta';
@@ -19,6 +20,7 @@ export default function HomePage() {
       <main>
         <Hero parties={parties} loading={loading} />
         <TrendingEvents entries={entries} loading={loading} />
+        <LagosLiveSound />
         <OrganizerFeatures />
         <HowItWorks />
         <HostCta />

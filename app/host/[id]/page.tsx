@@ -31,6 +31,7 @@ import SalesChart from '@/components/SalesChart';
 import { fetchOrganizerEventAnalytics, partyShareUrl, fetchEventReviews, submitEventForReview, withdrawEvent, fetchPartyHostVerified, type OrganizerEventAnalytics } from '@/lib/queries';
 import { formatNaira } from '@/lib/filters';
 import { partyPhoto } from '@/lib/data';
+import { eventAvailability } from '@/lib/event-state';
 import { useParty } from '@/lib/hooks/useParty';
 import { useLagosLiveStore } from '@/lib/store';
 import type { PartyStatus, Review } from '@/lib/types';
@@ -83,7 +84,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
   const user = useLagosLiveStore((s) => s.user);
   const authLoading = useLagosLiveStore((s) => s.authLoading);
   const showToast = useLagosLiveStore((s) => s.showToast);
-  const { party, loading } = useParty(Number(params.id));
+  const { party, loading, retry } = useParty(Number(params.id));
   const [analytics, setAnalytics] = useState<OrganizerEventAnalytics | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
@@ -92,6 +93,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [reviewBusy, setReviewBusy] = useState(false);
   const [hostVerified, setHostVerified] = useState(false);
+  const [availabilityBusy, setAvailabilityBusy] = useState<string | null>(null);
 
   useEffect(() => {
     if (!party) return;
@@ -199,6 +201,54 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
   const totalCapacity = party.capacity;
   const ticketsSold = analytics?.ticketsSold ?? 0;
   const ticketsRemaining = Math.max(0, totalCapacity - ticketsSold);
+
+  // Host availability controls: mark sold out / reopen / close. The API route
+  // re-checks ownership + business rules server-side (a sold-out event can only
+  // reopen while real tickets remain; closing is terminal). After a success we
+  // refetch the party so the dashboard reflects the new state.
+  const runAvailabilityAction = async (action: 'sold_out' | 'reopen' | 'close') => {
+    const confirmMsg =
+      action === 'sold_out'
+        ? 'Mark this event as sold out? Sales will stop immediately, you can reopen later.'
+        : action === 'reopen'
+        ? 'Reopen ticket sales for this event?'
+        : 'Close this event for good? No more tickets can be sold — existing tickets stay valid.';
+    if (!window.confirm(confirmMsg)) return;
+    setAvailabilityBusy(action);
+    try {
+      const res = await fetch('/api/host/event-availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_id: party.id, action }),
+      });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        showToast('Something went wrong', data.error ?? "Couldn't update the event.");
+        return;
+      }
+      showToast(
+        action === 'sold_out'
+          ? 'Marked as sold out'
+          : action === 'reopen'
+          ? 'Ticket sales reopened'
+          : 'Event closed',
+        action === 'close' ? 'No further ticket sales allowed.' : ''
+      );
+      retry();
+    } catch {
+      showToast('Something went wrong', "Couldn't update the event.");
+    } finally {
+      setAvailabilityBusy(null);
+    }
+  };
+
+  const evState = eventAvailability(party);
+  const availabilityPill =
+    evState === 'CLOSED'
+      ? { label: 'Event Closed', bg: 'rgba(255,255,255,0.06)', color: '#A7A8B5' }
+      : evState === 'SOLD_OUT'
+      ? { label: 'Sold Out', bg: 'rgba(255,255,255,0.06)', color: '#A7A8B5' }
+      : null;
 
   return (
     <div className="mx-auto max-w-[600px] animate-fade-in md:max-w-[1000px]">
@@ -351,6 +401,76 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
           </div>
         )}
 
+        {/* Availability — host-controlled sold out / close */}
+        {party.status === 'approved' && !party.cancelledAt && (
+          <div className="rounded-2xl p-4" style={{ background: 'rgba(0,191,255,0.06)', border: '1px solid rgba(0,191,255,0.25)' }}>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="text-[12px] font-bold uppercase tracking-[0.5px]" style={{ color: '#00BFFF' }}>
+                Ticket Availability
+              </div>
+              {availabilityPill ? (
+                <span className="rounded-full px-2.5 py-[3px] text-[10px] font-semibold uppercase tracking-[0.5px]" style={{ background: availabilityPill.bg, color: availabilityPill.color }}>
+                  {availabilityPill.label}
+                </span>
+              ) : (
+                <span className="rounded-full px-2.5 py-[3px] text-[10px] font-semibold uppercase tracking-[0.5px]" style={{ background: 'rgba(0,245,212,0.1)', color: '#00F5D4' }}>
+                  Open
+                </span>
+              )}
+            </div>
+
+            {party.closedAt ? (
+              <p className="text-[12px] leading-[1.6]" style={{ color: '#A7A8B5' }}>
+                This event is permanently closed to new orders. Existing tickets remain valid.
+              </p>
+            ) : party.soldOutAt ? (
+              <>
+                <p className="mb-3 text-[12px] leading-[1.6]" style={{ color: '#A7A8B5' }}>
+                  This event was marked as sold out by you{party.spotsLeft > 0 ? ` — ${party.spotsLeft} spots are still unsold.` : ' — no tickets remain.'}
+                </p>
+                {party.spotsLeft > 0 ? (
+                  <button
+                    onClick={() => runAvailabilityAction('reopen')}
+                    disabled={availabilityBusy !== null}
+                    className="flex w-full items-center justify-center gap-2 rounded-[10px] py-2.5 text-[13px] font-bold transition-all disabled:opacity-50"
+                    style={{ background: 'rgba(0,245,212,0.12)', border: '1px solid rgba(0,245,212,0.4)', color: '#00F5D4' }}
+                  >
+                    {availabilityBusy === 'reopen' ? 'Reopening…' : 'Reopen Ticket Sales'}
+                  </button>
+                ) : (
+                  <p className="text-[12px] font-semibold" style={{ color: '#FF8A00' }}>
+                    Genuinely sold out — there are no tickets left to reopen.
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="mb-3 text-[12px] leading-[1.6]" style={{ color: '#A7A8B5' }}>
+                  {party.spotsLeft > 0 ? `${party.spotsLeft} spots left.` : 'No spots left.'} Manage sales from here — no checkbox fiddling needed.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => runAvailabilityAction('sold_out')}
+                    disabled={availabilityBusy !== null || party.spotsLeft <= 0}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-[10px] py-2.5 text-[13px] font-bold transition-all disabled:opacity-50"
+                    style={{ background: 'rgba(255,45,149,0.1)', border: '1px solid rgba(255,45,149,0.35)', color: '#FF2D95' }}
+                  >
+                    {availabilityBusy === 'sold_out' ? 'Marking…' : 'Mark as Sold Out'}
+                  </button>
+                  <button
+                    onClick={() => runAvailabilityAction('close')}
+                    disabled={availabilityBusy !== null}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-[10px] py-2.5 text-[13px] font-bold transition-all disabled:opacity-50"
+                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#A7A8B5' }}
+                  >
+                    {availabilityBusy === 'close' ? 'Closing…' : 'Close Event'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Share card */}
         <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,45,149,0.16)' }}>
           <div className="mb-1.5 flex items-center justify-between gap-2">
@@ -391,8 +511,8 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
               <div className="relative" style={{ height: 150, background: party.gradient }}>
                 <PartyPhoto src={partyPhoto(party.id, party.coverUrl)} alt={party.title} gradient={party.gradient} sizes="600px" />
                 <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(7,7,11,0.92) 0%, rgba(7,7,11,0.15) 70%)' }} />
-                <span className="absolute right-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: statusStyle.bg, color: statusStyle.color, backdropFilter: 'blur(8px)' }}>
-                  {statusStyle.label}
+                <span className="absolute right-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold" style={availabilityPill ? { background: availabilityPill.bg, color: availabilityPill.color, backdropFilter: 'blur(8px)' } : { background: statusStyle.bg, color: statusStyle.color, backdropFilter: 'blur(8px)' }}>
+                  {availabilityPill?.label ?? statusStyle.label}
                 </span>
                 {hostVerified && (
                   <span className="absolute left-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: 'rgba(0,245,212,0.14)', border: '1px solid rgba(0,245,212,0.35)', color: '#00F5D4', backdropFilter: 'blur(8px)' }}>

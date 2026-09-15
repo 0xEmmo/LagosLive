@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams, notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, CheckCircle2, Loader2, AlertTriangle, X, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Loader2, AlertTriangle, X, ShieldCheck, Ticket } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { partyPhoto } from '@/lib/data';
 import { useParty } from '@/lib/hooks/useParty';
@@ -260,6 +260,28 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
           {party.cancellationReason
             ? `This event was cancelled: "${party.cancellationReason}"`
             : 'This event has been cancelled.'}
+        </p>
+        <Link href={`/party/${party.id}`} className="btn-primary mt-6 px-7 py-3 text-sm font-semibold">
+          Back to Event
+        </Link>
+      </div>
+    );
+  }
+
+  if (party.closedAt || party.soldOutAt || party.spotsLeft <= 0) {
+    const closed = !!party.closedAt;
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center px-6 text-center animate-fade-in">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)' }}>
+          <Ticket size={28} color="#A7A8B5" strokeWidth={2} />
+        </div>
+        <h1 className="font-display mt-5 text-[28px] tracking-[0.5px]" style={{ color: '#FFFFFF' }}>
+          {closed ? 'Event Closed' : 'Sold Out'}
+        </h1>
+        <p className="mt-2 max-w-[300px] text-sm" style={{ color: '#A7A8B5' }}>
+          {closed
+            ? 'Ticket sales for this event have stopped.'
+            : 'Sorry — this event has no tickets left.'}
         </p>
         <Link href="/" className="btn-primary mt-6 px-7 py-3 text-sm font-semibold">
           Discover Events

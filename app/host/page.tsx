@@ -12,6 +12,7 @@ import { fetchHostOrders, type AdminOrderJoined } from '@/lib/admin-queries';
 import { formatNaira } from '@/lib/filters';
 import { partyPhoto } from '@/lib/data';
 import { useLagosLiveStore } from '@/lib/store';
+import { eventAvailability } from '@/lib/event-state';
 import type { Party, PartyStatus } from '@/lib/types';
 
 const STATUS_STYLE: Record<PartyStatus, { label: string; bg: string; color: string }> = {
@@ -268,7 +269,17 @@ export default function HostDashboardPage() {
                 const statusStyle = STATUS_STYLE[p.status];
                 const sold = s?.ticketsSold ?? 0;
                 const remaining = Math.max(0, p.capacity - sold);
+                const evState = eventAvailability(p);
                 const cancelled = !!p.cancelledAt;
+                const closed = evState === 'CLOSED';
+                const soldOut = evState === 'SOLD_OUT';
+                const statusBadge = cancelled
+                  ? { label: 'Cancelled', bg: 'rgba(255,45,149,0.14)', color: '#FF2D95' }
+                  : closed
+                  ? { label: 'Closed', bg: 'rgba(255,255,255,0.06)', color: '#A7A8B5' }
+                  : soldOut
+                  ? { label: 'Sold Out', bg: 'rgba(255,255,255,0.06)', color: '#A7A8B5' }
+                  : statusStyle;
                 return (
                   <Link
                     key={p.id}
@@ -290,21 +301,12 @@ export default function HostDashboardPage() {
                           <div className="truncate font-heading text-[13px] font-bold" style={{ color: cancelled ? '#A7A8B5' : '#FFFFFF', textDecoration: cancelled ? 'line-through' : 'none' }}>{p.title}</div>
                           <div className="mt-0.5 text-[11px]" style={{ color: '#A7A8B5' }}>{p.date} · {p.time}</div>
                         </div>
-                        {cancelled ? (
-                          <span
-                            className="flex-shrink-0 rounded-full px-2 py-[3px] text-[10px] font-semibold uppercase tracking-[0.5px]"
-                            style={{ background: 'rgba(255,45,149,0.14)', color: '#FF2D95', border: '1px solid rgba(255,45,149,0.3)' }}
-                          >
-                            Cancelled
-                          </span>
-                        ) : (
-                          <span
-                            className="flex-shrink-0 rounded-full px-2 py-[3px] text-[10px] font-semibold"
-                            style={{ background: statusStyle.bg, color: statusStyle.color }}
-                          >
-                            {statusStyle.label}
-                          </span>
-                        )}
+                        <span
+                          className="flex-shrink-0 rounded-full px-2 py-[3px] text-[10px] font-semibold"
+                          style={{ background: statusBadge.bg, color: statusBadge.color }}
+                        >
+                          {statusBadge.label}
+                        </span>
                       </div>
                       {!cancelled && (
                         <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px]" style={{ color: '#A7A8B5' }}>

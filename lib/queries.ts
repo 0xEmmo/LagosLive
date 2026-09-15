@@ -55,6 +55,8 @@ function toParty(row: PartyRow, userLocation?: { lat: number; lng: number } | nu
     coverUrl: row.cover_url ?? null,
     cancelledAt: row.cancelled_at ?? null,
     cancellationReason: row.cancellation_reason ?? null,
+    soldOutAt: row.sold_out_at ?? null,
+    closedAt: row.closed_at ?? null,
     reviewReason: row.review_reason ?? null,
     reviewCount: row.review_count ?? 0,
     avgRating: Number(row.avg_rating ?? 0),

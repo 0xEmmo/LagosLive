@@ -24,6 +24,7 @@ import {
   Star,
   PenLine,
   ShieldCheck,
+  XCircle,
 } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import PartyCard from '@/components/PartyCard';
@@ -47,6 +48,7 @@ import {
 } from '@/lib/queries';
 import { partyPath } from '@/lib/seo';
 import { encodeCartItems, isTicketTypeSellable, MAX_QTY_PER_TYPE, type TicketCart } from '@/lib/tickets';
+import { eventAvailability } from '@/lib/event-state';
 import type { Party, Review, TicketType } from '@/lib/types';
 
 // Client section of the event detail page. Rendered by both the /party/[id] and
@@ -194,7 +196,9 @@ export default function PartyDetailClient({
   const coverSrc = partyPhoto(party.id, party.coverUrl);
   const capPct = Math.min(100, Math.round(((party.capacity - party.spotsLeft) / party.capacity) * 100));
   const spotsUrgent = party.spotsLeft < 100;
-  const soldOut = party.spotsLeft <= 0;
+  const availability = eventAvailability(party);
+  const soldOut = availability === 'SOLD_OUT';
+  const closed = availability === 'CLOSED';
   // "More events": neutral, non-personalised related list — same vibe, upcoming
   // and not cancelled, so we never recommend a past or cancelled event.
   const now = Date.now();
@@ -282,9 +286,41 @@ export default function PartyDetailClient({
           </div>
         </div>
 
+        {/* Event Closed banner */}
+        {closed && (
+          <div
+            className="mb-5 flex items-center gap-3 rounded-2xl px-4 py-3.5"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}
+          >
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(255,255,255,0.06)' }}>
+              <XCircle size={16} strokeWidth={2} color="#A7A8B5" />
+            </div>
+            <div>
+              <div className="text-[13px] font-bold" style={{ color: '#FFFFFF' }}>
+                This event has been closed
+              </div>
+              <div className="text-xs" style={{ color: '#A7A8B5' }}>
+                Ticket sales have stopped. If you already have a ticket, it remains valid.
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* CTA Buttons */}
         <div className="mb-5 flex gap-3">
-          {soldOut ? (
+          {closed ? (
+            <div
+              className="flex flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-[14px] py-4 text-[13px] font-bold tracking-[0.5px]"
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: '#A7A8B5',
+              }}
+            >
+              <XCircle size={15} strokeWidth={2.5} />
+              Event Closed
+            </div>
+          ) : soldOut ? (
             <div
               className="flex flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-[14px] py-4 text-[13px] font-bold tracking-[0.5px]"
               style={{
@@ -317,7 +353,7 @@ export default function PartyDetailClient({
         </div>
 
         {/* Tickets — per-tier steppers */}
-        {hasTicketTypes && (
+        {hasTicketTypes && !closed && (
           <div className="mb-6">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-[11px] font-bold uppercase tracking-[1.5px]" style={{ color: '#A7A8B5' }}>Tickets</h3>

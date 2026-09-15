@@ -50,6 +50,8 @@ export interface Party {
   coverUrl: string | null;
   cancelledAt: string | null;
   cancellationReason: string | null;
+  soldOutAt: string | null;
+  closedAt: string | null;
   reviewReason: string | null;
   reviewCount: number;
   avgRating: number;

@@ -198,6 +198,7 @@ export type Database = {
           capacity: number
           cancelled_at: string | null
           cancellation_reason: string | null
+          closed_at: string | null
           avg_rating: number
           review_count: number
           review_reason: string | null
@@ -224,6 +225,7 @@ export type Database = {
           organizer_phone: string | null
 page_views: number
           slug: string | null
+          sold_out_at: string | null
           spots_left: number
           starts_at: string
           status: string
@@ -241,6 +243,7 @@ page_views: number
           capacity: number
           cancelled_at?: string | null
           cancellation_reason?: string | null
+          closed_at?: string | null
           avg_rating?: number
           review_count?: number
           review_reason?: string | null
@@ -267,6 +270,7 @@ page_views: number
           organizer_phone?: string | null
           page_views?: number
           slug?: string | null
+          sold_out_at?: string | null
           spots_left: number
           starts_at: string
           status?: string
@@ -284,6 +288,7 @@ page_views: number
           capacity?: number
           cancelled_at?: string | null
           cancellation_reason?: string | null
+          closed_at?: string | null
           avg_rating?: number
           review_count?: number
           review_reason?: string | null
@@ -310,6 +315,7 @@ page_views: number
           organizer_phone?: string | null
           page_views?: number
           slug?: string | null
+          sold_out_at?: string | null
           spots_left?: number
           starts_at?: string
           status?: string

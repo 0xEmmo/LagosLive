@@ -5,6 +5,7 @@ import { Heart, Bell, Calendar, MapPin } from 'lucide-react';
 import type { Party } from '@/lib/types';
 import { VCB, VCT, partyPhoto, distanceColor, distanceBg, distanceBorder } from '@/lib/data';
 import { isPartyTonight } from '@/lib/filters';
+import { eventAvailability } from '@/lib/event-state';
 import { useLagosLiveStore } from '@/lib/store';
 import PartyPhoto from './PartyPhoto';
 
@@ -36,8 +37,10 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 20
     }
   };
 
-  const soldOut = party.spotsLeft <= 0;
-  const almostFull = !soldOut && party.capacity > 0 && party.spotsLeft / party.capacity < 0.15;
+  const status = eventAvailability(party);
+  const soldOut = status === 'SOLD_OUT';
+  const closed = status === 'CLOSED' || status === 'CANCELLED';
+  const almostFull = status === 'OPEN' && party.capacity > 0 && party.spotsLeft / party.capacity < 0.15;
   const tonight = isPartyTonight(party);
   const weekend = party.isWeekend;
 
@@ -159,12 +162,20 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 20
                 Almost Full
               </span>
             )}
-            {soldOut && (
+            {soldOut && !closed && (
               <span
                 className="rounded-full px-2 py-[3px] text-[10px] font-bold uppercase tracking-[0.4px]"
                 style={{ background: 'rgba(255,255,255,0.06)', color: '#A7A8B5', border: '1px solid rgba(255,255,255,0.12)' }}
               >
                 Sold Out
+              </span>
+            )}
+            {closed && (
+              <span
+                className="rounded-full px-2 py-[3px] text-[10px] font-bold uppercase tracking-[0.4px]"
+                style={{ background: 'rgba(255,255,255,0.06)', color: '#A7A8B5', border: '1px solid rgba(255,255,255,0.12)' }}
+              >
+                {status === 'CANCELLED' ? 'Cancelled' : 'Event Closed'}
               </span>
             )}
           </div>
@@ -176,12 +187,12 @@ export default function PartyCard({ party, showReminder = true, imageHeight = 20
           <span
             className="rounded-full px-3 py-1 text-[11px] font-semibold"
             style={{
-              background: soldOut ? 'rgba(255,255,255,0.06)' : 'rgba(255,45,149,0.1)',
-              border: `1px solid ${soldOut ? 'rgba(255,255,255,0.12)' : 'rgba(255,45,149,0.25)'}`,
-              color: soldOut ? '#A7A8B5' : '#FF2D95',
+              background: closed || soldOut ? 'rgba(255,255,255,0.06)' : 'rgba(255,45,149,0.1)',
+              border: `1px solid ${closed || soldOut ? 'rgba(255,255,255,0.12)' : 'rgba(255,45,149,0.25)'}`,
+              color: closed || soldOut ? '#A7A8B5' : '#FF2D95',
             }}
           >
-            {soldOut ? 'Sold Out' : 'Get Tickets'}
+            {closed ? (status === 'CANCELLED' ? 'Cancelled' : 'Event Closed') : soldOut ? 'Sold Out' : 'Get Tickets'}
           </span>
         </div>
       </div>

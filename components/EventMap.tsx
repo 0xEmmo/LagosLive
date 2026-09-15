@@ -13,6 +13,7 @@ import type {
 } from 'mapbox-gl';
 import type { Party } from '@/lib/types';
 import { VC, VIBE_LABEL, partyPhoto } from '@/lib/data';
+import { eventAvailability } from '@/lib/event-state';
 
 const LAGOS_CENTER: LngLatLike = [3.42, 6.445];
 const LAGOS_ZOOM = 11.5;
@@ -52,6 +53,21 @@ function esc(value: string) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+// Customer-facing availability tag shown in the popup. Genuine exhaustion and a
+// host-declared sold out both read as "Sold Out"; a closed event (which stays
+// discoverable) reads as "Event Closed"; cancelled events never surface here.
+function statusTag(party: Party) {
+  const state = eventAvailability(party);
+  if (state === 'CANCELLED') return null;
+  if (state === 'SOLD_OUT') {
+    return `<span style="display:inline-block;margin-left:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:#A7A8B5;padding:1px 8px;border-radius:10px;font:700 10px/1.6 'Montserrat',sans-serif;text-transform:uppercase;letter-spacing:0.4px">Sold Out</span>`;
+  }
+  if (state === 'CLOSED') {
+    return `<span style="display:inline-block;margin-left:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:#A7A8B5;padding:1px 8px;border-radius:10px;font:700 10px/1.6 'Montserrat',sans-serif;text-transform:uppercase;letter-spacing:0.4px">Event Closed</span>`;
+  }
+  return null;
 }
 
 function toGeoJSON(parties: Party[]) {
@@ -104,7 +120,7 @@ function popupHtml(party: Party) {
       <span style="position:absolute;left:8px;bottom:8px;background:${party.vibe in VC ? VC[party.vibe] : '#FF2D95'};color:#fff;padding:2px 9px;border-radius:12px;font:700 10px/1.5 'Montserrat',sans-serif;text-transform:uppercase;letter-spacing:0.4px">${esc(party.vibe)}</span>
     </div>
     <div style="padding:10px 12px 12px">
-      <div style="font:700 14px/1.35 'Montserrat',sans-serif;color:#fff;margin-bottom:3px">${esc(party.title)}</div>
+      <div style="font:700 14px/1.35 'Montserrat',sans-serif;color:#fff;margin-bottom:3px">${esc(party.title)}${statusTag(party) ?? ''}</div>
       <div style="color:#A7A8B5;font-size:12px;line-height:1.5;margin-bottom:2px">${esc(party.date)} &middot; ${esc(party.time)}</div>
       <div style="color:#A7A8B5;font-size:12px;line-height:1.5;margin-bottom:10px">${esc(party.location)}</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">

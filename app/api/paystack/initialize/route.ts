@@ -122,6 +122,12 @@ export async function POST(request: Request) {
     if (party.cancelled_at) {
       return NextResponse.json({ error: 'This event has been cancelled.' }, { status: 400 });
     }
+    if (party.closed_at) {
+      return NextResponse.json({ error: 'This event has been closed and is no longer taking orders.' }, { status: 400 });
+    }
+    if (party.sold_out_at) {
+      return NextResponse.json({ error: 'This event has been marked as sold out.' }, { status: 400 });
+    }
 
     // Legacy fee-based lines (no ticket type) collapse into one General Entry
     // purchase; mixing them with typed lines is not a supported request shape.

@@ -23,8 +23,6 @@ import {
   Home,
   Menu,
   X,
-  Moon,
-  Sun,
   LogOut,
   ShieldCheck,
 } from 'lucide-react';
@@ -90,8 +88,6 @@ export default function AdminDashboardNav() {
   const router = useRouter();
   const pathname = usePathname();
   const user = useLagosLiveStore((s) => s.user);
-  const theme = useLagosLiveStore((s) => s.theme);
-  const toggleTheme = useLagosLiveStore((s) => s.toggleTheme);
   const logout = useLagosLiveStore((s) => s.logout);
   const [open, setOpen] = useState(false);
 
@@ -136,14 +132,6 @@ export default function AdminDashboardNav() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          <button
-            onClick={toggleTheme}
-            aria-label="Toggle dark mode"
-            className="flex h-[38px] w-[38px] items-center justify-center rounded-full transition-all duration-200"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#A7A8B5' }}
-          >
-            {theme === 'dark' ? <Sun size={17} strokeWidth={2} className="text-[#00D9FF]" /> : <Moon size={17} strokeWidth={2} />}
-          </button>
           <button
             onClick={() => setOpen((o) => !o)}
             aria-label="Toggle menu"

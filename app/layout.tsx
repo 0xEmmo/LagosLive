@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Bebas_Neue, Montserrat, Inter } from 'next/font/google';
 import './globals.css';
-import ThemeEffect from '@/components/ThemeEffect';
 import HashScroll from '@/components/HashScroll';
 import AuthListener from '@/components/AuthListener';
 import ReminderScheduler from '@/components/ReminderScheduler';
@@ -96,7 +95,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="absolute inset-0 bg-glow-right" />
           <div className="absolute inset-0 bg-glow-bottom" />
         </div>
-        <ThemeEffect />
         <HashScroll />
         <AuthListener />
         <ReminderScheduler />

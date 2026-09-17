@@ -84,19 +84,11 @@ export default function PrivacyPage() {
       </InfoSection>
 
       <InfoSection title="Sharing with service providers">
-        <p>We share information with trusted service providers that help us run the platform:</p>
-        <InfoList
-          items={[
-            'Supabase — database, authentication and file storage.',
-            'Paystack — payment processing and refunds.',
-            'Resend — delivery of transactional emails.',
-            'Mapbox — map display.',
-            'Geoapify — address search and autocomplete.',
-          ]}
-        />
         <p>
-          These providers process information on our behalf so we can deliver the service. We do not sell your
-          personal information.
+          We may share information with trusted third-party service providers that help us operate Lagos Live,
+          including providers that support payment processing, email delivery, authentication, data storage, maps
+          and address services. These providers process information on our behalf where necessary to provide their
+          services. We do not sell your personal information.
         </p>
       </InfoSection>
 

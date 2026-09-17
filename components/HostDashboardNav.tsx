@@ -9,8 +9,6 @@ import {
   Menu,
   X,
   ChevronLeft,
-  Moon,
-  Sun,
   LayoutDashboard,
   CalendarDays,
   ListOrdered,
@@ -41,8 +39,6 @@ interface HostDashboardNavProps {
 export default function HostDashboardNav({ title = 'Host Dashboard', backHref, action }: HostDashboardNavProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const theme = useLagosLiveStore((s) => s.theme);
-  const toggleTheme = useLagosLiveStore((s) => s.toggleTheme);
   const logout = useLagosLiveStore((s) => s.logout);
   const [open, setOpen] = useState(false);
 
@@ -125,15 +121,6 @@ export default function HostDashboardNav({ title = 'Host Dashboard', backHref, a
               <span className="hidden sm:inline">New Event</span>
               <span className="sm:hidden">New</span>
             </Link>
-
-            <button
-              onClick={toggleTheme}
-              aria-label="Toggle dark mode"
-              className="flex h-[38px] w-[38px] items-center justify-center rounded-full transition-all duration-200"
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#A7A8B5' }}
-            >
-              {theme === 'dark' ? <Sun size={17} strokeWidth={2} className="text-[#00D9FF]" /> : <Moon size={17} strokeWidth={2} />}
-            </button>
 
             <button
               onClick={() => setOpen((o) => !o)}

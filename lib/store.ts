@@ -2,7 +2,6 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { ThemeName } from './theme';
 import { supabase } from './supabase/client';
 
 export interface User {
@@ -31,9 +30,6 @@ export interface Toast {
 export type LocationStatus = 'idle' | 'loading' | 'granted' | 'denied';
 
 interface LagosLiveState {
-  theme: ThemeName;
-  toggleTheme: () => void;
-
   userLocation: { lat: number; lng: number } | null;
   locationStatus: LocationStatus;
   requestLocation: () => void;
@@ -71,9 +67,6 @@ let toastTimer: ReturnType<typeof setTimeout> | null = null;
 export const useLagosLiveStore = create<LagosLiveState>()(
   persist(
     (set, get) => ({
-      theme: 'light',
-      toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
-
       userLocation: null,
       locationStatus: 'idle',
       requestLocation: () => {
@@ -265,7 +258,6 @@ export const useLagosLiveStore = create<LagosLiveState>()(
     {
       name: 'lagos-live-store',
       partialize: (s) => ({
-        theme: s.theme,
         savedParties: s.savedParties,
         reminders: s.reminders,
       }),

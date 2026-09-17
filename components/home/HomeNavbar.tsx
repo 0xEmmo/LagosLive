@@ -3,16 +3,16 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Plus, UserRound, Menu, X, Moon, Sun } from 'lucide-react';
+import { Plus, UserRound, Menu, X } from 'lucide-react';
 import { SiteLogo } from '@/components/Logo';
 import RoleNavButtons from '@/components/RoleNavButtons';
 import { useLagosLiveStore } from '@/lib/store';
 import { hostStartHref } from '@/lib/data';
 
 // Global header. On md+ screens it renders the full desktop navbar; on mobile it
-// becomes a compact bar with the logo + theme toggle + hamburger menu (the
-// primary destinations stay in the bottom tab bar via BottomNav). The hamburger
-// holds quick actions: Host an Event, role dashboard links, and sign in.
+// becomes a compact bar with the logo + hamburger menu (the primary destinations
+// stay in the bottom tab bar via BottomNav). The hamburger holds quick actions:
+// Host an Event, role dashboard links, and sign in.
 const NAV_LINKS = [
   { label: 'Home', href: '/', match: '/' },
   { label: 'Events', href: '/events', match: '/events' },
@@ -21,8 +21,6 @@ const NAV_LINKS = [
 
 export default function AppHeader() {
   const user = useLagosLiveStore((s) => s.user);
-  const theme = useLagosLiveStore((s) => s.theme);
-  const toggleTheme = useLagosLiveStore((s) => s.toggleTheme);
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -60,20 +58,6 @@ export default function AppHeader() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Theme toggle — visible on all sizes */}
-            <button
-              onClick={toggleTheme}
-              aria-label="Toggle dark mode"
-              className="flex h-[38px] w-[38px] items-center justify-center rounded-full transition-all duration-200"
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#A7A8B5' }}
-            >
-              {theme === 'dark' ? (
-                <Sun size={17} strokeWidth={2} className="text-[#00D9FF]" />
-              ) : (
-                <Moon size={17} strokeWidth={2} />
-              )}
-            </button>
-
             {/* Desktop sign in + host */}
             <Link
               href={user ? '/profile' : '/login'}

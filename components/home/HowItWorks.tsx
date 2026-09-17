@@ -15,7 +15,7 @@ export default function HowItWorks() {
   const user = useLagosLiveStore((s) => s.user);
 
   return (
-    <section className="w-full px-5 py-14 md:px-8 md:py-16">
+    <section id="how-it-works" className="w-full scroll-mt-20 px-5 py-14 md:px-8 md:py-16">
       <div className="mb-9 flex flex-col items-center text-center">
         <div className="mb-3 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5" style={{ background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.2)' }}>
           <span className="text-[10px] font-bold uppercase tracking-[1.2px]" style={{ color: '#00BFFF' }}>

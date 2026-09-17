@@ -31,7 +31,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/how-it-works" className="text-gray-400 hover:text-[#00D9FF] transition text-sm">
+                <Link href="/#how-it-works" className="text-gray-400 hover:text-[#00D9FF] transition text-sm">
                   How it works
                 </Link>
               </li>
@@ -52,12 +52,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/host/pricing" className="text-gray-400 hover:text-[#00D9FF] transition text-sm">
+                <Link href="/#pricing" className="text-gray-400 hover:text-[#00D9FF] transition text-sm">
                   Pricing
                 </Link>
               </li>
               <li>
-                <Link href="/host/how-payouts-work" className="text-gray-400 hover:text-[#00D9FF] transition text-sm">
+                <Link href="/payouts" className="text-gray-400 hover:text-[#00D9FF] transition text-sm">
                   How payouts work
                 </Link>
               </li>
@@ -83,7 +83,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/faq" className="text-gray-400 hover:text-[#00D9FF] transition text-sm">
+                <Link href="/#faq" className="text-gray-400 hover:text-[#00D9FF] transition text-sm">
                   FAQ
                 </Link>
               </li>
@@ -103,10 +103,10 @@ export default function Footer() {
           <div className="md:col-span-1">
             <h4 className="font-heading font-bold text-white mb-4 text-sm uppercase tracking-[1px]">Contact</h4>
             <a
-              href="mailto:hello@lagoslive.com.ng"
+              href="mailto:lagosliveticket@gmail.com"
               className="text-gray-400 hover:text-[#00D9FF] transition text-sm block mb-4"
             >
-              hello@lagoslive.com.ng
+              lagosliveticket@gmail.com
             </a>
             <Link
               href="/support"
@@ -164,15 +164,15 @@ export default function Footer() {
             </div>
 
             <div className="flex gap-4 text-xs">
-              <a href="/privacy" className="text-gray-500 hover:text-[#00D9FF] transition">
+              <Link href="/privacy" className="text-gray-500 hover:text-[#00D9FF] transition">
                 Privacy
-              </a>
-              <a href="/terms" className="text-gray-500 hover:text-[#00D9FF] transition">
+              </Link>
+              <Link href="/terms" className="text-gray-500 hover:text-[#00D9FF] transition">
                 Terms
-              </a>
-              <a href="/cookies" className="text-gray-500 hover:text-[#00D9FF] transition">
+              </Link>
+              <Link href="/cookies" className="text-gray-500 hover:text-[#00D9FF] transition">
                 Cookies
-              </a>
+              </Link>
             </div>
           </div>
         </div>

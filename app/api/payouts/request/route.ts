@@ -5,7 +5,7 @@ import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/serv
 // client from inserting a payout for anyone else — this route enforces the same
 // (plus the minimum amount) so a payout can never be requested without a human
 // admin having verified the operator first.
-const MIN_PAYOUT = 500000; // ₦5,000
+const MIN_PAYOUT = 1000; // ₦1,000
 
 export async function POST(request: Request) {
   try {
@@ -25,7 +25,11 @@ export async function POST(request: Request) {
     const platformFee = Number(body.platformFee);
     const bankLast4 = typeof body.bankLast4 === 'string' ? body.bankLast4.slice(0, 4) : null;
 
-    if (!Number.isFinite(amount) || amount < MIN_PAYOUT) {
+    // The minimum is enforced against the host's requested revenue — the same
+    // "available" balance the payouts screen compares against MIN_PAYOUT. The
+    // platform fee and payout figures below are unchanged, so a host sitting at
+    // exactly the minimum is not blocked by the fee applied afterwards.
+    if (!Number.isFinite(revenue) || revenue < MIN_PAYOUT) {
       return NextResponse.json({ error: 'Payout amount is below the minimum.' }, { status: 400 });
     }
     if (!Number.isInteger(amount) || !Number.isInteger(revenue) || !Number.isInteger(platformFee)) {

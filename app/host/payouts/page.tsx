@@ -17,7 +17,7 @@ const STATUS_BADGE: Record<string, { label: string; bg: string; color: string }>
   rejected: { label: 'Rejected', bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
 };
 
-const MIN_PAYOUT = 500000; // ₦5,000 in kobo
+const MIN_PAYOUT = 1000; // ₦1,000
 
 function fmtDate(iso: string | null, fallback = '—') {
   if (!iso) return fallback;

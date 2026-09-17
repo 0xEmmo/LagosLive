@@ -1,12 +1,18 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
-import { Ticket, ImagePlus, X, Plus, ChevronUp, ChevronDown, Trash2, MapPin } from 'lucide-react';
+import { useState, useRef, useCallback, useMemo } from 'react';
+import dynamic from 'next/dynamic';
+import { Ticket, ImagePlus, X, Plus, ChevronUp, ChevronDown, Trash2, MapPin, CheckCircle2 } from 'lucide-react';
 import { ALL_VIBES, GRADIENTS } from '@/lib/data';
 import { formatNaira } from '@/lib/filters';
-import AddressInput from '@/components/AddressInput';
+import AddressInput, { type LocationResult } from '@/components/AddressInput';
+import { geocodePlace, hasGeoapifyKey } from '@/lib/geoapify';
 import type { PartyFormInput, TicketFormType } from '@/lib/queries';
 import type { Party, Vibe } from '@/lib/types';
+
+// Reuse the exact same map implementation the public event page uses for the
+// in-form location preview — never a second map provider.
+const EventMap = dynamic(() => import('@/components/EventMap'), { ssr: false });
 
 interface PartyFormProps {
   initial?: Party;
@@ -98,6 +104,9 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, submi
   const [address, setAddress] = useState(initial?.address ?? '');
   const [lat, setLat] = useState(initial ? String(initial.lat) : '6.4281');
   const [lng, setLng] = useState(initial ? String(initial.lng) : '3.4219');
+  // The exact address the current lat/lng belong to. A manual edit clears it so
+  // one venue's coordinates can never be saved against another venue's address.
+  const [resolvedAddress, setResolvedAddress] = useState<string | null>(initial?.address?.trim() || null);
   const [isFree, setIsFree] = useState(initial ? initial.feeNum === 0 : true);
   const [vibe, setVibe] = useState<Vibe>(initial?.vibe ?? 'Club');
   const [tickets, setTickets] = useState<TicketFormType[]>(() => {
@@ -157,6 +166,52 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, submi
   const imageRef = useRef<HTMLInputElement>(null);
 
   const clearError = (key: FieldName) => setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e));
+
+  // Single source of truth for the address: the parent owns the text the host
+  // sees, so what is displayed is exactly what validates and submits. A null
+  // location means the address was edited by hand and the old coordinates are
+  // no longer trustworthy — clear them immediately.
+  const handleAddressChange = (next: string, location: LocationResult | null) => {
+    clearError('address');
+    setAddress(next);
+    if (location) {
+      setLat(String(location.latitude));
+      setLng(String(location.longitude));
+      setResolvedAddress(location.formatted || next);
+      clearError('lat');
+      clearError('lng');
+    } else {
+      setResolvedAddress(null);
+      setLat('');
+      setLng('');
+    }
+  };
+
+  // Safety net for hosts who type an address and submit without blurring the
+  // field first: geocode it right before validation so the coordinates belong
+  // to the address being saved.
+  const resolveAddressForSubmit = async (): Promise<{ lat: number; lng: number } | null> => {
+    const trimmed = address.trim();
+    if (!trimmed) return null;
+    if (resolvedAddress === trimmed && lat.trim() && lng.trim()) {
+      const currentLat = Number(lat);
+      const currentLng = Number(lng);
+      if (Number.isFinite(currentLat) && Number.isFinite(currentLng)) {
+        return { lat: currentLat, lng: currentLng };
+      }
+    }
+    if (!hasGeoapifyKey()) return null;
+    try {
+      const place = await geocodePlace(trimmed);
+      if (!place) return null;
+      setLat(String(place.lat));
+      setLng(String(place.lon));
+      setResolvedAddress(trimmed);
+      return { lat: place.lat, lng: place.lon };
+    } catch {
+      return null;
+    }
+  };
 
   const updateTicket = (index: number, patch: Partial<TicketFormType>) => {
     setTickets((list) => list.map((t, i) => (i === index ? { ...t, ...patch } : t)));
@@ -272,7 +327,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, submi
     return null;
   };
 
-  const validate = (): boolean => {
+  const validate = (coords?: { lat: number; lng: number } | null): boolean => {
     const e: Partial<Record<FieldName, string>> = {};
 
     if (!title.trim()) e.title = 'Event title is required.';
@@ -285,10 +340,19 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, submi
       e.description = 'Make the description a little longer (at least 20 characters).';
     }
 
-    const latParsed = Number(lat);
-    const lngParsed = Number(lng);
-    if (Number.isNaN(latParsed) || latParsed < -90 || latParsed > 90) e.lat = 'Latitude must be a number between -90 and 90.';
-    if (Number.isNaN(lngParsed) || lngParsed < -180 || lngParsed > 180) e.lng = 'Longitude must be a number between -180 and 180.';
+    // Number('') is 0, so an empty coordinate must be rejected explicitly —
+    // otherwise an unlocated address would silently save at 0,0.
+    const latRaw = (coords ? String(coords.lat) : lat).trim();
+    const lngRaw = (coords ? String(coords.lng) : lng).trim();
+    const latParsed = Number(latRaw);
+    const lngParsed = Number(lngRaw);
+    const latValid = latRaw !== '' && Number.isFinite(latParsed) && latParsed >= -90 && latParsed <= 90;
+    const lngValid = lngRaw !== '' && Number.isFinite(lngParsed) && lngParsed >= -180 && lngParsed <= 180;
+    if (!latValid) e.lat = latRaw === '' ? 'Confirm the address or enter latitude manually.' : 'Latitude must be a number between -90 and 90.';
+    if (!lngValid) e.lng = lngRaw === '' ? 'Confirm the address or enter longitude manually.' : 'Longitude must be a number between -180 and 180.';
+    if (address.trim() && !(latValid && lngValid) && !e.address) {
+      e.address = "Couldn't locate this address. Please select a suggested location or check the address.";
+    }
 
     const ticketIssue = validateTickets();
     if (ticketIssue) e.ticketTypes = ticketIssue;
@@ -328,21 +392,25 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, submi
   };
 
   const submit = async () => {
-    if (!validate()) return;
-    const latParsed = Number(lat);
-    const lngParsed = Number(lng);
-    const capacityParsed = tickets.reduce((sum, t) => sum + Math.trunc(Number(t.quantity)), 0);
-    const feeParsed = isFree ? 0 : Math.min(...tickets.map((t) => Math.trunc(Number(t.price))));
-    const ticketTypes = tickets.map((t) => ({
+    setError('');
+    setSubmitting(true);
+    try {
+      const located = await resolveAddressForSubmit();
+      if (!validate(located)) {
+        setSubmitting(false);
+        return;
+      }
+      const latParsed = located ? located.lat : Number(lat);
+      const lngParsed = located ? located.lng : Number(lng);
+      const capacityParsed = tickets.reduce((sum, t) => sum + Math.trunc(Number(t.quantity)), 0);
+      const feeParsed = isFree ? 0 : Math.min(...tickets.map((t) => Math.trunc(Number(t.price))));
+      const ticketTypes = tickets.map((t) => ({
         ...t,
         price: Math.trunc(Number(t.price)),
         quantity: Math.trunc(Number(t.quantity)),
         salesStartAt: t.salesStartAt ? new Date(t.salesStartAt).toISOString() : null,
         salesEndAt: t.salesEndAt ? new Date(t.salesEndAt).toISOString() : null,
       }));
-    setError('');
-    setSubmitting(true);
-    try {
       await onSubmit({
         title: title.trim(),
         startsAt,
@@ -374,6 +442,61 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, submi
   };
 
   const capacityTotal = tickets.reduce((sum, t) => sum + Math.trunc(Number(t.quantity)) || 0, 0);
+
+  const latNum = Number(lat);
+  const lngNum = Number(lng);
+  const hasPreview =
+    lat.trim() !== '' &&
+    lng.trim() !== '' &&
+    Number.isFinite(latNum) &&
+    Number.isFinite(lngNum) &&
+    !(latNum === 0 && lngNum === 0);
+
+  // Minimal Party shape so the existing EventMap can render the exact same
+  // single-marker preview the public event page shows.
+  const previewParty = useMemo<Party>(
+    () => ({
+      id: initial?.id ?? 0,
+      title: title.trim() || 'Your event',
+      slug: null,
+      date: '',
+      time: '',
+      startsAt: startsAt || new Date().toISOString(),
+      endsAt: endsAt || new Date().toISOString(),
+      location: location.trim() || 'Venue',
+      address: address.trim(),
+      lat: latNum,
+      lng: lngNum,
+      fee: 'Free',
+      feeNum: 0,
+      distance: 0,
+      vibe,
+      capacity: 0,
+      spotsLeft: 1,
+      ageRestriction: '18+',
+      dressCode: 'Casual',
+      organizer: '',
+      instagram: '',
+      whatsapp: '',
+      organizerPhone: null,
+      organizerEmail: null,
+      description: '',
+      gradient: GRADIENTS[vibe],
+      isWeekend: false,
+      isThisWeek: false,
+      createdBy: null,
+      status: 'draft',
+      coverUrl: null,
+      cancelledAt: null,
+      cancellationReason: null,
+      soldOutAt: null,
+      closedAt: null,
+      reviewReason: null,
+      reviewCount: 0,
+      avgRating: 0,
+    }),
+    [initial?.id, title, location, address, latNum, lngNum, vibe, startsAt, endsAt]
+  );
 
   return (
     <div className="flex flex-col gap-3.5">
@@ -457,15 +580,15 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, submi
           <AddressInput
             value={address}
             inputStyle={inputStyle}
-            onLocationChange={(result) => {
-              clearError('address');
-              if (result) {
-                setAddress(result.address);
-                setLat(String(result.latitude));
-                setLng(String(result.longitude));
-              }
-            }}
+            onChange={handleAddressChange}
+            placeholder="35 Adeola Odeku, Victoria Island, Lagos"
           />
+          {resolvedAddress === address.trim() && address.trim() && (
+            <div className="mt-1.5 flex items-center gap-1.5 text-[11.5px]" style={{ color: '#00F5D4' }}>
+              <CheckCircle2 size={13} strokeWidth={2} />
+              Location confirmed
+            </div>
+          )}
           <FieldError message={errors.address} />
         </Field>
 
@@ -483,9 +606,18 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, submi
             </Field>
           </div>
         </div>
+        {hasPreview && (
+          <div className="overflow-hidden rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="h-[180px]">
+              <EventMap parties={[previewParty]} single />
+            </div>
+          </div>
+        )}
+
         <div className="text-[11px]" style={{ color: '#6B6C80' }}>
           Start typing your address and pick from the suggestions — coordinates are filled in automatically to power the
-          map and ride links. You can still adjust the numbers manually if needed.
+          map and ride links. Editing the address by hand clears the old coordinates and re-locates it. You can still
+          adjust the numbers manually if needed.
         </div>
       </Section>
 

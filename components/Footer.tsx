@@ -157,44 +157,6 @@ export default function Footer() {
           </p>
 
           <div className="flex items-center gap-6">
-            <div className="flex gap-4">
-              <a
-                href="https://twitter.com/lagosliveng"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-500 hover:text-[#FF2D95] transition"
-                aria-label="Twitter"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2s9 5 20 5a9.5 9.5 0 00-9-5.5c4.75 2.25 7-7 7-7-2.25 4.5-7 5.5-11 5.5z" />
-                </svg>
-              </a>
-              <a
-                href="https://instagram.com/lagosliveng"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-500 hover:text-[#FF2D95] transition"
-                aria-label="Instagram"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="currentColor" strokeWidth="2" />
-                  <path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" fill="currentColor" />
-                  <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" />
-                </svg>
-              </a>
-              <a
-                href="https://facebook.com/lagoslive"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-500 hover:text-[#FF2D95] transition"
-                aria-label="Facebook"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M18 2h-3a6 6 0 0 0-6 6v3H7v4h2v8h4v-8h3l1-4h-4V8a1 1 0 0 1 1-1h3z" />
-                </svg>
-              </a>
-            </div>
-
             <div className="flex gap-4 text-xs">
               <Link href="/privacy" className="text-gray-500 hover:text-[#00D9FF] transition">
                 Privacy

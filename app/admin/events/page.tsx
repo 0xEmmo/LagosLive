@@ -8,6 +8,7 @@ import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, usePermissionGuard, B
 import { usePermission } from '@/lib/hooks/usePermission';
 import { fetchAdminEvents, type AdminEventJoined, toCsv, downloadCsv } from '@/lib/admin-queries';
 import { setEventReviewStatus, deleteParty } from '@/lib/queries';
+import { notifyTelegramEvent } from '@/lib/telegram-client';
 import { useLagosLiveStore } from '@/lib/store';
 import { formatNaira } from '@/lib/filters';
 
@@ -97,6 +98,12 @@ export default function AdminEventsPage() {
     try {
       await setEventReviewStatus(id, next as never, reason);
       showToast(next === 'approved' ? 'Event approved' : next === 'rejected' ? 'Event rejected' : next === 'suspended' ? 'Event suspended' : 'Event reinstated', `"${title}" updated.`);
+      if (next === 'approved') {
+        await notifyTelegramEvent(id, 'event_approved');
+        await notifyTelegramEvent(id, 'event_published');
+      } else if (next === 'pending') {
+        await notifyTelegramEvent(id, 'event_created');
+      }
     } catch {
       setEvents(prev);
       showToast('Something went wrong', "Couldn't update the event status.");

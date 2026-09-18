@@ -29,6 +29,7 @@ import HostDashboardNav from '@/components/HostDashboardNav';
 import PartyPhoto from '@/components/PartyPhoto';
 import SalesChart from '@/components/SalesChart';
 import { fetchOrganizerEventAnalytics, partyShareUrl, fetchEventReviews, submitEventForReview, withdrawEvent, fetchPartyHostVerified, type OrganizerEventAnalytics } from '@/lib/queries';
+import { notifyTelegramEvent } from '@/lib/telegram-client';
 import { formatNaira } from '@/lib/filters';
 import { partyPhoto } from '@/lib/data';
 import { eventAvailability } from '@/lib/event-state';
@@ -190,6 +191,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
       if (action === 'submit') await submitEventForReview(party.id);
       else await withdrawEvent(party.id);
       showToast(action === 'submit' ? 'Submitted for review' : 'Moved back to draft', action === 'submit' ? 'Your event is with the review team.' : 'Your event is saved as a draft.');
+      if (action === 'submit') await notifyTelegramEvent(party.id, 'event_created');
       setAttempt((a) => a + 1);
     } catch (err) {
       showToast('Something went wrong', err instanceof Error ? err.message : "Couldn't update the event.");

@@ -21,13 +21,19 @@ export type NotificationType =
   | 'review_request'
   | 'host_verification'
   | 'host_payout'
-  | 'check_in_summary';
+  | 'check_in_summary'
+  | 'event_created'
+  | 'event_approved'
+  | 'event_published';
+
+export type NotificationChannel = 'email' | 'telegram';
 
 export interface ClaimNotificationInput {
   userId?: string | null;
   email: string;
   type: NotificationType;
   refId: string;
+  channel?: NotificationChannel;
 }
 
 // Atomically reserves this recipient/type/ref for delivery. Returns true for
@@ -36,13 +42,13 @@ export interface ClaimNotificationInput {
 // recordNotificationOutcome().
 export async function claimNotification(
   service: ServiceSupabase,
-  { userId, email, type, refId }: ClaimNotificationInput
+  { userId, email, type, refId, channel = 'email' }: ClaimNotificationInput
 ): Promise<boolean> {
   const claimOnce = async (includeStatus: boolean): Promise<boolean | null> => {
     const { data, error } = await service.rpc('record_notification_send', {
       p_user_id: userId ?? null,
       p_email: email,
-      p_channel: 'email',
+      p_channel: channel,
       p_type: type,
       p_ref_id: refId,
       ...(includeStatus ? { p_status: 'pending' } : {}),

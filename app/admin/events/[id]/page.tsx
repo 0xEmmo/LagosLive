@@ -9,6 +9,7 @@ import { PageHeader, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, use
 import { usePermission } from '@/lib/hooks/usePermission';
 import { fetchAdminEvent, fetchEventOrders, flagEvent, updateEventNotes, fetchAdminNotes, createAdminNote, deleteAdminNote, logAudit, type AdminEventJoined, type AdminOrderJoined, type NoteRow, toCsv, downloadCsv } from '@/lib/admin-queries';
 import { setEventReviewStatus } from '@/lib/queries';
+import { notifyTelegramEvent } from '@/lib/telegram-client';
 import { useLagosLiveStore } from '@/lib/store';
 import { formatNaira } from '@/lib/filters';
 
@@ -79,6 +80,10 @@ export default function AdminEventDetailPage() {
       await setEventReviewStatus(event.id, next as never, reason);
       setEvent((e) => (e ? { ...e, status: next } : e));
       showToast('Event updated', next);
+      if (next === 'approved') {
+        await notifyTelegramEvent(event.id, 'event_approved');
+        await notifyTelegramEvent(event.id, 'event_published');
+      }
     } catch {
       showToast('Something went wrong', "Couldn't update the event.");
     }

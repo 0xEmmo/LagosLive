@@ -12,6 +12,7 @@ import { setEventReviewStatus } from '@/lib/queries';
 import { notifyTelegramEvent } from '@/lib/telegram-client';
 import { useLagosLiveStore } from '@/lib/store';
 import { formatNaira } from '@/lib/filters';
+import RejectEventDialog from '@/components/RejectEventDialog';
 
 const PAYMENT_BADGE: Record<string, { label: string; bg: string; color: string }> = {
   confirmed: { label: 'Paid', bg: 'rgba(0,245,212,0.08)', color: '#00F5D4' },
@@ -40,6 +41,7 @@ export default function AdminEventDetailPage() {
   const [status, setStatus] = useState<'loading' | 'error' | 'ok'>('loading');
   const [attempt, setAttempt] = useState(0);
   const [noteBusy, setNoteBusy] = useState(false);
+  const [rejectOpen, setRejectOpen] = useState(false);
 
   const id = Number(routeParams.id);
 
@@ -68,16 +70,23 @@ export default function AdminEventDetailPage() {
 
   const setStatusOf = async (next: string) => {
     if (!event) return;
-    let reason: string | undefined;
-    if (next === 'rejected' || next === 'suspended') {
-      reason = prompt(`${next === 'suspended' ? 'Suspend' : 'Reject'} "${event.title}" — add a reason the host will see:`) ?? '';
+    if (next === 'suspended') {
+      const reason = prompt(`Suspend "${event.title}" — add a reason the host will see:`) ?? '';
       if (!reason.trim()) {
-        showToast('Reason required', `Add a reason to ${next} an event.`);
+        showToast('Reason required', 'Add a reason to suspend an event.');
         return;
       }
+      try {
+        await setEventReviewStatus(event.id, 'suspended', reason);
+        setEvent((e) => (e ? { ...e, status: 'suspended' } : e));
+        showToast('Event updated', 'Event suspended');
+      } catch {
+        showToast('Something went wrong', "Couldn't suspend the event.");
+      }
+      return;
     }
     try {
-      await setEventReviewStatus(event.id, next as never, reason);
+      await setEventReviewStatus(event.id, next as never);
       setEvent((e) => (e ? { ...e, status: next } : e));
       showToast('Event updated', next);
       if (next === 'approved') {
@@ -86,6 +95,18 @@ export default function AdminEventDetailPage() {
       }
     } catch {
       showToast('Something went wrong', "Couldn't update the event.");
+    }
+  };
+
+  const confirmReject = async (reason: string) => {
+    if (!event) return;
+    try {
+      await setEventReviewStatus(event.id, 'rejected', reason);
+      setEvent((e) => (e ? { ...e, status: 'rejected' } : e));
+      showToast('Event rejected', reason);
+      setRejectOpen(false);
+    } catch (err) {
+      showToast('Could not reject', err instanceof Error ? err.message : "Couldn't update the event.");
     }
   };
 
@@ -196,7 +217,7 @@ export default function AdminEventDetailPage() {
                   {event.status === 'pending' && (
                     <>
                       {canApprove && <ActionBtn label="Approve" icon={<Check size={13} />} color="#00F5D4" onClick={() => setStatusOf('approved')} />}
-                      {canReject && <ActionBtn label="Reject" icon={<X size={13} />} color="#FF8A00" onClick={() => setStatusOf('rejected')} />}
+                      {canReject && <ActionBtn label="Reject" icon={<X size={13} />} color="#FF8A00" onClick={() => setRejectOpen(true)} />}
                     </>
                   )}
                 </div>
@@ -339,6 +360,13 @@ export default function AdminEventDetailPage() {
             )}
           </div>
         )}
+
+        <RejectEventDialog
+          open={rejectOpen}
+          eventName={event?.title}
+          onClose={() => setRejectOpen(false)}
+          onConfirm={confirmReject}
+        />
       </div>
     </AdminShell>
   );

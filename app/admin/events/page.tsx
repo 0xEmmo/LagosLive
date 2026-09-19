@@ -11,6 +11,7 @@ import { setEventReviewStatus, deleteParty } from '@/lib/queries';
 import { notifyTelegramEvent } from '@/lib/telegram-client';
 import { useLagosLiveStore } from '@/lib/store';
 import { formatNaira } from '@/lib/filters';
+import RejectEventDialog from '@/components/RejectEventDialog';
 
 const PAGE_SIZE = 50;
 
@@ -38,6 +39,7 @@ export default function AdminEventsPage() {
   const [attempt, setAttempt] = useState(0);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [rejectEvent, setRejectEvent] = useState<{ id: number; title: string } | null>(null);
 
   const load = async () => {
     setStatus('loading');
@@ -86,10 +88,10 @@ export default function AdminEventsPage() {
 
   const setStatusOf = async (id: number, next: string, title: string) => {
     let reason: string | undefined;
-    if (next === 'rejected' || next === 'suspended') {
-      reason = prompt(`${next === 'suspended' ? 'Suspend' : 'Reject'} "${title}" — add a reason the host will see:`) ?? '';
+    if (next === 'suspended') {
+      reason = prompt(`Suspend "${title}" — add a reason the host will see:`) ?? '';
       if (!reason.trim()) {
-        showToast('Reason required', `Add a reason to ${next} an event.`);
+        showToast('Reason required', 'Add a reason to suspend an event.');
         return;
       }
     }
@@ -107,6 +109,19 @@ export default function AdminEventsPage() {
     } catch {
       setEvents(prev);
       showToast('Something went wrong', "Couldn't update the event status.");
+    }
+  };
+
+  const confirmReject = async (target: { id: number; title: string }, reason: string) => {
+    const prev = events;
+    setEvents((e) => e.map((x) => (x.id === target.id ? { ...x, status: 'rejected' } : x)));
+    try {
+      await setEventReviewStatus(target.id, 'rejected', reason);
+      showToast('Event rejected', `"${target.title}" was rejected.`);
+      setRejectEvent(null);
+    } catch (err) {
+      setEvents(prev);
+      showToast('Could not reject', err instanceof Error ? err.message : "Couldn't update the event status.");
     }
   };
 
@@ -216,7 +231,7 @@ export default function AdminEventsPage() {
                         <>
                           {canApprove && <ActionBtn label="Submit" icon={<Check size={12} />} color="#FFD600" onClick={() => setStatusOf(ev.id, 'pending', ev.title)} />}
                           {canApprove && <ActionBtn label="Approve" icon={<Check size={12} />} color="#00F5D4" onClick={() => setStatusOf(ev.id, 'approved', ev.title)} />}
-                          {canReject && <ActionBtn label="Reject" icon={<X size={12} />} color="#FF8A00" onClick={() => setStatusOf(ev.id, 'rejected', ev.title)} />}
+                          {canReject && <ActionBtn label="Reject" icon={<X size={12} />} color="#FF8A00" onClick={() => setRejectEvent({ id: ev.id, title: ev.title })} />}
                         </>
                       )}
                       {canDelete && <ActionBtn label="Delete" icon={<Trash2 size={12} />} color="#FF2D95" onClick={() => remove(ev)} />}
@@ -264,7 +279,7 @@ export default function AdminEventsPage() {
                             {canApprove && (ev.status === 'suspended' || ev.status === 'rejected') && <button onClick={() => setStatusOf(ev.id, 'approved', ev.title)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#00F5D4' }}>Reinstate</button>}
                             {(ev.status === 'pending' || ev.status === 'draft') && <>
                               {canApprove && <button onClick={() => setStatusOf(ev.id, 'approved', ev.title)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#00F5D4' }}>Approve</button>}
-                              {canReject && ev.status === 'pending' && <button onClick={() => setStatusOf(ev.id, 'rejected', ev.title)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#FF8A00' }}>Reject</button>}
+                              {canReject && ev.status === 'pending' && <button onClick={() => setRejectEvent({ id: ev.id, title: ev.title })} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#FF8A00' }}>Reject</button>}
                             </>}
                             {canDelete && <button onClick={() => remove(ev)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#FF2D95' }}>Delete</button>}
                           </div>
@@ -300,6 +315,13 @@ export default function AdminEventsPage() {
             )}
           </>
         )}
+
+        <RejectEventDialog
+          open={rejectEvent !== null}
+          eventName={rejectEvent?.title}
+          onClose={() => setRejectEvent(null)}
+          onConfirm={(reason) => (rejectEvent ? confirmReject(rejectEvent, reason) : Promise.resolve())}
+        />
       </div>
     </AdminShell>
   );

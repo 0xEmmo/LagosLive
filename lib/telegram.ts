@@ -94,16 +94,25 @@ function actionButton(party: PartyBasics, type: TelegramEventType): { text: stri
   return { text: type === 'event_created' ? 'Review Event' : 'Publish Event', url: `${appUrl()}/admin/events/${party.id}` };
 }
 
+interface TelegramMessageSendResult {
+  ok: boolean;
+  messageId?: string;
+  httpStatus?: number;
+  apiError?: string;
+}
+
 // Direct Telegram Bot API call. Best-effort and never throws — the caller
-// records the outcome separately.
-async function sendTelegramMessage(
-  text: string,
-  button?: { text: string; url: string }
-): Promise<{ ok: boolean; messageId?: string }> {
+// records the outcome separately. Failure details returned for logging are
+// deliberately safe: HTTP status + Telegram's error description, never the
+// token or the request URL that embeds it.
+async function sendTelegramMessage(text: string, button?: { text: string; url: string }): Promise<TelegramMessageSendResult> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) {
-    console.warn('[telegram] TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID not configured');
+    console.warn('[telegram] not configured', {
+      tokenConfigured: Boolean(token),
+      chatIdConfigured: Boolean(chatId),
+    });
     return { ok: false };
   }
   try {
@@ -121,12 +130,34 @@ async function sendTelegramMessage(
     const json = (await response.json().catch(() => null)) as { ok?: boolean; description?: string; result?: { message_id?: number } } | null;
     if (!response.ok || !json?.ok) {
       console.warn('[telegram] sendMessage failed', { status: response.status, description: json?.description });
-      return { ok: false };
+      return { ok: false, httpStatus: response.status, apiError: json?.description ?? undefined };
     }
     return { ok: true, messageId: json.result?.message_id != null ? String(json.result.message_id) : undefined };
   } catch (err) {
     console.error('[telegram] sendMessage error', err);
-    return { ok: false };
+    return { ok: false, apiError: 'network_request_failed' };
+  }
+}
+
+// Self-healing for the exactly-once claim log: a transition whose earlier send
+// attempt failed is cleared so a later retry can re-claim and actually post the
+// message once the underlying issue (missing env vars, Telegram outage) is
+// resolved. Rows recorded 'sent' (or still 'pending') are never touched, so a
+// genuine duplicate can never be posted.
+async function clearFailedTelegramClaim(service: ServiceSupabase, eventId: number, type: TelegramEventType): Promise<void> {
+  const { count, error } = await service
+    .from('notification_sends')
+    .delete({ count: 'exact' })
+    .eq('channel', 'telegram')
+    .eq('type', type)
+    .eq('ref_id', String(eventId))
+    .eq('status', 'failed');
+  if (error) {
+    console.warn('[telegram] failed-claim cleanup error', { eventId, type, error: error.message });
+    return;
+  }
+  if (count) {
+    console.warn('[telegram] cleared stale failed claim for retry', { eventId, type, count });
   }
 }
 
@@ -139,7 +170,17 @@ export async function sendEventTelegramNotification(
   type: TelegramEventType,
   actorUserId: string
 ): Promise<TelegramSendResult> {
-  const service = createServiceSupabase();
+  let service: ServiceSupabase;
+  try {
+    service = createServiceSupabase();
+  } catch (err) {
+    console.warn('[telegram] service client unavailable; not sending', {
+      eventId,
+      type,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return { sent: false, reason: 'service_unavailable' };
+  }
 
   const { data: party, error: partyError } = await service
     .from('parties')
@@ -180,6 +221,7 @@ export async function sendEventTelegramNotification(
   }
 
   const claimEmail = profile?.email ?? `telegram:${party.id}`;
+  await clearFailedTelegramClaim(service, party.id, type);
   const claimed = await claimNotification(service, {
     userId: party.created_by ?? null,
     email: claimEmail,
@@ -191,7 +233,24 @@ export async function sendEventTelegramNotification(
 
   const text = buildMessage(party, type, firstEvent, creatorDisplayName(profile ?? null));
   const button = actionButton(party, type);
+  console.log('[telegram] about to send', {
+    eventId: party.id,
+    type,
+    title: party.title,
+    firstEvent,
+    tokenConfigured: Boolean(process.env.TELEGRAM_BOT_TOKEN),
+    chatIdConfigured: Boolean(process.env.TELEGRAM_CHAT_ID),
+  });
   const result = await sendTelegramMessage(text, button);
+  if (!result.ok) {
+    console.warn('[telegram] notification send failed', {
+      eventId: party.id,
+      type,
+      title: party.title,
+      httpStatus: result.httpStatus ?? null,
+      apiError: result.apiError ?? null,
+    });
+  }
 
   await recordNotificationOutcome(service, {
     email: claimEmail,

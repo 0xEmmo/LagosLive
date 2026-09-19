@@ -30,6 +30,7 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
 
     const result = await sendEventTelegramNotification(eventId, type as TelegramEventType, user.id);
+    console.log('[telegram:notify] attempt finished', { eventId, type, sent: result.sent, reason: result.reason ?? null });
     return NextResponse.json({ ok: result.sent, reason: result.reason ?? null });
   } catch (err) {
     console.error('[telegram:notify] notification error', err);

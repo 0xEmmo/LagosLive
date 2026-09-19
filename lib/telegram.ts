@@ -64,7 +64,7 @@ function creatorDisplayName(profile: ProfileBasics | null): string {
 }
 
 const STATUS_LABEL: Record<TelegramEventType, string> = {
-  event_created: 'Pending Approval',
+  event_created: 'Submitted for Review',
   event_approved: 'Approved',
   event_published: 'LIVE',
 };

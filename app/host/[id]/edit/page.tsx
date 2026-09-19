@@ -5,7 +5,9 @@ import { useRouter, notFound } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import HostDashboardNav from '@/components/HostDashboardNav';
 import PartyForm from '@/components/PartyForm';
-import { updateParty, deleteParty, fetchTicketTypes, type PartyFormInput, type TicketFormType } from '@/lib/queries';
+import DeleteEventDialog from '@/components/DeleteEventDialog';
+import { updateParty, deleteParty, fetchTicketTypes, submitEventForReview, type PartyFormInput, type PartySubmitMode, type TicketFormType } from '@/lib/queries';
+import { notifyTelegramEvent } from '@/lib/telegram-client';
 import { useParty } from '@/lib/hooks/useParty';
 import { useLagosLiveStore } from '@/lib/store';
 
@@ -13,8 +15,10 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const user = useLagosLiveStore((s) => s.user);
   const authLoading = useLagosLiveStore((s) => s.authLoading);
+  const showToast = useLagosLiveStore((s) => s.showToast);
   const { party, loading } = useParty(Number(params.id));
   const [ticketTypes, setTicketTypes] = useState<TicketFormType[] | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   useEffect(() => {
     fetchTicketTypes(Number(params.id))
@@ -52,7 +56,12 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
 
   const isAdminEditingOthersEvent = user.isAdmin && party.createdBy !== user.id;
 
-  const submit = async (input: PartyFormInput) => {
+  // mode: 'submit' means the host explicitly chose "Submit for Review", so after
+  // the save the event is pushed into pending review and the ops Telegram ping
+  // fires exactly once for that transition. Admins editing someone else's event
+  // only save (they moderate through /admin), and an already-pending event is
+  // never submitted twice (the server RPC also refuses draft/rejected-only).
+  const submit = async (input: PartyFormInput, mode: PartySubmitMode) => {
     // Phase 5: notify attending guests when a live event's key details shift.
     const changes: string[] = [];
     if (new Date(party.startsAt).getTime() !== new Date(input.startsAt).getTime()) {
@@ -73,15 +82,22 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
       });
     }
 
+    if (mode === 'submit' && !isAdminEditingOthersEvent && (party.status === 'draft' || party.status === 'rejected')) {
+      await submitEventForReview(party.id);
+      await notifyTelegramEvent(party.id, 'event_created');
+      showToast('Event submitted for review', 'Your event is with the review team.');
+    }
+
     router.push(isAdminEditingOthersEvent ? '/admin' : `/party/${party.id}`);
   };
 
   const remove = async () => {
-    if (!confirm(`Delete "${party.title}" permanently? This can't be undone.`)) return;
     try {
       await deleteParty(party.id);
+      setDeleteOpen(false);
       router.push(isAdminEditingOthersEvent ? '/admin' : '/host');
     } catch (err) {
+      setDeleteOpen(false);
       alert(
         err instanceof Error && err.message.includes('foreign key')
           ? "Can't delete — this event already has ticket orders. Suspend it instead."
@@ -109,15 +125,16 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
             <Loader2 size={26} strokeWidth={2} color="#FF2D95" className="animate-spin" />
           </div>
         ) : (
-          <PartyForm initial={party} initialTicketTypes={ticketTypes} onSubmit={submit} submitLabel="Save Changes" />
+          <PartyForm initial={party} initialTicketTypes={ticketTypes} onSubmit={submit} disableSubmit={isAdminEditingOthersEvent} />
         )}
         <button
-          onClick={remove}
+          onClick={() => setDeleteOpen(true)}
           className="mt-3 w-full rounded-xl py-[13px] text-sm font-semibold transition-all duration-200 active:scale-[0.98]"
           style={{ background: 'rgba(255,138,0,0.08)', border: '1px solid rgba(255,138,0,0.2)', color: '#FF8A00' }}
         >
           Delete Event
         </button>
+        <DeleteEventDialog open={deleteOpen} eventName={party.title} onClose={() => setDeleteOpen(false)} onDelete={remove} />
       </div>
     </div>
   );

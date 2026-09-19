@@ -7,7 +7,7 @@ import { ALL_VIBES, GRADIENTS } from '@/lib/data';
 import { formatNaira } from '@/lib/filters';
 import AddressInput, { type LocationResult } from '@/components/AddressInput';
 import { geocodePlace, hasGeoapifyKey } from '@/lib/geoapify';
-import type { PartyFormInput, TicketFormType } from '@/lib/queries';
+import type { PartyFormInput, PartySubmitMode, TicketFormType } from '@/lib/queries';
 import type { Party, Vibe } from '@/lib/types';
 
 // Reuse the exact same map implementation the public event page uses for the
@@ -17,8 +17,11 @@ const EventMap = dynamic(() => import('@/components/EventMap'), { ssr: false });
 interface PartyFormProps {
   initial?: Party;
   initialTicketTypes?: TicketFormType[];
-  onSubmit: (input: PartyFormInput) => Promise<void>;
-  submitLabel: string;
+  // mode tells the page what the host asked for: 'submit' moves the event into
+  // pending review (+ ops Telegram), 'draft' keeps it a private draft.
+  onSubmit: (input: PartyFormInput, mode: PartySubmitMode) => Promise<void>;
+  // Hide the submit-for-review action (e.g. an admin editing a host's event).
+  disableSubmit?: boolean;
 }
 
 function toDatetimeLocal(iso: string) {
@@ -96,7 +99,7 @@ function Section({ step, title, hint, children }: { step: number; title: string;
   );
 }
 
-export default function PartyForm({ initial, initialTicketTypes, onSubmit, submitLabel }: PartyFormProps) {
+export default function PartyForm({ initial, initialTicketTypes, onSubmit, disableSubmit }: PartyFormProps) {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [startsAt, setStartsAt] = useState(initial ? toDatetimeLocal(initial.startsAt) : '');
   const [endsAt, setEndsAt] = useState(initial ? toDatetimeLocal(initial.endsAt) : '');
@@ -158,7 +161,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, submi
   const [description, setDescription] = useState(initial?.description ?? '');
   const [errors, setErrors] = useState<Partial<Record<FieldName, string>>>({});
   const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [busy, setBusy] = useState<PartySubmitMode | null>(null);
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [imageError, setImageError] = useState('');
@@ -327,7 +330,11 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, submi
     return null;
   };
 
-  const validate = (coords?: { lat: number; lng: number } | null): boolean => {
+  // Form validation. A finished listing ('submit') is held to the full bar;
+  // a draft only needs what the database requires to actually save, so the
+  // editorial niceties (description length, past start time, optional contact
+  // formats) don't block a host mid-write.
+  const validate = (coords?: { lat: number; lng: number } | null, mode: PartySubmitMode = 'submit'): boolean => {
     const e: Partial<Record<FieldName, string>> = {};
 
     if (!title.trim()) e.title = 'Event title is required.';
@@ -336,7 +343,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, submi
     if (!location.trim()) e.location = 'Venue name is required.';
     if (!address.trim()) e.address = 'Full address is required.';
     if (!organizer.trim()) e.organizer = 'Organizer name is required.';
-    if (description.trim().length > 0 && description.trim().length < 20) {
+    if (mode === 'submit' && description.trim().length > 0 && description.trim().length < 20) {
       e.description = 'Make the description a little longer (at least 20 characters).';
     }
 
@@ -362,25 +369,27 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, submi
       const end = new Date(endsAt);
       if (end <= start) {
         e.endsAt = 'End time must be after the start time.';
-      } else if (!initial && start.getTime() < Date.now()) {
+      } else if (mode === 'submit' && !initial && start.getTime() < Date.now()) {
         e.startsAt = 'Start time can\'t be in the past.';
       }
     }
 
-    const digits = whatsapp.replace(/\D/g, '');
-    if (whatsapp.trim() && digits.length < 7) {
-      e.whatsapp = 'Enter a valid WhatsApp number, e.g. +2348012345678.';
-    }
-
-    if (organizerPhone.trim()) {
-      const phoneDigits = organizerPhone.replace(/\D/g, '');
-      if (phoneDigits.length < 7) {
-        e.organizerPhone = 'Enter a valid phone number, e.g. +2349012345678.';
+    if (mode === 'submit') {
+      const digits = whatsapp.replace(/\D/g, '');
+      if (whatsapp.trim() && digits.length < 7) {
+        e.whatsapp = 'Enter a valid WhatsApp number, e.g. +2348012345678.';
       }
-    }
 
-    if (organizerEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(organizerEmail.trim())) {
-      e.organizerEmail = 'Enter a valid email address.';
+      if (organizerPhone.trim()) {
+        const phoneDigits = organizerPhone.replace(/\D/g, '');
+        if (phoneDigits.length < 7) {
+          e.organizerPhone = 'Enter a valid phone number, e.g. +2349012345678.';
+        }
+      }
+
+      if (organizerEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(organizerEmail.trim())) {
+        e.organizerEmail = 'Enter a valid email address.';
+      }
     }
 
     setErrors(e);
@@ -391,13 +400,13 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, submi
     return true;
   };
 
-  const submit = async () => {
+  const submit = async (mode: PartySubmitMode) => {
     setError('');
-    setSubmitting(true);
+    setBusy(mode);
     try {
       const located = await resolveAddressForSubmit();
-      if (!validate(located)) {
-        setSubmitting(false);
+      if (!validate(located, mode)) {
+        setBusy(null);
         return;
       }
       const latParsed = located ? located.lat : Number(lat);
@@ -434,10 +443,10 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, submi
         description: description.trim(),
         gradient: GRADIENTS[vibe],
         coverImage,
-      });
+      }, mode);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
-      setSubmitting(false);
+      setBusy(null);
     }
   };
 
@@ -962,13 +971,75 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, submi
         </div>
       </Section>
 
+      {/* Actions — two explicit choices so "saving" and "submitting" can never
+          be confused. A finished listing is submitted for review; anything the
+          host isn't ready for yet is saved as a draft (kept private, no ops
+          Telegram notification until it's actually submitted). */}
+      <SubmitActions
+        initial={initial}
+        disableSubmit={disableSubmit}
+        busy={busy}
+        submit={submit}
+      />
+    </div>
+  );
+}
+
+function SubmitActions({
+  initial,
+  disableSubmit,
+  busy,
+  submit,
+}: {
+  initial?: Party;
+  disableSubmit?: boolean;
+  busy: PartySubmitMode | null;
+  submit: (mode: PartySubmitMode) => void;
+}) {
+  const isEditing = !!initial;
+  const isRejected = isEditing && initial.status === 'rejected';
+  const isDraft = isEditing && initial.status === 'draft';
+  // The event can be pushed into review: a brand-new form, or an existing
+  // draft / rejected listing the host is re-submitting after edits.
+  const canSubmit = !disableSubmit && (!isEditing || isDraft || isRejected);
+
+  const draftLabel = isEditing ? 'Save Changes' : 'Save as Draft';
+  const submitLabel = isEditing ? (isRejected ? 'Resubmit for Review' : 'Submit for Review') : 'Submit for Review';
+
+  if (!canSubmit) {
+    return (
       <button
-        onClick={submit}
-        disabled={submitting}
+        onClick={() => submit('submit')}
+        disabled={busy !== null}
         className="btn-primary mt-1 w-full py-[15px] text-sm font-bold disabled:opacity-60"
       >
-        {submitting ? 'Saving...' : submitLabel}
+        {busy === 'submit' ? 'Saving...' : 'Save Changes'}
       </button>
+    );
+  }
+
+  return (
+    <div className="mt-1 flex flex-col gap-2.5">
+      <button
+        onClick={() => submit('submit')}
+        disabled={busy !== null}
+        className="btn-primary w-full py-[15px] text-sm font-bold disabled:opacity-60"
+      >
+        {busy === 'submit' ? 'Submitting for Review...' : submitLabel}
+      </button>
+      <button
+        onClick={() => submit('draft')}
+        disabled={busy !== null}
+        className="w-full rounded-xl py-[15px] text-sm font-semibold glass glass-hover transition-all disabled:opacity-60"
+        style={{ color: '#A7A8B5' }}
+      >
+        {busy === 'draft' ? (isEditing ? 'Saving Changes...' : 'Saving Draft...') : draftLabel}
+      </button>
+      {!isEditing && (
+        <div className="px-1 text-center text-[11.5px] leading-[1.6]" style={{ color: '#6B6C80' }}>
+          Save as Draft keeps your listing private — no admin review until you submit it.
+        </div>
+      )}
     </div>
   );
 }

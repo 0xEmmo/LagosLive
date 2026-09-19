@@ -205,6 +205,11 @@ export interface TicketFormType {
   sold?: number;
 }
 
+// How the host chose to save the form: 'draft' keeps the event in its current
+// draft state (no review, no notification); 'submit' moves it into the
+// pending-review state and reports the submission to the ops Telegram channel.
+export type PartySubmitMode = 'draft' | 'submit';
+
 export interface PartyFormInput {
   title: string;
   startsAt: string; // ISO string from a <input type="datetime-local">

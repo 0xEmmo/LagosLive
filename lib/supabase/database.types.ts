@@ -796,6 +796,102 @@ page_views: number
         }
         Relationships: []
       }
+      host_verifications: {
+        Row: {
+          account_holder: string
+          account_last4: string
+          bank_name: string
+          business_document_url: string | null
+          business_name: string
+          business_type: string
+          cac_number: string | null
+          created_at: string
+          dob: string | null
+          id: string
+          id_document_url: string | null
+          id_number: string
+          id_selfie_url: string | null
+          id_type: string
+          legal_name: string
+          otp_expires_at: string | null
+          otp_phone_last4: string | null
+          phone_last4: string | null
+          phone_number: string | null
+          phone_verified: boolean
+          resubmitted_at: string | null
+          review_reason: string | null
+          review_requested_at: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_holder: string
+          account_last4: string
+          bank_name: string
+          business_document_url?: string | null
+          business_name: string
+          business_type?: string
+          cac_number?: string | null
+          created_at?: string
+          dob?: string | null
+          id?: string
+          id_document_url?: string | null
+          id_number: string
+          id_selfie_url?: string | null
+          id_type?: string
+          legal_name: string
+          otp_expires_at?: string | null
+          otp_phone_last4?: string | null
+          phone_last4?: string | null
+          phone_number?: string | null
+          phone_verified?: boolean
+          resubmitted_at?: string | null
+          review_reason?: string | null
+          review_requested_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_holder?: string
+          account_last4?: string
+          bank_name?: string
+          business_document_url?: string | null
+          business_name?: string
+          business_type?: string
+          cac_number?: string | null
+          created_at?: string
+          dob?: string | null
+          id?: string
+          id_document_url?: string | null
+          id_number?: string
+          id_selfie_url?: string | null
+          id_type?: string
+          legal_name?: string
+          otp_expires_at?: string | null
+          otp_phone_last4?: string | null
+          phone_last4?: string | null
+          phone_number?: string | null
+          phone_verified?: boolean
+          resubmitted_at?: string | null
+          review_reason?: string | null
+          review_requested_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           id: string

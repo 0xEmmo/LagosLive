@@ -43,6 +43,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: '/admin/events', label: 'Events', icon: CalendarDays, permissions: ['events.view'] },
   { href: '/admin/trending', label: 'Trending', icon: Flame, permissions: ['events.edit'] },
   { href: '/admin/hosts', label: 'Hosts', icon: Users, permissions: ['hosts.view'] },
+  { href: '/admin/host-verification', label: 'Host Verification', icon: ShieldCheck, permissions: ['hosts.view'] },
   { href: '/admin/users', label: 'Users', icon: UserCog, permissions: ['staff.suspend'] },
   { href: '/admin/roles', label: 'Roles', icon: Shield, permissions: ['staff.permissions'] },
   { href: '/admin/staff', label: 'Staff', icon: IdCard, permissions: ['staff.view'] },
@@ -71,7 +72,7 @@ export function filterAdminNav(user: User | null): AdminNavItem[] {
 
 const GROUPS: { label: string; hrefs: string[] }[] = [
   { label: 'Overview', hrefs: ['/admin'] },
-  { label: 'Operations', hrefs: ['/admin/events', '/admin/trending', '/admin/hosts', '/admin/users', '/admin/orders'] },
+  { label: 'Operations', hrefs: ['/admin/events', '/admin/trending', '/admin/hosts', '/admin/host-verification', '/admin/users', '/admin/orders'] },
   { label: 'Finance', hrefs: ['/admin/revenue'] },
   { label: 'Analytics & Reviews', hrefs: ['/admin/analytics', '/admin/reviews'] },
   { label: 'Promos & Marketing', hrefs: ['/admin/promos'] },

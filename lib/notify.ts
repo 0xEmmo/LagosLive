@@ -24,7 +24,10 @@ export type NotificationType =
   | 'check_in_summary'
   | 'event_created'
   | 'event_approved'
-  | 'event_published';
+  | 'event_published'
+  | 'host_verification_submitted'
+  | 'host_verification_approved'
+  | 'host_verification_rejected';
 
 export type NotificationChannel = 'email' | 'telegram';
 

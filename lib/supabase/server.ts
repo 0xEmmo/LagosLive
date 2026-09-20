@@ -41,3 +41,5 @@ export function createServiceSupabase() {
     { auth: { persistSession: false } }
   );
 }
+
+export type ServiceSupabase = ReturnType<typeof createServiceSupabase>;

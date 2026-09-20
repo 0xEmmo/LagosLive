@@ -1,29 +1,16 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { ArrowLeft, Banknote, Building2, FileImage, IdCard, Lock, Phone, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Banknote, Building2, FileImage, IdCard, Lock, ShieldCheck } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/server';
 import { getHostVerificationDetail, signDocumentPreviewUrls, documentSlots, VERIFICATION_DOCUMENT_SPECS } from '@/lib/host-verification';
 import type { HostVerificationRow } from '@/lib/host-verification';
-import { HOST_VERIFICATION_STATUS_LABEL, HOST_VERIFICATION_STATUS_COLOR } from '@/lib/host-verification-types';
+import { HOST_VERIFICATION_STATUS_LABEL, HOST_VERIFICATION_STATUS_COLOR, HOST_BUSINESS_TYPE_LABEL } from '@/lib/host-verification-types';
 import AdminShell from '@/components/admin-shell';
 import { PageHeader, Badge, EmptyBlock } from '@/components/ui/dashboard-ui';
 import ReviewForm from './review-form';
 
 export const dynamic = 'force-dynamic';
-
-const BUSINESS_TYPE_LABEL: Record<string, string> = {
-  sole_proprietor: 'Sole proprietor',
-  registered_company: 'Registered company',
-  partnership: 'Partnership',
-};
-
-const ID_TYPE_LABEL: Record<string, string> = {
-  national_id: 'National ID',
-  driver_license: 'Driver\u2019s license',
-  passport: 'Passport',
-  business_registration: 'Business registration',
-};
 
 export default async function AdminHostVerificationDetailPage({ params }: { params: { id: string } }) {
   const supabase = createServerSupabase();
@@ -89,30 +76,32 @@ export default async function AdminHostVerificationDetailPage({ params }: { para
         <div className="flex flex-col gap-5">
           <Section title="Business" icon={<Building2 />}>
             <Field label="Business name" value={row.businessName} />
-            <Field label="Business type" value={BUSINESS_TYPE_LABEL[row.businessType] ?? row.businessType} />
-            <Field label="CAC number" value={row.cacNumber || '—'} />
+            <Field label="Business type" value={HOST_BUSINESS_TYPE_LABEL[row.businessType as keyof typeof HOST_BUSINESS_TYPE_LABEL] ?? row.businessType} />
+            <Field label="Years in business" value={row.yearsInBusiness || '—'} />
+            <Field
+              label="Website / social"
+              value={
+                row.websiteSocial ? (
+                  <a href={row.websiteSocial} target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: '#FF2D95' }}>
+                    {row.websiteSocial}
+                  </a>
+                ) : (
+                  '—'
+                )
+              }
+            />
+            <Field label="Address" value={row.address || '—'} />
           </Section>
 
           <Section title="Identity" icon={<IdCard />}>
             <Field label="Legal name" value={row.legalName} />
-            <Field label="Date of birth" value={row.dob ? new Date(row.dob).toLocaleDateString() : '—'} />
-            <Field label="ID type" value={ID_TYPE_LABEL[row.idType] ?? row.idType} />
-            <Field label="ID number" value={row.idNumber} />
+            <Field label="NIN" value={row.nin || '—'} />
           </Section>
 
-          <Section title="Bank" icon={<Banknote />}>
+          <Section title="Payout account" icon={<Banknote />}>
             <Field label="Bank" value={row.bankName} />
             <Field label="Account holder" value={row.accountHolder} />
-            <Field label="Account last 4" value={row.accountLast4} />
-          </Section>
-
-          <Section title="Phone" icon={<Phone />}>
-            <Field label="Phone verified" value={row.phoneVerified ? 'Yes' : 'No'} />
-            <Field label="Phone last 4" value={row.phoneLast4 || '—'} />
-            <Field
-              label="OTP expires"
-              value={row.otpExpiresAt ? new Date(row.otpExpiresAt).toLocaleString() : '—'}
-            />
+            <Field label="Account number" value={row.accountNumber || row.accountLast4 || '—'} />
           </Section>
 
           {/* Documents */}

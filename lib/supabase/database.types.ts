@@ -800,6 +800,8 @@ page_views: number
         Row: {
           account_holder: string
           account_last4: string
+          account_number: string | null
+          address: string | null
           bank_name: string
           business_document_url: string | null
           business_name: string
@@ -811,7 +813,7 @@ page_views: number
           id_document_url: string | null
           id_number: string
           id_selfie_url: string | null
-          id_type: string
+          id_type: string | null
           legal_name: string
           otp_expires_at: string | null
           otp_phone_last4: string | null
@@ -827,10 +829,14 @@ page_views: number
           submitted_at: string
           updated_at: string
           user_id: string
+          website_social: string | null
+          years_in_business: string | null
         }
         Insert: {
           account_holder: string
           account_last4: string
+          account_number?: string | null
+          address?: string | null
           bank_name: string
           business_document_url?: string | null
           business_name: string
@@ -858,10 +864,14 @@ page_views: number
           submitted_at?: string
           updated_at?: string
           user_id: string
+          website_social?: string | null
+          years_in_business?: string | null
         }
         Update: {
           account_holder?: string
           account_last4?: string
+          account_number?: string | null
+          address?: string | null
           bank_name?: string
           business_document_url?: string | null
           business_name?: string
@@ -873,7 +883,7 @@ page_views: number
           id_document_url?: string | null
           id_number?: string
           id_selfie_url?: string | null
-          id_type?: string
+          id_type?: string | null
           legal_name?: string
           otp_expires_at?: string | null
           otp_phone_last4?: string | null
@@ -889,6 +899,8 @@ page_views: number
           submitted_at?: string
           updated_at?: string
           user_id?: string
+          website_social?: string | null
+          years_in_business?: string | null
         }
         Relationships: []
       }
@@ -1345,6 +1357,14 @@ page_views: number
           p_party_id: number
           p_status: string
           p_reason?: string
+        }
+        Returns: undefined
+      }
+      set_host_verification_status: {
+        Args: {
+          p_user_id: string
+          p_status: string
+          p_reason?: string | null
         }
         Returns: undefined
       }

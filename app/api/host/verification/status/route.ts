@@ -3,7 +3,7 @@ import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/serv
 import { getHostVerificationByUserId, documentSlots, signDocumentPreviewUrls } from '@/lib/host-verification';
 import { isHostVerificationStatus } from '@/lib/host-verification-types';
 
-// Host-facing read of the 5-step verification: the full host_verifications row
+// Host-facing read of the 3-step verification: the full host_verifications row
 // plus profiles.host_verification_status (the column every other gate reads).
 // Also returns short-lived signed URLs for any already-uploaded documents so
 // the wizard can preview them on resubmission (private bucket, server-signed).

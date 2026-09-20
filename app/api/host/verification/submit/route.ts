@@ -7,10 +7,9 @@ import {
   type HostVerificationSubmitInput,
 } from '@/lib/host-verification';
 import { claimNotification, recordNotificationOutcome } from '@/lib/notify';
+import { HOST_BUSINESS_TYPES, isHostYearsInBusiness } from '@/lib/host-verification-types';
+import { sendHostVerificationTelegramNotification } from '@/lib/telegram';
 import type { ServiceSupabase } from '@/lib/supabase/server';
-
-const BUSINESS_TYPES = ['sole_proprietor', 'registered_company', 'partnership'] as const;
-const ID_TYPES = ['national_id', 'driver_license', 'passport', 'business_registration'] as const;
 
 function parseInput(
   body: Record<string, unknown>
@@ -19,33 +18,32 @@ function parseInput(
   const maybeStr = (v: unknown) => (typeof v === 'string' && v.trim() ? v : null);
 
   const businessType = str(body.businessType) as HostVerificationSubmitInput['businessType'];
-  const idType = str(body.idType) as HostVerificationSubmitInput['idType'];
+  const yearsInBusiness = str(body.yearsInBusiness) as HostVerificationSubmitInput['yearsInBusiness'];
 
-  if (!BUSINESS_TYPES.includes(businessType)) return { ok: false, error: 'Invalid business type.' };
-  if (!ID_TYPES.includes(idType)) return { ok: false, error: 'Invalid ID type.' };
+  if (!(HOST_BUSINESS_TYPES as readonly string[]).includes(businessType)) return { ok: false, error: 'Invalid business type.' };
+  if (!isHostYearsInBusiness(yearsInBusiness)) return { ok: false, error: 'Invalid years-in-business option.' };
   if (!str(body.businessName).trim()) return { ok: false, error: 'Add a business name.' };
+  if (!str(body.address).trim()) return { ok: false, error: 'Add your address.' };
   if (!str(body.legalName).trim()) return { ok: false, error: 'Add your legal name.' };
-  if (!str(body.idNumber).trim()) return { ok: false, error: 'Add your ID number.' };
+  if (!/^[0-9]{11}$/.test(str(body.nin).trim())) return { ok: false, error: 'NIN must be an 11-digit number.' };
   if (!str(body.bankName).trim()) return { ok: false, error: 'Add a bank name.' };
   if (!str(body.accountHolder).trim()) return { ok: false, error: 'Add the account holder name.' };
-  if (!/^[0-9]{4}$/.test(str(body.accountLast4))) return { ok: false, error: 'Account last 4 must be 4 digits.' };
+  if (!/^[0-9]{10}$/.test(str(body.accountNumber).trim())) return { ok: false, error: 'Enter the full 10-digit account number.' };
 
   return {
     ok: true,
     input: {
       businessName: str(body.businessName),
       businessType,
-      cacNumber: maybeStr(body.cacNumber),
+      yearsInBusiness,
+      websiteSocial: maybeStr(body.websiteSocial),
+      address: str(body.address),
       legalName: str(body.legalName),
-      dob: maybeStr(body.dob),
-      idType,
-      idNumber: str(body.idNumber),
+      nin: str(body.nin),
       idDocumentPath: maybeStr(body.idDocumentPath),
-      idSelfiePath: maybeStr(body.idSelfiePath),
-      businessDocumentPath: maybeStr(body.businessDocumentPath),
       bankName: str(body.bankName),
       accountHolder: str(body.accountHolder),
-      accountLast4: str(body.accountLast4),
+      accountNumber: str(body.accountNumber),
     },
   };
 }
@@ -73,10 +71,10 @@ function bestEffortNotify(service: ServiceSupabase, userId: string, email: strin
   })();
 }
 
-// Host (re)submits their 5-step KYC. Writes through the server lib (which
+// Host (re)submits their 3-step KYC. Writes through the server lib (which
 // enforces the flow: hosts may only land on 'pending'), keeps the legacy
 // profiles status in sync, and best-effort claims the submission in the send
-// log so the ops team sees it exactly once.
+// log so the ops team sees it exactly once (Telegram + email digest).
 export async function POST(request: Request) {
   try {
     const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
@@ -119,6 +117,7 @@ export async function POST(request: Request) {
 
     const { data: profile } = await service.from('profiles').select('email').eq('id', user.id).maybeSingle();
     bestEffortNotify(service, user.id, typeof profile?.email === 'string' ? profile.email : '', `submitted:${result.row.submittedAt}`);
+    void sendHostVerificationTelegramNotification(user.id, 'host_verification_submitted');
 
     return NextResponse.json({ ok: true, row: result.row });
   } catch (err) {

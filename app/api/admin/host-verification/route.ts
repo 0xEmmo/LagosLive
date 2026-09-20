@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/server';
 import { sendHostVerificationEmail } from '@/lib/resend';
+import { sendHostVerificationTelegramNotification } from '@/lib/telegram';
 import type { Database } from '@/lib/supabase/database.types';
 
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 
-// Admin review decisions on host verification. Only admin/super_admin may
-// resolve a request; finance/support review read-only. Every decision is
-// audited and (best-effort) emailed to the host.
+// Admin review decisions on host verification. 'verified' and 'rejected' are
+// resolved through the DB function set_host_verification_status() — the ONLY
+// path staff may use for those transitions — so it writes the verification row,
+// audits, and keeps profiles.host_verification_status in sync in one atomic
+// call. 'suspend' is a separate account-level decision that does not touch the
+// verification row. Every decision is emailed to the host (best-effort) and
+// reported to the Telegram ops channel.
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as {
@@ -52,52 +57,63 @@ export async function POST(request: Request) {
       .maybeSingle();
     if (targetError || !target) return NextResponse.json({ error: 'User not found.' }, { status: 404 });
 
-    const now = new Date().toISOString();
-    const patch: ProfileUpdate = {
-      host_verification_reviewed_at: now,
-      host_verification_reviewed_by: user.id,
-    };
-
-    let action = '';
     let emailDecision: 'approved' | 'rejected' | 'suspended' | null = null;
 
-    if (decision === 'verify') {
-      patch.host_verification_status = 'verified';
-      patch.host_verification_reason = reason || null;
-      patch.account_status = 'active';
-      action = 'host_verification_approved';
-      emailDecision = 'approved';
-    } else if (decision === 'reject') {
-      patch.host_verification_status = 'rejected';
-      patch.host_verification_reason = reason;
-      action = 'host_verification_rejected';
-      emailDecision = 'rejected';
+    // Verify / reject go through the DB function (set_host_verification_status),
+    // which needs the caller's uid, so it must use the user-scoped client.
+    if (decision === 'verify' || decision === 'reject') {
+      const { error } = await supabase.rpc('set_host_verification_status', {
+        p_user_id: target.id,
+        p_status: decision === 'verify' ? 'verified' : 'rejected',
+        p_reason: decision === 'reject' ? reason : null,
+      });
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+      }
+
+      // Verify also re-activates the account (the DB function deliberately does
+      // not touch account_status — that is an account-level field, not a
+      // verification one).
+      if (decision === 'verify') {
+        const { error: activateError } = await service
+          .from('profiles')
+          .update({ account_status: 'active' })
+          .eq('id', target.id);
+        if (activateError) {
+          console.warn('[admin host-verification] account reactivation failed', { userId: target.id, error: activateError.message });
+        }
+      }
+
+      emailDecision = decision === 'verify' ? 'approved' : 'rejected';
     } else {
-      patch.account_status = 'suspended';
-      patch.host_verification_reason = reason;
-      action = 'host_suspended';
+      // Suspend is an account-level decision: it does not change the
+      // verification row or status, only blocks the account (and records why).
+      const patch: ProfileUpdate = {
+        account_status: 'suspended',
+        host_verification_reason: reason,
+        host_verification_reviewed_at: new Date().toISOString(),
+        host_verification_reviewed_by: user.id,
+      };
+
+      const { error: updateError } = await service.from('profiles').update(patch).eq('id', target.id);
+      if (updateError) {
+        return NextResponse.json({ error: 'Could not update the user.' }, { status: 500 });
+      }
+
+      await service.rpc('write_audit_log', {
+        p_action: 'host_suspended',
+        p_target_type: 'profile',
+        p_target_id: target.id,
+        p_details: {
+          decision,
+          reason: reason || null,
+          previous_status: target.host_verification_status,
+          account_status: target.account_status,
+        },
+      } as never);
+
       emailDecision = 'suspended';
     }
-
-    const { error: updateError } = await service
-      .from('profiles')
-      .update(patch)
-      .eq('id', target.id);
-    if (updateError) {
-      return NextResponse.json({ error: 'Could not update the user.' }, { status: 500 });
-    }
-
-    await service.rpc('write_audit_log', {
-      p_action: action,
-      p_target_type: 'profile',
-      p_target_id: target.id,
-      p_details: {
-        decision,
-        reason: reason || null,
-        previous_status: target.host_verification_status,
-        account_status: target.account_status,
-      },
-    } as never);
 
     if (emailDecision && notify && target.email) {
       await sendHostVerificationEmail({
@@ -106,6 +122,17 @@ export async function POST(request: Request) {
         decision: emailDecision,
         reason: reason || undefined,
       });
+    }
+
+    // Ops-channel visibility for verification transitions only (a suspend is an
+    // account action, not a verification event).
+    if (decision === 'verify' || decision === 'reject') {
+      const { data: actor } = await service.from('profiles').select('name').eq('id', user.id).maybeSingle();
+      void sendHostVerificationTelegramNotification(
+        target.id,
+        decision === 'verify' ? 'host_verification_approved' : 'host_verification_rejected',
+        { actorName: actor?.name ?? null }
+      );
     }
 
     return NextResponse.json({ ok: true });

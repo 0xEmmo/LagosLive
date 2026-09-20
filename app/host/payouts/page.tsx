@@ -63,7 +63,7 @@ export default function HostPayoutsPage() {
   const totalRevenue = confirmed.reduce((s, o) => s + o.total, 0);
   const paidOut = payouts.filter((p) => p.status === 'paid' || p.status === 'approved' || p.status === 'processing' || p.status === 'pending').reduce((s, p) => s + p.amount, 0);
   const available = Math.max(0, totalRevenue - paidOut);
-  const canRequest = available >= MIN_PAYOUT;
+  const canRequest = available >= MIN_PAYOUT && user.hostVerificationStatus === 'verified';
 
   const handleRequestPayout = async () => {
     if (!user || !canRequest) return;
@@ -121,7 +121,11 @@ export default function HostPayoutsPage() {
               className="shrink-0 rounded-[10px] px-3.5 py-2 text-[11.5px] font-bold"
               style={{ background: 'rgba(255,138,0,0.14)', border: '1px solid rgba(255,138,0,0.4)', color: '#FF8A00' }}
             >
-              {user.hostVerificationStatus === 'pending' ? 'Status' : 'Verify'}
+              {user.hostVerificationStatus === 'pending'
+                ? 'View Verification Status'
+                : user.hostVerificationStatus === 'rejected'
+                ? 'View Reason & Resubmit'
+                : 'Complete Verification'}
             </Link>
           </div>
         )}

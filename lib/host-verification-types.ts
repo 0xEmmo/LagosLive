@@ -60,3 +60,21 @@ export const HOST_VERIFICATION_PAYOUT_GATE: Record<
   pending: 'Payouts unlock once this verification is approved.',
   missing: 'Add banking details to request payouts.',
 };
+
+// Step 1 — Host Information. Business type is deliberately just Individual |
+// Company (no CAC requirement for a company host) and the years-in-business
+// options mirror the simple bands the quote "1-2 years / 2-5 years / 5+ years."
+export const HOST_BUSINESS_TYPES = ['individual', 'company'] as const;
+export type HostBusinessType = (typeof HOST_BUSINESS_TYPES)[number];
+
+export const HOST_BUSINESS_TYPE_LABEL: Record<HostBusinessType, string> = {
+  individual: 'Individual',
+  company: 'Company',
+};
+
+export const HOST_YEARS_IN_BUSINESS = ['1-2 years', '2-5 years', '5+ years'] as const;
+export type HostYearsInBusiness = (typeof HOST_YEARS_IN_BUSINESS)[number];
+
+export function isHostYearsInBusiness(value: string): value is HostYearsInBusiness {
+  return (HOST_YEARS_IN_BUSINESS as readonly string[]).includes(value);
+}

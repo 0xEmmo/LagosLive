@@ -17,7 +17,7 @@ import { createServiceSupabase } from '@/lib/supabase/server';
 import type { Database } from '@/lib/supabase/database.types';
 import { claimNotification, recordNotificationOutcome } from '@/lib/notify';
 import { eventCanonicalUrl, appUrl } from '@/lib/seo';
-import type { TelegramEventType } from '@/lib/telegram-client';
+import type { TelegramEventType, TelegramHostVerificationType } from '@/lib/telegram-client';
 
 type ServiceSupabase = SupabaseClient<Database>;
 
@@ -144,20 +144,20 @@ async function sendTelegramMessage(text: string, button?: { text: string; url: s
 // message once the underlying issue (missing env vars, Telegram outage) is
 // resolved. Rows recorded 'sent' (or still 'pending') are never touched, so a
 // genuine duplicate can never be posted.
-async function clearFailedTelegramClaim(service: ServiceSupabase, eventId: number, type: TelegramEventType): Promise<void> {
+async function clearFailedTelegramClaim(service: ServiceSupabase, refId: string, type: string): Promise<void> {
   const { count, error } = await service
     .from('notification_sends')
     .delete({ count: 'exact' })
     .eq('channel', 'telegram')
     .eq('type', type)
-    .eq('ref_id', String(eventId))
+    .eq('ref_id', refId)
     .eq('status', 'failed');
   if (error) {
-    console.warn('[telegram] failed-claim cleanup error', { eventId, type, error: error.message });
+    console.warn('[telegram] failed-claim cleanup error', { refId, type, error: error.message });
     return;
   }
   if (count) {
-    console.warn('[telegram] cleared stale failed claim for retry', { eventId, type, count });
+    console.warn('[telegram] cleared stale failed claim for retry', { refId, type, count });
   }
 }
 
@@ -221,7 +221,7 @@ export async function sendEventTelegramNotification(
   }
 
   const claimEmail = profile?.email ?? `telegram:${party.id}`;
-  await clearFailedTelegramClaim(service, party.id, type);
+  await clearFailedTelegramClaim(service, String(party.id), type);
   const claimed = await claimNotification(service, {
     userId: party.created_by ?? null,
     email: claimEmail,
@@ -256,6 +256,112 @@ export async function sendEventTelegramNotification(
     email: claimEmail,
     type,
     refId: String(party.id),
+    status: result.ok ? 'sent' : 'failed',
+    providerMessageId: result.messageId ?? null,
+  });
+
+  return result.ok ? { sent: true } : { sent: false, reason: 'send_failed' };
+}
+
+interface HostVerificationForTelegram {
+  id: string;
+  user_id: string;
+  business_name: string | null;
+  legal_name: string;
+  status: string;
+  submitted_at: string;
+  reviewed_at: string | null;
+  review_reason: string | null;
+}
+
+function hostVerificationActionButton(row: HostVerificationForTelegram, type: TelegramHostVerificationType): { text: string; url: string } {
+  if (type === 'host_verification_submitted') {
+    return { text: 'Review Verification', url: `${appUrl()}/admin/host-verification/${row.id}` };
+  }
+  return { text: 'Host Dashboard', url: `${appUrl()}/host/verification` };
+}
+
+function buildHostVerificationMessage(
+  row: HostVerificationForTelegram,
+  type: TelegramHostVerificationType,
+  actorName: string | null
+): string {
+  const who = `${row.legal_name || '(unknown name)'}${row.business_name ? ` — ${row.business_name}` : ''}`;
+  if (type === 'host_verification_submitted') {
+    return [
+      `🔍 NEW HOST VERIFICATION SUBMISSION`,
+      ``,
+      `${who}`,
+      ``,
+      `Submitted: Just now`,
+    ].join('\n');
+  }
+  if (type === 'host_verification_approved') {
+    return ['✅ HOST VERIFIED', '', `${who}`, '', `Approved by: ${actorName?.trim() || 'Admin'}`].join('\n');
+  }
+  return ['❌ HOST REJECTED', '', `${who}`, '', `Rejected by: ${actorName?.trim() || 'Admin'}`, `Reason: ${row.review_reason || 'Not provided'}`].join('\n');
+}
+
+// Ops-channel Telegram notification for one host verification lifecycle event,
+// fired ONLY after the transition is committed in the DB (mirrors the event
+// lifecycle bot, but there is no per-host Telegram chat: hosts are always
+// alerted in-app + by email, staff see these messages in the ops channel).
+export async function sendHostVerificationTelegramNotification(
+  userId: string,
+  type: TelegramHostVerificationType,
+  opts: { actorName?: string | null } = {}
+): Promise<TelegramSendResult> {
+  let service: ServiceSupabase;
+  try {
+    service = createServiceSupabase();
+  } catch (err) {
+    console.warn('[telegram] service client unavailable; not sending host verification', {
+      userId,
+      type,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return { sent: false, reason: 'service_unavailable' };
+  }
+
+  const { data: row, error: rowError } = await service
+    .from('host_verifications')
+    .select('id, user_id, business_name, legal_name, status, submitted_at, reviewed_at, review_reason')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (rowError || !row) return { sent: false, reason: 'verification_not_found' };
+
+  const submitted = type === 'host_verification_submitted';
+  const expectedStatus = submitted ? 'pending' : type === 'host_verification_approved' ? 'verified' : 'rejected';
+  if (row.status !== expectedStatus) return { sent: false, reason: 'not_in_transition_state' };
+
+  const refId = submitted ? `submitted:${row.submitted_at}` : `reviewed:${row.reviewed_at ?? ''}`;
+  const claimEmail = `telegram:host:${userId}`;
+  await clearFailedTelegramClaim(service, refId, type);
+  const claimed = await claimNotification(service, {
+    userId,
+    email: claimEmail,
+    channel: 'telegram',
+    type,
+    refId,
+  });
+  if (!claimed) return { sent: false, reason: 'duplicate' };
+
+  const text = buildHostVerificationMessage(row, type, opts.actorName ?? null);
+  const button = hostVerificationActionButton(row, type);
+  const result = await sendTelegramMessage(text, button);
+  if (!result.ok) {
+    console.warn('[telegram] host verification send failed', {
+      userId,
+      type,
+      httpStatus: result.httpStatus ?? null,
+      apiError: result.apiError ?? null,
+    });
+  }
+
+  await recordNotificationOutcome(service, {
+    email: claimEmail,
+    type,
+    refId,
     status: result.ok ? 'sent' : 'failed',
     providerMessageId: result.messageId ?? null,
   });

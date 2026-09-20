@@ -15,10 +15,13 @@ export async function POST(request: Request) {
     const body = (await request.json()) as { field?: unknown; fileName?: unknown; contentType?: unknown };
     const field = typeof body.field === 'string' ? body.field : '';
     const fileName = typeof body.fileName === 'string' ? body.fileName : '';
-    const contentType = typeof body.contentType === 'string' && body.contentType ? body.contentType : 'image/jpeg';
+    const contentType = typeof body.contentType === 'string' && body.contentType ? body.contentType : '';
 
     if (!VERIFICATION_DOCUMENT_FIELDS.includes(field as VerificationDocumentField)) {
       return NextResponse.json({ error: 'Invalid document field.' }, { status: 400 });
+    }
+    if (!['image/jpeg', 'image/png'].includes(contentType)) {
+      return NextResponse.json({ error: 'Only JPG or PNG documents are allowed.' }, { status: 400 });
     }
 
     const supabase = createServerSupabase();

@@ -1,9 +1,9 @@
-// Server-only data access for the real Host Verification KYC flow (Batch 32).
+// Server-only data access for the real Host Verification KYC flow.
 //
 // This sits on top of two read models that must always agree:
 //
-//   * public.host_verifications — the NEW document/bank/identity KYC row (five
-//     wizard steps). It is the canonical home of the reviewer-facing payload.
+//   * public.host_verifications — the host verification row (NEW 3-step flow:
+//     host/business info, NIN identity, payout account + optional document).
 //   * public.profiles.host_verification_status — the LEGACY column the rest of
 //     the app already reads (event badges, payout gating, host_verified). A
 //     trigger (set_host_verification_status) keeps the two in sync so every
@@ -17,8 +17,7 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/supabase/database.types';
 import { createServiceSupabase, type ServiceSupabase } from '@/lib/supabase/server';
-import type { HostVerificationStatus } from '@/lib/host-verification-types';
-import { claimNotification, recordNotificationOutcome } from '@/lib/notify';
+import type { HostBusinessType, HostVerificationStatus, HostYearsInBusiness } from '@/lib/host-verification-types';
 
 // The single status a host row can be in. Mirrors the DB CHECK exactly.
 export type HostKycStatus = 'unverified' | 'pending' | 'verified' | 'rejected' | 'resubmit_requested';
@@ -28,31 +27,24 @@ export interface HostVerificationRow {
   userId: string;
   status: HostKycStatus;
 
-  // -- Step 1: business -----------------------------------------------------
+  // -- Step 1: host / business -----------------------------------------------
   businessName: string;
-  businessType: 'sole_proprietor' | 'registered_company' | 'partnership';
+  businessType: string;
   cacNumber: string | null;
+  yearsInBusiness: string | null;
+  websiteSocial: string | null;
+  address: string | null;
 
-  // -- Step 2: personal / identity -------------------------------------------
+  // -- Step 2: identity (NIN is the single identity number) -------------------
   legalName: string;
-  dob: string | null;
-  idType: 'national_id' | 'driver_license' | 'passport' | 'business_registration';
-  idNumber: string;
+  nin: string;
   idDocumentUrl: string | null;
-  idSelfieUrl: string | null;
 
-  // -- Step 3: business documents --------------------------------------------
-  businessDocumentUrl: string | null;
-
-  // -- Step 4: bank -----------------------------------------------------------
+  // -- Step 3: payout account -------------------------------------------------
   bankName: string;
   accountHolder: string;
-  accountLast4: string;
-
-  // -- Step 5: phone OTP ------------------------------------------------------
-  phoneVerified: boolean;
-  phoneLast4: string | null;
-  otpExpiresAt: string | null;
+  accountNumber: string | null;
+  accountLast4: string | null;
 
   submittedAt: string;
   resubmittedAt: string | null;
@@ -64,26 +56,24 @@ export interface HostVerificationRow {
 }
 
 function toRow(row: Database['public']['Tables']['host_verifications']['Row']): HostVerificationRow {
+  const accountNumber = row.account_number ?? null;
   return {
     id: row.id,
     userId: row.user_id,
     status: row.status as HostKycStatus,
     businessName: row.business_name,
-    businessType: row.business_type as HostVerificationRow['businessType'],
+    businessType: row.business_type,
     cacNumber: row.cac_number,
+    yearsInBusiness: row.years_in_business,
+    websiteSocial: row.website_social,
+    address: row.address,
     legalName: row.legal_name,
-    dob: row.dob,
-    idType: row.id_type as HostVerificationRow['idType'],
-    idNumber: row.id_number,
+    nin: row.id_number,
     idDocumentUrl: row.id_document_url,
-    idSelfieUrl: row.id_selfie_url,
-    businessDocumentUrl: row.business_document_url,
     bankName: row.bank_name,
     accountHolder: row.account_holder,
-    accountLast4: row.account_last4,
-    phoneVerified: row.phone_verified ?? false,
-    phoneLast4: row.phone_last4,
-    otpExpiresAt: row.otp_expires_at,
+    accountNumber,
+    accountLast4: accountNumber ? accountNumber.slice(-4) : (row.account_last4 ?? null),
     submittedAt: row.submitted_at,
     resubmittedAt: row.resubmitted_at,
     reviewedAt: row.reviewed_at,
@@ -95,55 +85,29 @@ function toRow(row: Database['public']['Tables']['host_verifications']['Row']): 
 }
 
 // The storage paths a host may upload to. Paths are intentionally whitelisted —
-// a document type must exist before the client can ask for a signed upload URL,
-// so a host can never mint a URL for an arbitrary object path.
-export const VERIFICATION_DOCUMENT_FIELDS = [
-  'id-document',
-  'id-selfie',
-  'business-document',
-] as const;
+// a document type must exist before the client can ask for a signed upload URL.
+// The new flow has exactly ONE optional identity document: the NIN scan.
+export const VERIFICATION_DOCUMENT_FIELDS = ['nin-document'] as const;
 export type VerificationDocumentField = (typeof VERIFICATION_DOCUMENT_FIELDS)[number];
 
 export interface VerificationDocumentSpec {
   field: VerificationDocumentField;
   label: string;
   hint: string;
-  column: 'id_document_url' | 'id_selfie_url' | 'business_document_url';
+  column: 'id_document_url';
 }
 
 export const VERIFICATION_DOCUMENT_SPECS: VerificationDocumentSpec[] = [
   {
-    field: 'id-document',
-    label: 'Government-issued ID',
-    hint: 'National ID, driver\u2019s license or passport (photo of the front).',
+    field: 'nin-document',
+    label: 'NIN Document',
+    hint: 'Optional supporting document.',
     column: 'id_document_url',
-  },
-  {
-    field: 'id-selfie',
-    label: 'Selfie holding your ID',
-    hint: 'A clear face + document shot so staff can match you to your identity.',
-    column: 'id_selfie_url',
-  },
-  {
-    field: 'business-document',
-    label: 'Business document',
-    hint: 'CAC certificate, business registration or a recent utility bill.',
-    column: 'business_document_url',
   },
 ];
 
-function columnForField(field: VerificationDocumentField): string {
-  const spec = VERIFICATION_DOCUMENT_SPECS.find((s) => s.field === field);
-  return spec ? spec.column : 'id_document_url';
-}
-
-function normalizePhone(phone: string): string {
-  const digits = phone.replace(/[^\d+]/g, '');
-  if (!digits) return '';
-  // 0803 123 4567 -> +2348031234567 (also handles +2340000... input verbatim).
-  if (digits.startsWith('+')) return digits;
-  if (digits.startsWith('0')) return `+234${digits.slice(1)}`;
-  return `+234${digits}`;
+function columnForField(field: VerificationDocumentField): 'id_document_url' {
+  return VERIFICATION_DOCUMENT_SPECS.find((s) => s.field === field)?.column ?? 'id_document_url';
 }
 
 // ---------------------------------------------------------------------------
@@ -182,11 +146,23 @@ export async function hostCanResubmit(
 export async function listPendingHostVerifications(
   service: ServiceSupabase
 ): Promise<HostVerificationRow[]> {
+  return listHostVerificationsByStatus(service, 'pending');
+}
+
+// Staff-only: the most recent resolved submissions (approvals/rejections) for
+// the queue's historical lists — newest review first.
+export async function listHostVerificationsByStatus(
+  service: ServiceSupabase,
+  status: 'pending' | 'verified' | 'rejected',
+  limit = 20
+): Promise<HostVerificationRow[]> {
+  const orderBy = status === 'pending' ? 'submitted_at' : 'reviewed_at';
   const { data, error } = await service
     .from('host_verifications')
     .select('*')
-    .eq('status', 'pending')
-    .order('submitted_at', { ascending: true });
+    .eq('status', status)
+    .order(orderBy, { ascending: status === 'pending' })
+    .limit(limit);
   if (error) throw error;
   return (data ?? []).map(toRow);
 }
@@ -220,11 +196,7 @@ export interface DocumentSlot {
 // Builds {column, objectPath} for every document field so the server can gather
 // ids + object paths in one query and generate all preview signed URLs at once.
 export function documentSlots(row: HostVerificationRow): DocumentSlot[] {
-  return [
-    { column: 'id_document_url', objectPath: row.idDocumentUrl },
-    { column: 'id_selfie_url', objectPath: row.idSelfieUrl },
-    { column: 'business_document_url', objectPath: row.businessDocumentUrl },
-  ];
+  return [{ column: 'id_document_url', objectPath: row.idDocumentUrl }];
 }
 
 export interface SignedDocumentUrl {
@@ -275,7 +247,8 @@ export async function createSignedUploadUrl(
   if (!/^[a-zA-Z0-9._-]{1,120}$/.test(fileName)) {
     return { ok: false, error: 'Invalid file name.' };
   }
-  const objectPath = `${userId}/${field}${fileExtension(fileName)}`;
+  const column = columnForField(field);
+  const objectPath = `${userId}/${column}${fileExtension(fileName)}`;
   const { data, error } = await service.storage.from(DOCUMENT_BUCKET).createSignedUploadUrl(objectPath, { upsert: true });
   if (error) {
     console.warn('[host-verification] signed upload failed', { userId, field, error: error.message });
@@ -300,26 +273,24 @@ function fileExtension(fileName: string): string {
 export interface HostVerificationSubmitInput {
   userId: string;
 
-  // Step 1: business.
+  // Step 1: host / business.
   businessName: string;
-  businessType: 'sole_proprietor' | 'registered_company' | 'partnership';
-  cacNumber?: string | null;
+  businessType: HostBusinessType;
+  yearsInBusiness: HostYearsInBusiness;
+  websiteSocial?: string | null;
+  address: string;
 
-  // Step 2: personal / identity.
+  // Step 2: identity (NIN is the only required identity number).
   legalName: string;
-  dob?: string | null;
-  idType: 'national_id' | 'driver_license' | 'passport' | 'business_registration';
-  idNumber: string;
+  nin: string;
 
-  // Step 3: uploaded document refs (object paths returned by createSignedUploadUrl).
+  // Step 2 optional document ref (object path returned by createSignedUploadUrl).
   idDocumentPath?: string | null;
-  idSelfiePath?: string | null;
-  businessDocumentPath?: string | null;
 
-  // Step 4: bank.
+  // Step 3: payout account.
   bankName: string;
   accountHolder: string;
-  accountLast4: string;
+  accountNumber: string;
 }
 
 // Hosts call this to (re)submit their KYC. The row is upserted (a host owns
@@ -330,33 +301,34 @@ export async function submitHostVerification(
   input: HostVerificationSubmitInput
 ): Promise<{ ok: boolean; row?: HostVerificationRow; error?: string }> {
   if (!input.businessName.trim()) return { ok: false, error: 'Add a business name.' };
+  if (!input.address.trim()) return { ok: false, error: 'Add your address.' };
   if (!input.legalName.trim()) return { ok: false, error: 'Add your legal name.' };
-  if (!input.idNumber.trim()) return { ok: false, error: 'Add your ID number.' };
+  if (!/^[0-9]{11}$/.test(input.nin.trim())) return { ok: false, error: 'NIN must be an 11-digit number.' };
   if (!input.bankName.trim()) return { ok: false, error: 'Add a bank name.' };
   if (!input.accountHolder.trim()) return { ok: false, error: 'Add the account holder name.' };
-  if (!/^[0-9]{4}$/.test(input.accountLast4)) return { ok: false, error: 'Account last 4 must be 4 digits.' };
+  if (!/^[0-9]{10}$/.test(input.accountNumber.trim())) return { ok: false, error: 'Enter the full 10-digit account number.' };
 
   const now = new Date().toISOString();
   const existing = await getHostVerificationByUserId(service, input.userId);
   const status = 'pending';
   const resubmitted = Boolean(existing && existing.status !== 'pending');
+  const accountNumber = input.accountNumber.trim();
 
   const payload: Database['public']['Tables']['host_verifications']['Insert'] = {
     user_id: input.userId,
     status,
     business_name: input.businessName.trim(),
     business_type: input.businessType,
-    cac_number: input.cacNumber?.trim() || null,
+    years_in_business: input.yearsInBusiness,
+    website_social: input.websiteSocial?.trim() || null,
+    address: input.address.trim(),
     legal_name: input.legalName.trim(),
-    dob: input.dob || null,
-    id_type: input.idType,
-    id_number: input.idNumber.trim(),
+    id_number: input.nin.trim(),
     id_document_url: input.idDocumentPath || null,
-    id_selfie_url: input.idSelfiePath || null,
-    business_document_url: input.businessDocumentPath || null,
     bank_name: input.bankName.trim(),
     account_holder: input.accountHolder.trim(),
-    account_last4: input.accountLast4,
+    account_number: accountNumber,
+    account_last4: accountNumber.slice(-4),
     ...(resubmitted ? { resubmitted_at: now } : {}),
   };
 

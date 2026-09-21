@@ -80,31 +80,78 @@ export async function POST(request: Request) {
     // Verify / reject go through the DB function (set_host_verification_status),
     // which needs the caller's uid, so it must use the user-scoped client.
     if (decision === 'verify' || decision === 'reject') {
+      const targetStatus = decision === 'verify' ? 'verified' : 'rejected';
       // TEMPORARY DEBUG — remove after debugging (batch: host verification failure).
       console.error('[HOST VERIFICATION DEBUG]', {
         step: 'before_update',
         hostId: target.id,
         action: decision,
         currentStatus: target.host_verification_status,
-        targetStatus: decision === 'verify' ? 'verified' : 'rejected',
+        targetStatus,
       });
-      const { error } = await supabase.rpc('set_host_verification_status', {
-        p_user_id: target.id,
-        p_status: decision === 'verify' ? 'verified' : 'rejected',
-        p_reason: decision === 'reject' ? reason : null,
-      });
-      if (error) {
+
+      // Hosts from the older profile-only request flow (pre-batch-32) have no
+      // host_verifications row, so set_host_verification_status raises
+      // 'No verification on file'. When the row is missing we fall back to
+      // updating profiles directly (the legacy source of truth) and audit with
+      // the same action names the DB function uses.
+      const { data: verificationRow } = await service
+        .from('host_verifications')
+        .select('id, status')
+        .eq('user_id', target.id)
+        .maybeSingle();
+
+      if (verificationRow) {
+        const { error } = await supabase.rpc('set_host_verification_status', {
+          p_user_id: target.id,
+          p_status: targetStatus,
+          p_reason: decision === 'reject' ? reason : null,
+        });
+        if (error) {
+          // TEMPORARY DEBUG — remove after debugging (batch: host verification failure).
+          console.error('[HOST VERIFICATION DEBUG]', {
+            step: 'database_update_failed',
+            hostId: target.id,
+            action: decision,
+            error: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint,
+          });
+          return NextResponse.json({ error: error.message }, { status: 400 });
+        }
+      } else {
         // TEMPORARY DEBUG — remove after debugging (batch: host verification failure).
         console.error('[HOST VERIFICATION DEBUG]', {
-          step: 'database_update_failed',
+          step: 'profile_only_host_fallback',
           hostId: target.id,
           action: decision,
-          error: error.message,
-          code: error.code,
-          details: error.details,
-          hint: error.hint,
+          targetStatus,
         });
-        return NextResponse.json({ error: error.message }, { status: 400 });
+        const patch: ProfileUpdate = {
+          host_verification_status: targetStatus,
+          host_verification_reason: decision === 'reject' ? reason : null,
+          host_verification_reviewed_at: new Date().toISOString(),
+          host_verification_reviewed_by: user.id,
+        };
+        const { error: updateError } = await service.from('profiles').update(patch).eq('id', target.id);
+        if (updateError) {
+          // TEMPORARY DEBUG — remove after debugging (batch: host verification failure).
+          console.error('[HOST VERIFICATION DEBUG]', {
+            step: 'profile_only_update_failed',
+            hostId: target.id,
+            action: decision,
+            error: updateError.message,
+            code: updateError.code,
+          });
+          return NextResponse.json({ error: updateError.message }, { status: 500 });
+        }
+        await service.rpc('write_audit_log', {
+          p_action: targetStatus === 'verified' ? 'host_verification_approved' : 'host_verification_rejected',
+          p_target_type: 'profile',
+          p_target_id: target.id,
+          p_details: { status: targetStatus, reason, legacy: true },
+        } as never);
       }
       // TEMPORARY DEBUG — remove after debugging (batch: host verification failure).
       console.error('[HOST VERIFICATION DEBUG]', { step: 'database_update_succeeded', hostId: target.id, action: decision });

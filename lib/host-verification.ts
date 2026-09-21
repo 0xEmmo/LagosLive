@@ -308,10 +308,8 @@ export async function submitHostVerification(
   if (!input.accountHolder.trim()) return { ok: false, error: 'Add the account holder name.' };
   if (!/^[0-9]{10}$/.test(input.accountNumber.trim())) return { ok: false, error: 'Enter the full 10-digit account number.' };
 
-  const now = new Date().toISOString();
   const existing = await getHostVerificationByUserId(service, input.userId);
   const status = 'pending';
-  const resubmitted = Boolean(existing && existing.status !== 'pending');
   const accountNumber = input.accountNumber.trim();
 
   const payload: Database['public']['Tables']['host_verifications']['Insert'] = {
@@ -329,7 +327,6 @@ export async function submitHostVerification(
     account_holder: input.accountHolder.trim(),
     account_number: accountNumber,
     account_last4: accountNumber.slice(-4),
-    ...(resubmitted ? { resubmitted_at: now } : {}),
   };
 
   const { error } = existing

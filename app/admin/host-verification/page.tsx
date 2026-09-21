@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import type { ReactNode } from 'react';
 import { ArrowRight, Building2, CheckCircle2, Clock, Lock, XCircle } from 'lucide-react';
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/server';
 import { listPendingHostVerifications, listHostVerificationsByStatus, type HostVerificationRow } from '@/lib/host-verification';
 import { HOST_VERIFICATION_STATUS_LABEL, HOST_VERIFICATION_STATUS_COLOR } from '@/lib/host-verification-types';
 import AdminShell from '@/components/admin-shell';
-import { PageHeader, Badge, EmptyBlock, StatCard } from '@/components/ui/dashboard-ui';
+import { PageHeader, Badge, EmptyBlock } from '@/components/ui/dashboard-ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,9 +38,9 @@ export default async function AdminHostVerificationQueuePage() {
         <PageHeader title="Host Verification" subtitle="Review submitted KYC applications" />
 
         <div className="mb-6 grid grid-cols-3 gap-3">
-          <StatCard label="Pending" value={String(pending.length)} icon={Clock} color="#FFD600" />
-          <StatCard label="Verified" value={String(verified.length)} icon={CheckCircle2} color="#00F5D4" />
-          <StatCard label="Rejected" value={String(rejected.length)} icon={XCircle} color="#FF2D95" />
+          <QueueStat label="Pending" value={String(pending.length)} icon={<Clock size={15} strokeWidth={2} color="#FFD600" />} />
+          <QueueStat label="Verified" value={String(verified.length)} icon={<CheckCircle2 size={15} strokeWidth={2} color="#00F5D4" />} />
+          <QueueStat label="Rejected" value={String(rejected.length)} icon={<XCircle size={15} strokeWidth={2} color="#FF2D95" />} />
         </div>
 
         <div className="mb-6 flex flex-col gap-2">
@@ -80,6 +81,18 @@ export default async function AdminHostVerificationQueuePage() {
         </div>
       </div>
     </AdminShell>
+  );
+}
+
+function QueueStat({ label, value, icon }: { label: string; value: string; icon: ReactNode }) {
+  return (
+    <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-[10px] font-bold uppercase tracking-[0.9px]" style={{ color: '#6B6C80' }}>{label}</span>
+        {icon}
+      </div>
+      <div className="font-display truncate text-[20px] leading-tight" style={{ color: '#FFFFFF' }}>{value}</div>
+    </div>
   );
 }
 

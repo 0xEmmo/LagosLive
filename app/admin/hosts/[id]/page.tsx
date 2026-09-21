@@ -81,7 +81,7 @@ export default function AdminHostDetailPage() {
       const res = await fetch('/api/admin/host-verification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profileId: host.id, decision, reason }),
+        body: JSON.stringify({ user_id: host.id, decision, reason }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error ?? 'Failed');

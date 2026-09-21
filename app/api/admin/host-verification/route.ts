@@ -26,6 +26,14 @@ export async function POST(request: Request) {
     const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
     const notify = body.notify !== false;
 
+    // TEMPORARY DEBUG — remove after debugging (batch: host verification failure).
+    console.error('[HOST VERIFICATION DEBUG]', {
+      step: 'request_received',
+      decision,
+      bodyKeys: Object.keys(body),
+      targetUserId,
+    });
+
     if (!targetUserId) return NextResponse.json({ error: 'Missing target user.' }, { status: 400 });
     if (!['verify', 'reject', 'suspend'].includes(decision)) {
       return NextResponse.json({ error: 'Invalid decision.' }, { status: 400 });
@@ -48,6 +56,8 @@ export async function POST(request: Request) {
     if (canVerify !== true) {
       return NextResponse.json({ error: 'Only staff with host verification access can resolve these requests.' }, { status: 403 });
     }
+    // TEMPORARY DEBUG — remove after debugging (batch: host verification failure).
+    console.error('[HOST VERIFICATION DEBUG]', { step: 'admin_authorized', adminUserId: user.id, canVerify });
 
     const service = createServiceSupabase();
     const { data: target, error: targetError } = await service
@@ -56,20 +66,48 @@ export async function POST(request: Request) {
       .eq('id', targetUserId)
       .maybeSingle();
     if (targetError || !target) return NextResponse.json({ error: 'User not found.' }, { status: 404 });
+    // TEMPORARY DEBUG — remove after debugging (batch: host verification failure).
+    console.error('[HOST VERIFICATION DEBUG]', {
+      step: 'target_loaded',
+      hostId: target.id,
+      currentStatus: target.host_verification_status,
+      accountStatus: target.account_status,
+      action: decision,
+    });
 
     let emailDecision: 'approved' | 'rejected' | 'suspended' | null = null;
 
     // Verify / reject go through the DB function (set_host_verification_status),
     // which needs the caller's uid, so it must use the user-scoped client.
     if (decision === 'verify' || decision === 'reject') {
+      // TEMPORARY DEBUG — remove after debugging (batch: host verification failure).
+      console.error('[HOST VERIFICATION DEBUG]', {
+        step: 'before_update',
+        hostId: target.id,
+        action: decision,
+        currentStatus: target.host_verification_status,
+        targetStatus: decision === 'verify' ? 'verified' : 'rejected',
+      });
       const { error } = await supabase.rpc('set_host_verification_status', {
         p_user_id: target.id,
         p_status: decision === 'verify' ? 'verified' : 'rejected',
         p_reason: decision === 'reject' ? reason : null,
       });
       if (error) {
+        // TEMPORARY DEBUG — remove after debugging (batch: host verification failure).
+        console.error('[HOST VERIFICATION DEBUG]', {
+          step: 'database_update_failed',
+          hostId: target.id,
+          action: decision,
+          error: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+        });
         return NextResponse.json({ error: error.message }, { status: 400 });
       }
+      // TEMPORARY DEBUG — remove after debugging (batch: host verification failure).
+      console.error('[HOST VERIFICATION DEBUG]', { step: 'database_update_succeeded', hostId: target.id, action: decision });
 
       // Verify also re-activates the account (the DB function deliberately does
       // not touch account_status — that is an account-level field, not a

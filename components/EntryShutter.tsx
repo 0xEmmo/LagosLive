@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
@@ -42,14 +41,7 @@ export default function EntryShutter() {
     >
       <div className="entry-shutter__logo-lockup">
         <div className="entry-shutter__halo" />
-        <Image
-          className="entry-shutter__logo"
-          src="/icon-512.png"
-          alt=""
-          width={512}
-          height={512}
-          priority
-        />
+        <img className="entry-shutter__logo" src="/icon-512.png" alt="" />
         <span className="entry-shutter__caption">Good nights start here</span>
       </div>
       <div className="entry-shutter__slats">

@@ -211,6 +211,9 @@ select option {
   }
 }
 
+/* --- Logo-first horizontal entry shutter ---
+   The site remains covered until the rolling slats clear. The centered mark
+   is intentionally above the slats so it is the first thing visitors see. */
 .entry-shutter {
   position: fixed;
   inset: 0;

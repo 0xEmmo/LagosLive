@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
 const RINGS = Array.from({ length: 4 });
+const DURATION_MS = 6000;
 
 export default function EntryShutter() {
   const pathname = usePathname();
@@ -15,17 +16,21 @@ export default function EntryShutter() {
 
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(isEntryRoute);
+  const playedRef = useRef(false);
 
   useEffect(() => {
     if (!isEntryRoute) {
-      setVisible(false);
+      if (playedRef.current) setVisible(false);
       return;
     }
+
+    if (playedRef.current) return;
+    playedRef.current = true;
 
     setVisible(true);
     setOpen(false);
     const frame = window.requestAnimationFrame(() => setOpen(true));
-    const finish = window.setTimeout(() => setVisible(false), 2000);
+    const finish = window.setTimeout(() => setVisible(false), DURATION_MS);
 
     return () => {
       window.cancelAnimationFrame(frame);

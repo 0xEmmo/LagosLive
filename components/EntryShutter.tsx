@@ -25,7 +25,7 @@ export default function EntryShutter() {
     setVisible(true);
     setOpen(false);
     const frame = window.requestAnimationFrame(() => setOpen(true));
-    const finish = window.setTimeout(() => setVisible(false), 950);
+    const finish = window.setTimeout(() => setVisible(false), 1400);
 
     return () => {
       window.cancelAnimationFrame(frame);

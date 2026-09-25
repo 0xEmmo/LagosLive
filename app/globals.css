@@ -213,7 +213,7 @@ select option {
 
 /* --- Logo-first Orbit Pulse entry ---
    No curtains or shutter panels: the centered mark holds while luminous
-   rings ripple outward and the page is revealed in approximately 800ms. */
+   rings ripple outward and the page is revealed in approximately 1.4 seconds. */
 .entry-shutter {
   position: fixed;
   inset: 0;
@@ -221,6 +221,8 @@ select option {
   overflow: hidden;
   background: radial-gradient(circle at 50% 50%, #342051 0%, #100b19 38%, #09070e 100%);
   pointer-events: none;
+  opacity: 1;
+  transition: opacity 1.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .entry-shutter__rings {
@@ -248,9 +250,11 @@ select option {
 }
 
 .entry-shutter--open .entry-shutter__rings span {
-  animation-play-state: paused;
+  animation-play-state: running;
+}
+
+.entry-shutter--open {
   opacity: 0;
-  transition: opacity 0.35s ease;
 }
 
 .entry-shutter__logo-lockup {
@@ -261,12 +265,12 @@ select option {
   display: grid;
   justify-items: center;
   transform: translate(-50%, -50%);
-  transition: opacity 0.22s ease 0.35s, transform 0.34s ease 0.35s;
+  transition: opacity 0.45s ease 0.45s, transform 0.55s ease 0.45s;
 }
 
 .entry-shutter--open .entry-shutter__logo-lockup {
   opacity: 0;
-  transform: translate(-50%, -50%) scale(1.08);
+  transform: translate(-50%, -50%) scale(1.14);
 }
 
 .entry-shutter__logo {

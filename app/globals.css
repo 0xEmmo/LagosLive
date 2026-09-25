@@ -211,153 +211,46 @@ select option {
   }
 }
 
-/* --- Logo-first horizontal entry shutter ---
-   The site remains covered until the rolling slats clear. The centered mark
-   is intentionally above the slats so it is the first thing visitors see. */
+/* --- Logo-first Orbit Pulse entry ---
+   No curtains or shutter panels: the centered mark holds while luminous
+   rings ripple outward and the page is revealed in approximately 800ms. */
 .entry-shutter {
   position: fixed;
   inset: 0;
   z-index: 100;
   overflow: hidden;
-  background: #0b0910;
+  background: radial-gradient(circle at 50% 50%, #342051 0%, #100b19 38%, #09070e 100%);
   pointer-events: none;
 }
 
-.entry-shutter__slats {
+.entry-shutter__rings {
   position: absolute;
   inset: 0;
   display: grid;
-  grid-template-rows: repeat(10, 1fr);
+  place-items: center;
 }
 
-.entry-shutter__slats span {
-  display: block;
-  min-height: 10vh;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 45%),
-    linear-gradient(105deg, #130d1d 0%, #3d245f 52%, #191125 100%);
-  box-shadow: inset 0 -12px 26px rgba(5, 3, 9, 0.25);
-  transform: translateY(0);
-  transition: transform 0.78s cubic-bezier(0.77, 0, 0.18, 1);
-  transition-delay: calc(var(--slat-index) * 45ms);
-}
-
-.entry-shutter__slats span:nth-child(even) {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 45%),
-    linear-gradient(105deg, #100b18 0%, #2d1a48 52%, #120c1d 100%);
-}
-
-.entry-shutter--open .entry-shutter__slats span:nth-child(-n + 5) {
-  transform: translateY(-110%);
-}
-
-.entry-shutter--open .entry-shutter__slats span:nth-child(n + 6) {
-  transform: translateY(110%);
-}
-
-.entry-shutter__logo-lockup {
+.entry-shutter__rings span {
   position: absolute;
-  z-index: 2;
-  top: 50%;
-  left: 50%;
-  display: grid;
-  justify-items: center;
-  transform: translate(-50%, -50%);
-  transition: opacity 0.28s ease 0.58s, transform 0.38s ease 0.58s;
-}
-
-.entry-shutter--open .entry-shutter__logo-lockup {
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(1.08);
-}
-
-.entry-shutter__logo {
-  position: relative;
-  z-index: 1;
-  width: clamp(104px, 15vw, 154px);
-  height: auto;
-  filter: drop-shadow(0 0 22px rgba(177, 75, 255, 0.35));
-}
-
-.entry-shutter__halo {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: clamp(164px, 22vw, 228px);
+  width: clamp(190px, 25vw, 300px);
   aspect-ratio: 1;
-  border: 1px solid rgba(255, 255, 255, 0.17);
+  border: 1px solid rgba(185, 129, 238, 0.42);
   border-radius: 999px;
-  box-shadow: 0 0 0 18px rgba(255, 255, 255, 0.035), 0 0 70px rgba(137, 72, 218, 0.35);
-  transform: translate(-50%, -50%);
+  transform: scale(0.72);
+  opacity: 0;
+  animation: entry-ring-pulse 2.2s ease-out infinite;
+  animation-delay: calc(var(--ring-index) * 220ms);
 }
 
-.entry-shutter__caption {
-  margin-top: 22px;
-  color: #dfbdfd;
-  font-family: var(--font-montserrat), sans-serif;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  white-space: nowrap;
+@keyframes entry-ring-pulse {
+  0% { transform: scale(0.72); opacity: 0.72; }
+  100% { transform: scale(3.9); opacity: 0; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .entry-shutter__slats span {
-    transition-duration: 0.01ms;
-    transition-delay: 0ms;
-  }
-
-  .entry-shutter__logo-lockup {
-    transition-duration: 0.01ms;
-    transition-delay: 0ms;
-  }
-}
-
-/* LagosLive — Night frequency entry shutter, 800ms */
-.entry-shutter {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  overflow: hidden;
-  background: #0b0910;
-  pointer-events: none;
-}
-
-.entry-shutter__slats {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-rows: repeat(10, 1fr);
-}
-
-.entry-shutter__slats span {
-  display: block;
-  min-height: 10vh;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 45%),
-    linear-gradient(105deg, #130d1d 0%, #3d245f 52%, #191125 100%);
-  box-shadow: inset 0 -12px 26px rgba(5, 3, 9, 0.25);
-  transform: translateY(0);
-  transition: transform 0.58s cubic-bezier(0.77, 0, 0.18, 1);
-  transition-delay: calc(var(--slat-index) * 25ms);
-}
-
-.entry-shutter__slats span:nth-child(even) {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 45%),
-    linear-gradient(105deg, #100b18 0%, #2d1a48 52%, #120c1d 100%);
-}
-
-.entry-shutter--open .entry-shutter__slats span:nth-child(-n + 5) {
-  transform: translateY(-110%);
-}
-
-.entry-shutter--open .entry-shutter__slats span:nth-child(n + 6) {
-  transform: translateY(110%);
+.entry-shutter--open .entry-shutter__rings span {
+  animation-play-state: paused;
+  opacity: 0;
+  transition: opacity 0.35s ease;
 }
 
 .entry-shutter__logo-lockup {
@@ -368,7 +261,7 @@ select option {
   display: grid;
   justify-items: center;
   transform: translate(-50%, -50%);
-  transition: opacity 0.2s ease 0.45s, transform 0.25s ease 0.45s;
+  transition: opacity 0.22s ease 0.35s, transform 0.34s ease 0.35s;
 }
 
 .entry-shutter--open .entry-shutter__logo-lockup {
@@ -409,7 +302,12 @@ select option {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .entry-shutter__slats span,
+  .entry-shutter__rings span {
+    animation: none;
+    transition-duration: 0.01ms;
+    transition-delay: 0ms;
+  }
+
   .entry-shutter__logo-lockup {
     transition-duration: 0.01ms;
     transition-delay: 0ms;

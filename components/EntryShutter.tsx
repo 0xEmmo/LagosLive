@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
-// Night frequency: horizontal rolling slats that clear in beats.
-const SLATS = Array.from({ length: 10 });
+const RINGS = Array.from({ length: 4 });
 
 export default function EntryShutter() {
   const pathname = usePathname();
@@ -38,16 +37,16 @@ export default function EntryShutter() {
 
   return (
     <div className={`entry-shutter${open ? ' entry-shutter--open' : ''}`} aria-hidden="true">
+      <div className="entry-shutter__rings">
+        {RINGS.map((_, index) => (
+          <span key={index} style={{ '--ring-index': index } as React.CSSProperties} />
+        ))}
+      </div>
+
       <div className="entry-shutter__logo-lockup">
         <div className="entry-shutter__halo" />
         <img className="entry-shutter__logo" src="/Lagoslivelogo.png" alt="" />
         <span className="entry-shutter__caption">Good nights start here</span>
-      </div>
-
-      <div className="entry-shutter__slats">
-        {SLATS.map((_, index) => (
-          <span key={index} style={{ '--slat-index': index } as React.CSSProperties} />
-        ))}
       </div>
     </div>
   );

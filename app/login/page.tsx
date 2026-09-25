@@ -4,8 +4,16 @@ import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import BackButton from '@/components/BackButton';
+import GoogleAuthButton from '@/components/GoogleAuthButton';
 import { SiteLogo } from '@/components/Logo';
 import { useLagosLiveStore } from '@/lib/store';
+import { supabase } from '@/lib/supabase/client';
+import {
+  buildGoogleCallbackUrl,
+  classifyOAuthError,
+  oauthErrorMessage,
+  safeNextPath,
+} from '@/lib/auth-redirect';
 
 function LoginPageContent() {
   const router = useRouter();
@@ -16,9 +24,10 @@ function LoginPageContent() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const rawNext = searchParams.get('next');
-  const requestedNext = rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : null;
+  const requestedNext = safeNextPath(rawNext, '') || null;
   const defaultHome = user?.isAdmin
     ? '/admin'
     : user?.role === 'organizer'
@@ -26,6 +35,11 @@ function LoginPageContent() {
       : '/profile';
   const next = requestedNext ?? defaultHome;
   const signupHref = requestedNext ? `/signup?next=${encodeURIComponent(requestedNext)}` : '/signup';
+  const callbackError = oauthErrorMessage(searchParams.get('error'));
+
+  useEffect(() => {
+    if (callbackError) setError(callbackError);
+  }, [callbackError]);
 
   // If we're already signed in (e.g. the user navigates to /login while
   // authenticated, or auth is restored after a page reload), bounce them to
@@ -51,6 +65,30 @@ function LoginPageContent() {
     router.push(next);
   };
 
+  const signInWithGoogle = async () => {
+    if (googleLoading || submitting) return;
+
+    setError('');
+    setGoogleLoading(true);
+
+    try {
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: buildGoogleCallbackUrl(window.location.origin, next),
+        },
+      });
+
+      if (oauthError) {
+        setError(oauthErrorMessage(classifyOAuthError(oauthError.code, oauthError.message)));
+        setGoogleLoading(false);
+      }
+    } catch {
+      setError(oauthErrorMessage('oauth_failed'));
+      setGoogleLoading(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col animate-fade-in">
       <div className="px-5 py-4">
@@ -72,6 +110,14 @@ function LoginPageContent() {
             {error}
           </div>
         )}
+
+        <GoogleAuthButton onClick={signInWithGoogle} loading={googleLoading} disabled={submitting} />
+
+        <div className="my-[18px] flex items-center gap-3" aria-hidden="true">
+          <span className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.1)' }} />
+          <span className="text-[11px] uppercase tracking-[1.5px] text-white/40">or</span>
+          <span className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.1)' }} />
+        </div>
 
         <div className="mb-[22px] flex flex-col gap-3.5">
           <div>
@@ -108,7 +154,7 @@ function LoginPageContent() {
 
         <button
           onClick={submit}
-          disabled={submitting}
+          disabled={submitting || googleLoading}
           className="btn-primary w-full py-[15px] text-sm font-bold disabled:opacity-60"
         >
           {submitting ? 'Logging in...' : 'Log In'}

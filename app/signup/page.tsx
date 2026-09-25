@@ -1,11 +1,19 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import BackButton from '@/components/BackButton';
+import GoogleAuthButton from '@/components/GoogleAuthButton';
 import { SiteLogo } from '@/components/Logo';
 import { useLagosLiveStore } from '@/lib/store';
+import { supabase } from '@/lib/supabase/client';
+import {
+  buildGoogleCallbackUrl,
+  classifyOAuthError,
+  oauthErrorMessage,
+  safeNextPath,
+} from '@/lib/auth-redirect';
 
 function SignupPageContent() {
   const router = useRouter();
@@ -17,11 +25,17 @@ function SignupPageContent() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [confirmationSent, setConfirmationSent] = useState(false);
 
   const rawNext = searchParams.get('next');
-  const next = rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/profile';
+  const next = safeNextPath(rawNext);
   const nextQuery = next !== '/profile' ? `?next=${encodeURIComponent(next)}` : '';
+  const callbackError = oauthErrorMessage(searchParams.get('error'));
+
+  useEffect(() => {
+    if (callbackError) setError(callbackError);
+  }, [callbackError]);
 
   const submit = async () => {
     if (!name.trim() || !email.trim() || !password.trim()) {
@@ -44,6 +58,30 @@ function SignupPageContent() {
       setConfirmationSent(true);
     } else {
       router.push(next);
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    if (googleLoading || submitting) return;
+
+    setError('');
+    setGoogleLoading(true);
+
+    try {
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: buildGoogleCallbackUrl(window.location.origin, next),
+        },
+      });
+
+      if (oauthError) {
+        setError(oauthErrorMessage(classifyOAuthError(oauthError.code, oauthError.message)));
+        setGoogleLoading(false);
+      }
+    } catch {
+      setError(oauthErrorMessage('oauth_failed'));
+      setGoogleLoading(false);
     }
   };
 
@@ -94,6 +132,14 @@ function SignupPageContent() {
           </div>
         )}
 
+        <GoogleAuthButton onClick={signInWithGoogle} loading={googleLoading} disabled={submitting} />
+
+        <div className="my-[18px] flex items-center gap-3" aria-hidden="true">
+          <span className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.1)' }} />
+          <span className="text-[11px] uppercase tracking-[1.5px] text-white/40">or</span>
+          <span className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.1)' }} />
+        </div>
+
         <div className="mb-[22px] flex flex-col gap-3.5">
           {[
             { label: 'Full Name', value: name, set: setName, placeholder: 'Ada Okafor', type: 'text' },
@@ -121,7 +167,7 @@ function SignupPageContent() {
 
         <button
           onClick={submit}
-          disabled={submitting}
+          disabled={submitting || googleLoading}
           className="btn-primary w-full py-[15px] text-sm font-bold disabled:opacity-60"
         >
           {submitting ? 'Creating Account...' : 'Create Account'}

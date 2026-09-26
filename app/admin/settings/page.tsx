@@ -5,7 +5,7 @@ import { ShieldCheck, Mail, BadgeCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AdminShell from '@/components/admin-shell';
 import { PageHeader, LoadingBlock, ErrorBlock, TableShell, Cell, usePermissionGuard, Badge } from '@/components/ui/dashboard-ui';
-import { fetchAllProfiles, updateProfileRole, updateProfileStatus, type HostProfile } from '@/lib/admin-queries';
+import { fetchAllProfiles, setUserRole, updateProfileStatus, type HostProfile } from '@/lib/admin-queries';
 import { ROLE_LABEL, ADMIN_ROLES, type Role } from '@/lib/authz';
 import { useLagosLiveStore } from '@/lib/store';
 
@@ -42,7 +42,7 @@ export default function AdminSettingsPage() {
     const prev = profiles;
     setProfiles((ps) => ps.map((x) => (x.id === p.id ? { ...x, role } : x)));
     try {
-      await updateProfileRole(p.id, role);
+      await setUserRole(p.id, role);
       showToast('Role updated', `${p.name} is now ${ROLE_LABEL[role as Role] ?? role}.`);
     } catch {
       setProfiles(prev);

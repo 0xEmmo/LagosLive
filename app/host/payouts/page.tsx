@@ -6,15 +6,21 @@ import Link from 'next/link';
 import { AlertTriangle, RefreshCw, Wallet, Landmark, CalendarDays, XCircle, Plus, ShieldCheck } from 'lucide-react';
 import HostDashboardNav from '@/components/HostDashboardNav';
 import { useLagosLiveStore } from '@/lib/store';
-import { fetchPayouts, fetchHostOrders, requestPayout, type PayoutRow, type AdminOrderJoined } from '@/lib/admin-queries';
+import { fetchPayouts, fetchHostOrders, requestPayout, fetchBankAccounts, registerBankAccount, removeBankAccount, type PayoutRow, type AdminOrderJoined, type HostBankAccount, type NigerianBank } from '@/lib/admin-queries';
 import { formatNaira } from '@/lib/filters';
 
 const STATUS_BADGE: Record<string, { label: string; bg: string; color: string }> = {
   pending: { label: 'Pending', bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
   processing: { label: 'Processing', bg: 'rgba(176,106,255,0.1)', color: '#B06AFF' },
   approved: { label: 'Approved', bg: 'rgba(0,191,255,0.1)', color: '#00BFFF' },
+  transfer_pending: { label: 'On its way', bg: 'rgba(0,191,255,0.16)', color: '#00BFFF' },
   paid: { label: 'Paid', bg: 'rgba(0,245,212,0.08)', color: '#00F5D4' },
   rejected: { label: 'Rejected', bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
+  reconciliation_required: {
+    label: 'Under review',
+    bg: 'rgba(255,138,0,0.12)',
+    color: '#FF8A00',
+  },
 };
 
 const MIN_PAYOUT = 1000; // ₦1,000
@@ -38,6 +44,74 @@ export default function HostPayoutsPage() {
   const [requestMsg, setRequestMsg] = useState('');
   const [showRequestForm, setShowRequestForm] = useState(false);
 
+  // Verified payout destination. A host cannot request a payout without one,
+  // so this is a precondition rather than an optional extra.
+  const [accounts, setAccounts] = useState<HostBankAccount[]>([]);
+  const [banks, setBanks] = useState<NigerianBank[]>([]);
+  const [showBankForm, setShowBankForm] = useState(false);
+  const [bankName, setBankName] = useState('');
+  const [bankCode, setBankCode] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountName, setAccountName] = useState('');
+  const [savingBank, setSavingBank] = useState(false);
+  const [bankMsg, setBankMsg] = useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchBankAccounts()
+      .then(({ accounts: a, banks: b }) => {
+        setAccounts(a);
+        setBanks(b);
+      })
+      .catch(() => setBankMsg({ tone: 'err', text: 'Could not load your bank accounts.' }));
+  }, [user, attempt]);
+
+  const activeAccount = accounts[0] ?? null;
+
+  const handleSaveBankAccount = async () => {
+    setSavingBank(true);
+    setBankMsg(null);
+    try {
+      const result = await registerBankAccount({ accountNumber, bankCode, accountName });
+      // The number is cleared from state the moment it has been exchanged for
+      // a recipient code, so it does not linger in a React tree or a heap dump.
+      setAccountNumber('');
+      setShowBankForm(false);
+      setAccountName('');
+      if (result.nameMismatch) {
+        setBankMsg({
+          tone: 'err',
+          text: `Saved, but the bank holds this account as "${result.accountName}", not "${accountName}". Payouts will go to the bank's name.`,
+        });
+      } else {
+        setBankMsg({ tone: 'ok', text: `Bank account ending ${result.last4} verified.` });
+      }
+      setAttempt((a) => a + 1);
+    } catch (err) {
+      setBankMsg({
+        tone: 'err',
+        text: err instanceof Error ? err.message : 'Could not verify that account.',
+      });
+    } finally {
+      setSavingBank(false);
+    }
+  };
+
+  const handleRemoveBankAccount = async () => {
+    if (!activeAccount) return;
+    if (!confirm(`Remove the account ending ${activeAccount.account_number_last4}?`)) return;
+    try {
+      await removeBankAccount(activeAccount.id);
+      setBankMsg({ tone: 'ok', text: 'Bank account removed.' });
+      setAttempt((a) => a + 1);
+    } catch (err) {
+      setBankMsg({
+        tone: 'err',
+        text: err instanceof Error ? err.message : 'Could not remove that account.',
+      });
+    }
+  };
+
   useEffect(() => {
     if (!authLoading && !user) router.replace('/login?next=%2Fhost%2Fpayouts');
   }, [authLoading, user, router]);
@@ -57,25 +131,48 @@ export default function HostPayoutsPage() {
   if (!user) return null;
 
   const paid = payouts.filter((p) => p.status === 'paid').reduce((s, p) => s + p.amount, 0);
-  const pending = payouts.filter((p) => p.status === 'pending' || p.status === 'processing' || p.status === 'approved').reduce((s, p) => s + p.amount, 0);
+  // A transfer in flight is money that has left this platform and not yet landed,
+  // so it counts as pending rather than paid.
+  const pending = payouts.filter((p) => ['pending', 'processing', 'approved', 'transfer_pending'].includes(p.status)).reduce((s, p) => s + p.amount, 0);
 
   const confirmed = orders.filter((o) => o.payment_status === 'confirmed');
   const totalRevenue = confirmed.reduce((s, o) => s + o.total, 0);
-  const paidOut = payouts.filter((p) => p.status === 'paid' || p.status === 'approved' || p.status === 'processing' || p.status === 'pending').reduce((s, p) => s + p.amount, 0);
+  // A payout awaiting reconciliation is not money that left, so it is neither
+  // paid out nor spoken for: the revenue is owed again and the host can be paid
+  // for it once finance finishes reviewing the reversal. It is deliberately not
+  // in the "pending" figure either, because nothing is in flight.
+  //
+  // 'transfer_pending' is in here because the money genuinely is committed and
+  // must not be counted as available to be requested again.
+  const paidOut = payouts.filter((p) => ['paid', 'approved', 'processing', 'pending', 'transfer_pending'].includes(p.status)).reduce((s, p) => s + p.amount, 0);
   const available = Math.max(0, totalRevenue - paidOut);
-  const canRequest = available >= MIN_PAYOUT && user.hostVerificationStatus === 'verified';
+  const underReview = payouts.filter((p) => p.status === 'reconciliation_required');
+  // A verified bank account is a hard precondition, enforced by the server as
+  // well: the button is disabled so the host is told why rather than being
+  // allowed to submit something that will be refused.
+  const hasBankAccount = accounts.length > 0;
+  const canRequest =
+    underReview.length === 0 &&
+    available >= MIN_PAYOUT &&
+    user.hostVerificationStatus === 'verified' &&
+    hasBankAccount;
+  const requestBlockedReason = underReview.length > 0
+    ? 'A payout transfer was returned by your bank, so new payouts are on hold until our team has reviewed it. Your events and ticket sales are not affected.'
+    : !hasBankAccount
+    ? 'Add a verified bank account to receive payouts.'
+    : user.hostVerificationStatus !== 'verified'
+    ? 'Complete host verification to request payouts.'
+    : `Minimum payout: ${formatNaira(MIN_PAYOUT)}. Available: ${formatNaira(available)}`;
 
   const handleRequestPayout = async () => {
     if (!user || !canRequest) return;
     setRequesting(true);
     setRequestMsg('');
     try {
-      const now = new Date();
-      const periodStart = new Date(now.getTime() - 30 * 86400000).toISOString().split('T')[0];
-      const periodEnd = now.toISOString().split('T')[0];
-      const platformFee = Math.round(available * 0.15);
-      const payoutAmount = available - platformFee;
-      await requestPayout(user.id, payoutAmount, periodStart, periodEnd, available, platformFee, null);
+      // No figures are sent: the server derives revenue, the fee and the period
+      // from the host's own confirmed orders. The numbers shown on this screen
+      // are a preview and are no longer the source of the payout.
+      await requestPayout();
       setRequestMsg('Payout request submitted! It will be reviewed by our team.');
       setShowRequestForm(false);
       setAttempt((a) => a + 1);
@@ -102,6 +199,45 @@ export default function HostPayoutsPage() {
             Your revenue is settled to your bank after each payout cycle. Once a payout is <span className="font-semibold" style={{ color: '#00F5D4' }}>Paid</span>, funds should reach your account within a few business days.
           </div>
         </div>
+
+        {underReview.length > 0 && (
+          <div
+            className="rounded-2xl p-4"
+            style={{ background: 'rgba(255,138,0,0.07)', border: '1px solid rgba(255,138,0,0.3)' }}
+          >
+            <div className="flex items-start gap-3">
+              <AlertTriangle size={18} strokeWidth={1.5} color="#FF8A00" className="mt-0.5 shrink-0" />
+              <div className="flex-1 text-[12px]" style={{ color: '#D5D6E0' }}>
+                <span className="font-bold" style={{ color: '#FFFFFF' }}>
+                  {underReview.length === 1
+                    ? 'A payout of yours was returned by the bank'
+                    : `${underReview.length} of your payouts were returned by the bank`}
+                  .
+                </span>{' '}
+                The transfer was sent and then came back, so the money was never
+                received. We have put your payouts on hold while someone checks it,
+                and that amount is owed to you again. Your events, your tickets and
+                your account are unaffected — you keep selling. Most returns are a
+                mistyped account number, and adding a corrected bank account below
+                usually resolves it.
+              </div>
+            </div>
+            <div className="mt-3 space-y-1.5">
+              {underReview.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex items-center justify-between rounded-[10px] px-3 py-2 text-[11.5px]"
+                  style={{ background: 'rgba(0,0,0,0.25)', color: '#A7A8B5' }}
+                >
+                  <span>{fmtDate(p.created_at)}</span>
+                  <span className="font-semibold" style={{ color: '#FF8A00' }}>
+                    {formatNaira(p.amount)} — with the bank for review
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {user.hostVerificationStatus !== 'verified' && (
           <div className="flex items-center gap-3 rounded-2xl p-4" style={{ background: 'rgba(255,138,0,0.06)', border: '1px solid rgba(255,138,0,0.25)' }}>
@@ -130,6 +266,115 @@ export default function HostPayoutsPage() {
           </div>
         )}
 
+        {/* Verified bank account */}
+        <div className="rounded-2xl p-4" style={{ background: 'rgba(0,245,212,0.04)', border: '1px solid rgba(0,245,212,0.15)' }}>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: '#FFFFFF' }}>
+                <Landmark size={14} strokeWidth={2} color="#00F5D4" />
+                Payout Account
+              </div>
+              <div className="text-[11px]" style={{ color: '#A7A8B5' }}>
+                {activeAccount
+                  ? `${activeAccount.bank_name} •••• ${activeAccount.account_number_last4} • ${activeAccount.account_name}`
+                  : 'Add the account your payouts should be sent to. We verify it with the bank before saving.'}
+              </div>
+            </div>
+            <button
+              onClick={() => setShowBankForm(!showBankForm)}
+              className="flex shrink-0 items-center gap-1.5 rounded-xl px-4 py-2.5 text-[12px] font-bold transition-all"
+              style={{ background: 'rgba(0,245,212,0.12)', border: '1px solid rgba(0,245,212,0.3)', color: '#00F5D4' }}
+            >
+              {activeAccount ? 'Change' : 'Add'}
+            </button>
+          </div>
+
+          {activeAccount && (
+            <div className="mt-2 flex items-center gap-2 text-[11px]" style={{ color: '#A7A8B5' }}>
+              <ShieldCheck size={12} strokeWidth={2} color="#00F5D4" />
+              <span>Verified {fmtDate(activeAccount.verified_at)}</span>
+              <button
+                onClick={handleRemoveBankAccount}
+                className="ml-auto underline underline-offset-2"
+                style={{ color: '#FF8A00' }}
+              >
+                Remove
+              </button>
+            </div>
+          )}
+
+          {showBankForm && (
+            <div className="mt-3 grid gap-2 border-t pt-3 sm:grid-cols-2" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+              <label className="flex flex-col gap-1 text-[11px]" style={{ color: '#A7A8B5' }}>
+                Bank
+                <select
+                  value={bankCode}
+                  onChange={(e) => setBankCode(e.target.value)}
+                  className="rounded-lg px-3 py-2 text-[12px]"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#FFFFFF' }}
+                >
+                  <option value="">Select your bank</option>
+                  {banks.map((b) => (
+                    <option key={b.code} value={b.code}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex flex-col gap-1 text-[11px]" style={{ color: '#A7A8B5' }}>
+                Account number
+                <input
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  inputMode="numeric"
+                  placeholder="10-digit number"
+                  autoComplete="off"
+                  className="rounded-lg px-3 py-2 text-[12px]"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#FFFFFF' }}
+                />
+              </label>
+
+              <label className="flex flex-col gap-1 text-[11px] sm:col-span-2" style={{ color: '#A7A8B5' }}>
+                Account name
+                <input
+                  value={accountName}
+                  onChange={(e) => setAccountName(e.target.value)}
+                  placeholder="Exactly as it appears on the account"
+                  className="rounded-lg px-3 py-2 text-[12px]"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#FFFFFF' }}
+                />
+              </label>
+
+              <div className="text-[11px] sm:col-span-2" style={{ color: '#A7A8B5' }}>
+                We check the name against the bank and keep only the last four digits — the account
+                number is never stored.
+              </div>
+
+              <button
+                onClick={handleSaveBankAccount}
+                disabled={savingBank || !bankCode || accountNumber.length !== 10 || accountName.trim().length < 2}
+                className="rounded-xl py-2.5 text-[12px] font-bold transition-all disabled:opacity-40 sm:col-span-2"
+                style={{ background: 'linear-gradient(135deg, #00F5D4, #00B894)', color: '#04121A' }}
+              >
+                {savingBank ? 'Verifying with the bank...' : 'Verify and save'}
+              </button>
+            </div>
+          )}
+
+          {bankMsg && (
+            <div
+              className="mt-2 rounded-xl px-3 py-2 text-[11px]"
+              style={{
+                background: bankMsg.tone === 'ok' ? 'rgba(0,245,212,0.08)' : 'rgba(255,138,0,0.1)',
+                color: bankMsg.tone === 'ok' ? '#00F5D4' : '#FF8A00',
+              }}
+            >
+              {bankMsg.text}
+            </div>
+          )}
+        </div>
+
         {/* Request payout */}
         <div className="rounded-2xl p-4" style={{ background: 'rgba(255,45,149,0.04)', border: '1px solid rgba(255,45,149,0.15)' }}>
           <div className="flex items-center justify-between gap-3">
@@ -138,13 +383,13 @@ export default function HostPayoutsPage() {
               <div className="text-[11px]" style={{ color: '#A7A8B5' }}>
                 {canRequest
                   ? `Available: ${formatNaira(available)} (min. ${formatNaira(MIN_PAYOUT)})`
-                  : `Minimum payout: ${formatNaira(MIN_PAYOUT)}. Available: ${formatNaira(available)}`}
+                  : requestBlockedReason}
               </div>
             </div>
             <button
               onClick={() => setShowRequestForm(!showRequestForm)}
               disabled={!canRequest}
-              className="flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-[12px] font-bold transition-all disabled:opacity-40"
+              className="flex shrink-0 items-center gap-1.5 rounded-xl px-4 py-2.5 text-[12px] font-bold transition-all disabled:opacity-40"
               style={{ background: canRequest ? 'linear-gradient(135deg, #FF9B3E, #FF6A00)' : 'rgba(255,255,255,0.06)', color: '#FFFFFF' }}
             >
               <Plus size={14} strokeWidth={2.5} />
@@ -161,6 +406,16 @@ export default function HostPayoutsPage() {
                 <div className="mt-1 flex justify-between border-t pt-1 font-bold" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
                   <span style={{ color: '#00F5D4' }}>You receive</span>
                   <span style={{ color: '#00F5D4' }}>{formatNaira(available - Math.round(available * 0.15))}</span>
+                </div>
+                {activeAccount && (
+                  <div className="mt-2 flex justify-between border-t pt-2" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+                    <span>To</span>
+                    <span style={{ color: '#FFFFFF' }}>{activeAccount.bank_name} •••• {activeAccount.account_number_last4}</span>
+                  </div>
+                )}
+                <div className="mt-2 text-[11px]">
+                  These figures are calculated by the server from your paid orders. The amount sent is
+                  whatever it confirms at the time you press the button.
                 </div>
               </div>
               <button

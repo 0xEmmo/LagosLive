@@ -181,11 +181,6 @@ export async function updateProfileStatus(userId: string, accountStatus: string)
   if (error) throw error;
 }
 
-export async function updateProfileRole(userId: string, role: string): Promise<void> {
-  const { error } = await supabase.from('profiles').update({ role }).eq('id', userId);
-  if (error) throw error;
-}
-
 /** Promote or demote a user's role through the staff-gated API (audit-logged). */
 export async function setUserRole(targetUserId: string, role: string): Promise<void> {
   const res = await fetch('/api/admin/operations', {
@@ -219,13 +214,26 @@ export async function fetchPayouts(filters?: { status?: string }): Promise<Payou
   return (data ?? []) as PayoutRow[];
 }
 
+/**
+ * Move a payout along its state machine.
+ *
+ * Goes through `transition_payout()` rather than updating the row directly:
+ * the database is what decides which transitions are legal, and it writes the
+ * audit entry. A direct update would also be impossible now — the table no
+ * longer grants UPDATE to authenticated, and the money columns are frozen by a
+ * trigger — but calling the function keeps the "paid" step out of reach of
+ * this code path entirely, since it is the only one that can reach it.
+ */
 export async function updatePayoutStatus(payoutId: number, status: string): Promise<void> {
-  const patch: Database['public']['Tables']['payouts']['Update'] = {
-    status,
-    updated_at: new Date().toISOString(),
-  };
-  if (status === 'paid') patch.paid_at = new Date().toISOString();
-  const { error } = await supabase.from('payouts').update(patch).eq('id', payoutId);
+  if (status === 'paid') {
+    throw new Error(
+      'A payout is marked paid by a confirmed provider transfer, not from the dashboard.',
+    );
+  }
+  const { error } = await supabase.rpc('transition_payout', {
+    p_payout_id: payoutId,
+    p_to_status: status,
+  });
   if (error) throw error;
 }
 
@@ -593,24 +601,95 @@ export async function fetchHostEventsByCategory(userId: string): Promise<{ label
 
 // ---- Payout request (host self-service) ------------------------------------
 
-export async function requestPayout(
-  organizerId: string,
-  amount: number,
-  periodStart: string,
-  periodEnd: string,
-  revenue: number,
-  platformFee: number,
-  bankLast4: string | null
-): Promise<void> {
-  // Routed through the server endpoint so verification/role/amount are
-  // enforced outside of RLS and the request is audit-logged.
-  const res = await fetch('/api/payouts/request', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount, periodStart, periodEnd, revenue, platformFee, bankLast4 }),
-  });
+/**
+ * Ask the server for a payout.
+ *
+ * Takes no figures. Revenue, the platform fee, the net amount and the covered
+ * period are all computed by the `request_payout()` database function from the
+ * host's own confirmed orders; passing them from the client is what allowed a
+ * host to request money they had not earned.
+ */
+export async function requestPayout(): Promise<void> {
+  const res = await fetch('/api/payouts/request', { method: 'POST' });
   const body = await res.json().catch(() => ({ error: 'Something went wrong. Please try again.' }));
   if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+}
+
+// ---- Bank accounts (verified payout destinations) --------------------------
+
+export type HostBankAccount = {
+  id: string;
+  bank_code: string;
+  bank_name: string;
+  account_name: string;
+  account_number_last4: string;
+  verification_status: string;
+  verified_at: string;
+  created_at: string;
+};
+
+export type NigerianBank = { name: string; code: string };
+
+/**
+ * The host's verified account and the banks they can choose from.
+ *
+ * `recipient_code` is deliberately absent from the response: the server never
+ * hands it to a browser, and there is nothing here that could.
+ */
+export async function fetchBankAccounts(): Promise<{
+  accounts: HostBankAccount[];
+  banks: NigerianBank[];
+}> {
+  const res = await fetch('/api/host/bank-accounts');
+  const body = await res.json().catch(() => ({ error: 'Could not load bank accounts.' }));
+  if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+  return { accounts: body.accounts ?? [], banks: body.banks ?? [] };
+}
+
+/**
+ * Registers a bank account.
+ *
+ * The account number is posted once, to the server, and is never returned,
+ * stored in the browser, or included in a URL. The server exchanges it for a
+ * Paystack recipient code and keeps only the last four digits.
+ */
+export async function registerBankAccount(input: {
+  accountNumber: string;
+  bankCode: string;
+  accountName: string;
+}): Promise<{ ok: true; nameMismatch: boolean; accountName: string; last4: string }> {
+  const res = await fetch('/api/host/bank-accounts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  const body = await res.json().catch(() => ({ error: 'Could not save this bank account.' }));
+  if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+  return body;
+}
+
+export async function removeBankAccount(id: string): Promise<void> {
+  const res = await fetch(`/api/host/bank-accounts/${id}`, { method: 'DELETE' });
+  const body = await res.json().catch(() => ({ error: 'Could not remove this bank account.' }));
+  if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+}
+
+/**
+ * Asks the server to send an approved payout to the host's verified account.
+ *
+ * The payout id is the only input: the destination comes from the verified bank
+ * account on the payout and the amount is the payout's own figure, so this call
+ * cannot move money to an account or for an amount chosen here.
+ */
+export async function sendPayoutTransfer(payoutId: number): Promise<{
+  sent: boolean;
+  transferStatus?: string;
+  message?: string;
+}> {
+  const res = await fetch(`/api/admin/payouts/${payoutId}/transfer`, { method: 'POST' });
+  const body = await res.json().catch(() => ({ error: 'Could not send the payout.' }));
+  if (!res.ok && res.status !== 202) throw new Error(body.error || `HTTP ${res.status}`);
+  return body;
 }
 
 // ---- Analytics time range ---------------------------------------------------

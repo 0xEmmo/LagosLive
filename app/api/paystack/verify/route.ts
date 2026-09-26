@@ -1,76 +1,20 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/server';
-import { paystackVerifyTransaction } from '@/lib/paystack-server';
-import { buildTicketUrl } from '@/lib/ticket-access';
-import { sendTicketConfirmation } from '@/lib/resend';
-import { claimNotification, recordNotificationOutcome } from '@/lib/notify';
+import { reconcilePaidOrderGroup } from '@/lib/payment-reconciliation';
 import type { Database } from '@/lib/supabase/database.types';
 
 type OrderRow = Database['public']['Tables']['orders']['Row'];
 
-// Best-effort delivery after a confirmed group payment — one email per order
-// line. Each delivery is claimed against the dedupe log BEFORE sending so a
-// replay/retry of this verification can never double-email a buyer; the outcome
-// (sent/failed) is then recorded for the admin delivery view. Needs extra reads
-// (party, ticket type name) purely for the email; if anything is missing we log
-// and skip; the confirmation already happened and must not be rolled back.
-async function notifyConfirmedOrder(order: OrderRow): Promise<boolean> {
-  const to = order.customer_email;
-  if (!to) {
-    console.warn('[verify] no customer_email on order', order.id, '— skipping ticket email');
-    return false;
-  }
-  try {
-    const service = createServiceSupabase();
-    const [{ data: party }, tt] = await Promise.all([
-      service.from('parties').select('title, date, time, location').eq('id', order.party_id).single(),
-      order.ticket_type_id
-        ? service.from('ticket_types').select('name').eq('id', order.ticket_type_id).maybeSingle()
-        : Promise.resolve({ data: null }),
-    ]);
-    if (!party) {
-      console.warn('[verify] party not found for order', order.id, '— skipping ticket email');
-      return false;
-    }
-
-    const claimed = await claimNotification(service, {
-      userId: order.user_id,
-      email: to,
-      type: 'ticket_confirmation',
-      refId: order.id,
-    });
-    if (!claimed) return false;
-
-    const sent = await sendTicketConfirmation({
-      to,
-      guestName: order.guest_name ?? undefined,
-      guestPhone: order.guest_phone ?? undefined,
-      partyTitle: party.title,
-      partyDate: party.date,
-      partyTime: party.time,
-      partyLocation: party.location,
-      ticketTypeName: tt?.data?.name ?? 'General Entry',
-      quantity: order.quantity,
-      total: order.total,
-      orderRef: order.order_ref,
-      ticketUrl: buildTicketUrl(order.id, order.ticket_access_token),
-      promoCode: order.promo_code ?? undefined,
-      promoDiscount: order.promo_discount ?? undefined,
-    });
-
-    await recordNotificationOutcome(service, {
-      email: to,
-      type: 'ticket_confirmation',
-      refId: order.id,
-      status: sent ? 'sent' : 'failed',
-    });
-    return sent;
-  } catch (err) {
-    console.warn('[verify] could not build ticket email for order', order.id, err);
-    return false;
-  }
-}
-
+// The buyer returning from the Paystack popup. This is a FAST PATH for the
+// person in front of the screen — it is not the source of truth for whether
+// money arrived. All of the actual verification lives in
+// lib/payment-reconciliation.ts and is shared with the signed webhook at
+// /api/paystack/webhook, so the browser can never reach a different conclusion
+// than the provider did.
+//
+// Every payment outcome is decided server-side from Paystack's API and the
+// order rows the server created: the amount charged is cross-checked against
+// the group total, and the whole group is confirmed atomically or not at all.
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as { reference?: unknown; orderId?: unknown; token?: unknown };
@@ -90,7 +34,9 @@ export async function POST(request: Request) {
 
     // Authenticated buyers only ever reach their own order through RLS. Guests
     // prove ownership with the unguessable ticket-access token stored on the
-    // order — a bare order id alone is never trusted.
+    // order — a bare order id alone is never trusted. This anchoring is what
+    // stops a buyer from posting someone else's reference to make the platform
+    // confirm an order group they do not own.
     let anchor: OrderRow | null = null;
     if (user) {
       const { data } = await supabase
@@ -119,79 +65,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Payment reference mismatch.' }, { status: 400 });
     }
 
-    // The whole group shares one payment_ref — verify, confirm and email every
-    // line together so a multi-type purchase lands (or fails) atomically.
-    const { data: group, error: groupError } = await service
-      .from('orders')
-      .select('*')
-      .eq('payment_ref', reference)
-      .eq('party_id', anchor.party_id)
-      .order('id');
-    if (groupError || !group || group.length === 0) {
+    const result = await reconcilePaidOrderGroup(service, reference);
+
+    if (result.status === 'unknown_reference') {
       return NextResponse.json({ error: 'Order group not found.' }, { status: 404 });
     }
-    const groupTotal = group.reduce((sum, order) => sum + order.total, 0);
-
-    // Idempotent: re-verifying an already confirmed group just reports success.
-    // The emails were already attempted at confirmation time, so we don't resend.
-    if (group.every((order) => order.payment_status === 'confirmed')) {
-      return NextResponse.json({
-        status: 'confirmed',
-        emailSent: true,
-        lineTickets: group.map((order) => ({
-          orderId: order.id,
-          orderRef: order.order_ref,
-          ticketAccessToken: order.ticket_access_token,
-        })),
-      });
+    if (result.status === 'failed') {
+      return NextResponse.json({ status: 'failed', error: result.reason }, { status: 400 });
     }
-
-    let verified;
-    try {
-      verified = await paystackVerifyTransaction(reference);
-    } catch (err) {
-      return NextResponse.json(
-        { status: 'failed', error: err instanceof Error ? err.message : 'Payment could not be verified.' },
-        { status: 502 }
-      );
-    }
-
-    const failGroup = async (error: string) => {
-      for (const order of group) {
-        await service.rpc('settle_order_payment', { p_order_id: order.id, p_payment_status: 'failed' });
-      }
-      return NextResponse.json({ status: 'failed', error }, { status: 400 });
-    };
-
-    if (verified.status !== 'success') {
-      return failGroup('Payment was not completed. No charge was made.');
-    }
-    if (verified.reference !== reference) {
-      return failGroup('Payment verification failed.');
-    }
-    // The only amount we accept is the one the server computed when the group
-    // was created — anything else (tampered client, wrong charge) is rejected.
-    if (verified.amountKobo !== groupTotal * 100 || verified.currency !== 'NGN') {
-      return failGroup('The payment amount did not match. Please contact support.');
-    }
-
-    const { error: confirmError } = await service.rpc('confirm_order_group', { p_payment_ref: reference });
-    if (confirmError) {
-      return failGroup('Sorry, tickets just sold out. Your payment will be refunded.');
-    }
-
-    // Notification is best-effort: a failed email never unconfirms the ticket.
-    const results = await Promise.all(group.map((order) => notifyConfirmedOrder(order)));
-    const emailSent = results.some(Boolean);
 
     return NextResponse.json({
       status: 'confirmed',
-      emailSent,
-      lineTickets: group.map((order) => ({
-        orderId: order.id,
-        orderRef: order.order_ref,
-        ticketAccessToken: order.ticket_access_token,
-      })),
+      emailSent: result.emailSent,
+      lineTickets: result.lines,
     });
   } catch {
     return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });

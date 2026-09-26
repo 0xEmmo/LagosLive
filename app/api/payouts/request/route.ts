@@ -1,103 +1,62 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/server';
+import { createServerSupabase } from '@/lib/supabase/server';
 
-// Payouts are only available to verified, active hosts. RLS already blocks the
-// client from inserting a payout for anyone else — this route enforces the same
-// (plus the minimum amount) so a payout can never be requested without a human
-// admin having verified the operator first.
-const MIN_PAYOUT = 1000; // ₦1,000
-
-export async function POST(request: Request) {
+/**
+ * Request a payout.
+ *
+ * The body is ignored on purpose. This endpoint used to accept `revenue`,
+ * `platformFee`, `amount`, `periodStart` and `periodEnd` from the browser and
+ * insert them with the service client, which meant the host chose how much
+ * money to withdraw — the checks here only ever compared the numbers to each
+ * other, and the host controlled all of them.
+ *
+ * The figures are now derived inside the database by `request_payout()` from
+ * confirmed, non-refunded orders that the caller hosts and that no live payout
+ * already covers. The caller's only input is their identity.
+ *
+ * The destination is derived too. `request_payout()` reads the host's verified
+ * bank account, stamps `bank_account_id` and the last four digits onto the
+ * payout, and refuses the request outright if there is none. The full account
+ * number is never stored here or anywhere else — only Paystack's recipient code
+ * for the verified account lives in `host_bank_accounts`, and finance sends the
+ * transfer against that.
+ */
+export async function POST() {
   try {
-    const body = (await request.json()) as {
-      amount?: unknown;
-      periodStart?: unknown;
-      periodEnd?: unknown;
-      revenue?: unknown;
-      platformFee?: unknown;
-      bankLast4?: unknown;
-    };
-
-    const amount = Number(body.amount);
-    const periodStart = typeof body.periodStart === 'string' ? body.periodStart : '';
-    const periodEnd = typeof body.periodEnd === 'string' ? body.periodEnd : '';
-    const revenue = Number(body.revenue);
-    const platformFee = Number(body.platformFee);
-    const bankLast4 = typeof body.bankLast4 === 'string' ? body.bankLast4.slice(0, 4) : null;
-
-    // The minimum is enforced against the host's requested revenue — the same
-    // "available" balance the payouts screen compares against MIN_PAYOUT. The
-    // platform fee and payout figures below are unchanged, so a host sitting at
-    // exactly the minimum is not blocked by the fee applied afterwards.
-    if (!Number.isFinite(revenue) || revenue < MIN_PAYOUT) {
-      return NextResponse.json({ error: 'Payout amount is below the minimum.' }, { status: 400 });
-    }
-    if (!Number.isInteger(amount) || !Number.isInteger(revenue) || !Number.isInteger(platformFee)) {
-      return NextResponse.json({ error: 'Invalid payout amount.' }, { status: 400 });
-    }
-    if (!periodStart || !periodEnd || periodEnd < periodStart) {
-      return NextResponse.json({ error: 'Invalid payout period.' }, { status: 400 });
-    }
-    if (revenue <= 0 || platformFee < 0 || platformFee >= revenue) {
-      return NextResponse.json({ error: 'Invalid payout figures.' }, { status: 400 });
-    }
-
     const supabase = createServerSupabase();
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
 
-    const service = createServiceSupabase();
-    const { data: profile } = await service
-      .from('profiles')
-      .select('account_status, host_verification_status, role')
-      .eq('id', user.id)
-      .maybeSingle();
+    // Called as the user, not the service client: the function is SECURITY
+    // DEFINER, but auth.uid() has to be the caller's for the ownership check
+    // inside it to mean anything.
+    const { data: payoutId, error } = await supabase.rpc('request_payout');
 
-    if (!profile) return NextResponse.json({ error: 'Profile not found.' }, { status: 404 });
-
-    const allowedRoles = ['organizer', 'finance', 'support', 'admin', 'super_admin'];
-    if (!allowedRoles.includes(profile.role ?? '')) {
-      return NextResponse.json({ error: 'Only event hosts can request payouts.' }, { status: 403 });
-    }
-    if ((profile.host_verification_status ?? 'unverified') !== 'verified') {
-      return NextResponse.json({ error: 'Verify your host account before requesting payouts.' }, { status: 403 });
-    }
-    if (profile.account_status !== 'active') {
-      return NextResponse.json({ error: 'Your account must be active to request payouts.' }, { status: 403 });
-    }
-
-    const { data: row, error } = await service
-      .from('payouts')
-      .insert({
-        organizer_id: user.id,
-        period_start: periodStart,
-        period_end: periodEnd,
-        revenue,
-        platform_fee: platformFee,
-        amount,
-        bank_last4: bankLast4,
-      })
-      .select('id')
-      .single();
-
-    if (error || !row) {
-      return NextResponse.json({ error: 'Could not create the payout request.' }, { status: 500 });
+    if (error) {
+      // The function raises with a message meant for the host (unverified
+      // account, no bank account, below minimum, revenue already claimed, or a
+      // freeze after a reversed transfer). Relay it; anything unrecognised
+      // becomes a generic failure so internals are not echoed.
+      const known = [
+        'Verify your host account',
+        'Only event hosts can request payouts',
+        'Your account must be active',
+        'Payout amount is below the minimum',
+        'already being processed',
+        'Add a verified bank account',
+        'payouts are on hold',
+      ];
+      const message = known.find((k) => error.message.includes(k));
+      const status = message ? 400 : 500;
+      return NextResponse.json(
+        { error: message ?? 'Could not create the payout request.' },
+        { status },
+      );
     }
 
-    try {
-      await service.rpc('write_audit_log', {
-        p_action: 'payout_requested',
-        p_target_type: 'payout',
-        p_target_id: row.id,
-        p_details: { amount, revenue, platform_fee: platformFee, period_start: periodStart, period_end: periodEnd },
-      } as never);
-    } catch {
-      // Auditing is best-effort; the payout itself is already created.
-    }
-
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, payoutId });
   } catch {
     return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }

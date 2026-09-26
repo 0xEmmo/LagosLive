@@ -2,6 +2,8 @@
 // NEVER be imported from a client component — it is only ever imported by API
 // routes. The secret key is never part of a function's return value.
 
+import { createHmac, timingSafeEqual } from 'node:crypto';
+
 const PAYSTACK_API = 'https://api.paystack.co';
 
 function paystackHeaders() {
@@ -12,6 +14,34 @@ function paystackHeaders() {
     Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
     'Content-Type': 'application/json',
   };
+}
+
+/**
+ * Verifies the `x-paystack-signature` header on a webhook delivery.
+ *
+ * Paystack signs the RAW request body with HMAC-SHA512 keyed on the signing
+ * secret. The body has to be the exact bytes sent: re-serializing a parsed
+ * object changes key order and whitespace and produces a different digest, so
+ * this takes the raw text and never a re-encoded object.
+ *
+ * PAYSTACK_WEBHOOK_SECRET is honoured when set so the webhook key can be
+ * rotated independently of the API key; otherwise the API secret is used, which
+ * is what Paystack signs with by default.
+ *
+ * timingSafeEqual is used rather than === so the comparison does not leak how
+ * much of a forged signature was correct.
+ */
+export function paystackVerifyWebhookSignature(rawBody: string, signature: string | null): boolean {
+  const secret = process.env.PAYSTACK_WEBHOOK_SECRET || process.env.PAYSTACK_SECRET_KEY;
+  if (!secret || !signature) return false;
+
+  const expected = createHmac('sha512', secret).update(rawBody, 'utf8').digest('hex');
+
+  const got = Buffer.from(signature.trim().toLowerCase(), 'utf8');
+  const want = Buffer.from(expected, 'utf8');
+  if (got.length !== want.length) return false;
+
+  return timingSafeEqual(got, want);
 }
 
 export function generatePaymentRef(): string {
@@ -118,8 +148,15 @@ export async function paystackVerifyTransaction(reference: string): Promise<Pays
 // Nigerian bank → Paystack bank_code. Paystack validates the bank_code when a
 // recipient is created, so an out-of-date or wrong code fails fast here with a
 // clear Paystack error instead of silently sending money to the wrong place.
+//
+// Prefer paystackListBanks() wherever a bank list is actually shown. This map
+// is the offline fallback only, because a stale entry in a hard-coded list is
+// wrong until a transfer fails.
 export const NIGERIAN_BANK_CODES: Record<string, string> = {
-  ABB: '023',
+  // ABB is Access Bank, Bigger, Bolder, Better — 044, not 023. That code is
+  // Citibank's, and the two were both listed as '023' here, which would have
+  // sent ABB payouts to Citibank recipients.
+  ABB: '044',
   'Access Bank': '044',
   'Citibank Nigeria': '023',
   'Ecobank Nigeria': '050',
@@ -245,4 +282,98 @@ export async function paystackInitiateTransfer(params: PaystackTransferParams): 
     amountKobo: d.amount ?? 0,
     currency: d.currency ?? 'NGN',
   };
+}
+
+export interface PaystackTransferStatus {
+  transferCode: string;
+  reference: string;
+  status: string;
+  amountKobo: number;
+  currency: string;
+  recipientCode: string;
+  reason: string | null;
+}
+
+/**
+ * Re-reads a transfer from Paystack.
+ *
+ * paystackInitiateTransfer only says the transfer was *accepted*; Paystack then
+ * moves the money asynchronously, so `queued` on the create response is normal
+ * and not a failure. This is what distinguishes a transfer that actually left
+ * the balance from one that is still waiting or was rejected, and it is the
+ * call that gates marking a payout paid.
+ *
+ * The amount and recipient are returned so the caller can check them against
+ * the payout rather than trusting that the transfer it holds is the transfer it
+ * asked for.
+ */
+export async function paystackGetTransfer(transferCode: string): Promise<PaystackTransferStatus> {
+  const res = await fetch(`${PAYSTACK_API}/transfer/${encodeURIComponent(transferCode)}`, {
+    method: 'GET',
+    headers: paystackHeaders(),
+  });
+
+  const json = (await res.json()) as {
+    status?: boolean;
+    message?: string;
+    data?: {
+      transfer_code?: string;
+      reference?: string;
+      status?: string;
+      amount?: number;
+      currency?: string;
+      recipient?: { recipient_code?: string };
+      reason?: string | null;
+    };
+  };
+
+  if (!res.ok || !json.status || !json.data) {
+    throw new Error(json.message ?? 'Paystack could not retrieve the transfer');
+  }
+
+  const d = json.data;
+  return {
+    transferCode: d.transfer_code ?? '',
+    reference: d.reference ?? '',
+    status: d.status ?? '',
+    amountKobo: d.amount ?? 0,
+    currency: d.currency ?? '',
+    recipientCode: d.recipient?.recipient_code ?? '',
+    reason: d.reason ?? null,
+  };
+}
+
+export interface PaystackBank {
+  name: string;
+  code: string;
+}
+
+/**
+ * Fetches the live list of banks Paystack can transfer to.
+ *
+ * NIGERIAN_BANK_CODES above is a hard-coded convenience list, and hard-coded
+ * lists of bank codes rot: an entry is wrong until a transfer to that bank
+ * fails at the worst possible moment. This is preferred wherever a bank list is
+ * shown, with the static map kept only as an offline fallback.
+ */
+export async function paystackListBanks(): Promise<PaystackBank[]> {
+  const res = await fetch(`${PAYSTACK_API}/bank?country=NGN`, {
+    method: 'GET',
+    headers: paystackHeaders(),
+  });
+
+  const json = (await res.json()) as {
+    status?: boolean;
+    message?: string;
+    data?: { name?: string; code?: string }[];
+  };
+
+  if (!res.ok || !json.status || !Array.isArray(json.data)) {
+    throw new Error(json.message ?? 'Paystack could not list banks');
+  }
+
+  return json.data
+    .map((b) => ({ name: b.name ?? '', code: b.code ?? '' }))
+    .filter((b) => b.name !== '' && b.code !== '')
+    .sort((a, b) => a.name.localeCompare(b.name));
 }

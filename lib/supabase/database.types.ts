@@ -602,6 +602,7 @@ page_views: number
       payouts: {
         Row: {
           amount: number
+          bank_account_id: string | null
           bank_last4: string | null
           created_at: string
           id: number
@@ -611,11 +612,19 @@ page_views: number
           period_start: string
           platform_fee: number
           revenue: number
+          reversal_code: string | null
+          reversal_reason: string | null
+          reversal_reference: string | null
+          reversed_at: string | null
           status: string
+          transfer_attempted_at: string | null
+          transfer_code: string | null
+          transfer_reference: string | null
           updated_at: string
         }
         Insert: {
           amount: number
+          bank_account_id?: string | null
           bank_last4?: string | null
           created_at?: string
           id?: number
@@ -625,11 +634,19 @@ page_views: number
           period_start: string
           platform_fee?: number
           revenue?: number
+          reversal_code?: string | null
+          reversal_reason?: string | null
+          reversal_reference?: string | null
+          reversed_at?: string | null
           status?: string
+          transfer_attempted_at?: string | null
+          transfer_code?: string | null
+          transfer_reference?: string | null
           updated_at?: string
         }
         Update: {
           amount?: number
+          bank_account_id?: string | null
           bank_last4?: string | null
           created_at?: string
           id?: number
@@ -639,15 +656,180 @@ page_views: number
           period_start?: string
           platform_fee?: number
           revenue?: number
+          reversal_code?: string | null
+          reversal_reason?: string | null
+          reversal_reference?: string | null
+          reversed_at?: string | null
           status?: string
+          transfer_attempted_at?: string | null
+          transfer_code?: string | null
+          transfer_reference?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "payouts_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "host_bank_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payouts_organizer_id_fkey"
             columns: ["organizer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payout_items: {
+        Row: {
+          amount: number
+          created_at: string
+          id: number
+          order_id: string
+          payout_id: number
+          released: boolean
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: number
+          order_id: string
+          payout_id: number
+          released?: boolean
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: number
+          order_id?: string
+          payout_id?: number
+          released?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payout_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payout_items_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "payouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payout_transfer_events: {
+        Row: {
+          amount: number | null
+          event: string
+          id: string
+          match_method: string | null
+          outcome: string | null
+          payload: Json
+          payout_id: number | null
+          provider: string
+          reason: string | null
+          received_at: string
+          reference: string | null
+          transfer_code: string | null
+        }
+        Insert: {
+          amount?: number | null
+          event: string
+          id?: string
+          match_method?: string | null
+          outcome?: string | null
+          payload: Json
+          payout_id?: number | null
+          provider?: string
+          reason?: string | null
+          received_at?: string
+          reference?: string | null
+          transfer_code?: string | null
+        }
+        Update: {
+          amount?: number | null
+          event?: string
+          id?: string
+          match_method?: string | null
+          outcome?: string | null
+          payload?: Json
+          payout_id?: number | null
+          provider?: string
+          reason?: string | null
+          received_at?: string
+          reference?: string | null
+          transfer_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payout_transfer_events_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "payouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payout_transfer_attempts: {
+        Row: {
+          account_last4: string | null
+          amount: number
+          attempt_number: number
+          claimed_at: string
+          closed_at: string | null
+          closure_reason: string | null
+          id: string
+          payout_id: number
+          reversal_reason: string | null
+          reversal_reference: string | null
+          status: string
+          transfer_code: string | null
+          transfer_reference: string
+        }
+        Insert: {
+          account_last4?: string | null
+          amount: number
+          attempt_number: number
+          claimed_at?: string
+          closed_at?: string | null
+          closure_reason?: string | null
+          id?: string
+          payout_id: number
+          reversal_reason?: string | null
+          reversal_reference?: string | null
+          status?: string
+          transfer_code?: string | null
+          transfer_reference: string
+        }
+        Update: {
+          account_last4?: string | null
+          amount?: number
+          attempt_number?: number
+          claimed_at?: string
+          closed_at?: string | null
+          closure_reason?: string | null
+          id?: string
+          payout_id?: number
+          reversal_reason?: string | null
+          reversal_reference?: string | null
+          status?: string
+          transfer_code?: string | null
+          transfer_reference?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payout_transfer_attempts_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "payouts"
             referencedColumns: ["id"]
           },
         ]
@@ -1128,6 +1310,120 @@ page_views: number
         }
         Relationships: []
       }
+      host_bank_accounts: {
+        Row: {
+          account_name: string
+          account_number_last4: string
+          bank_code: string
+          bank_name: string
+          created_at: string
+          id: string
+          recipient_code: string
+          removed_at: string | null
+          updated_at: string
+          user_id: string
+          verification_status: string
+          verified_at: string
+        }
+        Insert: {
+          account_name: string
+          account_number_last4: string
+          bank_code: string
+          bank_name: string
+          created_at?: string
+          id?: string
+          recipient_code: string
+          removed_at?: string | null
+          updated_at?: string
+          user_id: string
+          verification_status?: string
+          verified_at?: string
+        }
+        Update: {
+          account_name?: string
+          account_number_last4?: string
+          bank_code?: string
+          bank_name?: string
+          created_at?: string
+          id?: string
+          recipient_code?: string
+          removed_at?: string | null
+          updated_at?: string
+          user_id?: string
+          verification_status?: string
+          verified_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "host_bank_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      host_payout_freezes: {
+        Row: {
+          created_at: string
+          host_id: string
+          id: string
+          payout_id: number | null
+          reason: string
+          released_at: string | null
+          released_by: string | null
+          release_note: string | null
+          reversal_count: number
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          host_id: string
+          id?: string
+          payout_id?: number | null
+          reason: string
+          released_at?: string | null
+          released_by?: string | null
+          release_note?: string | null
+          reversal_count?: number
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          host_id?: string
+          id?: string
+          payout_id?: number | null
+          reason?: string
+          released_at?: string | null
+          released_by?: string | null
+          release_note?: string | null
+          reversal_count?: number
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "host_payout_freezes_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "host_payout_freezes_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "payouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "host_payout_freezes_released_by_fkey"
+            columns: ["released_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       homepage_trending_events: {
         Row: {
           created_at: string
@@ -1273,6 +1569,39 @@ page_views: number
             referencedColumns: ["id"]
           },
         ]
+      }
+      payment_events: {
+        Row: {
+          event: string
+          id: string
+          outcome: string | null
+          payload: Json
+          processed_at: string | null
+          provider: string
+          received_at: string
+          reference: string | null
+        }
+        Insert: {
+          event: string
+          id?: string
+          outcome?: string | null
+          payload?: Json
+          processed_at?: string | null
+          provider: string
+          received_at?: string
+          reference?: string | null
+        }
+        Update: {
+          event?: string
+          id?: string
+          outcome?: string | null
+          payload?: Json
+          processed_at?: string | null
+          provider?: string
+          received_at?: string
+          reference?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -1472,6 +1801,135 @@ page_views: number
           p_status?: string
         }
         Returns: undefined
+      }
+      register_bank_account: {
+        Args: {
+          p_user_id: string
+          p_bank_code: string
+          p_bank_name: string
+          p_account_name: string
+          p_account_number_last4: string
+          p_recipient_code: string
+        }
+        Returns: string
+      }
+      remove_bank_account: {
+        Args: {
+          p_bank_account_id: string
+        }
+        Returns: undefined
+      }
+      my_bank_accounts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          bank_code: string
+          bank_name: string
+          account_name: string
+          account_number_last4: string
+          verification_status: string
+          verified_at: string
+          created_at: string
+        }[]
+      }
+      request_payout: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      transition_payout: {
+        Args: {
+          p_payout_id: number
+          p_to_status: string
+        }
+        Returns: string
+      }
+      mark_payout_paid: {
+        Args: {
+          p_payout_id: number
+          p_transfer_code: string
+          p_transfer_reference?: string | null
+        }
+        Returns: string
+      }
+      mark_transfer_event_outcome: {
+        Args: {
+          p_event_id: string | null
+          p_outcome: string
+        }
+        Returns: undefined
+      }
+      record_transfer_event: {
+        Args: {
+          p_event: string
+          p_payout_id: number | null
+          p_match_method: string
+          p_transfer_code: string | null
+          p_reference: string | null
+          p_amount: number | null
+          p_reason: string | null
+          p_payload: Json
+        }
+        Returns: string
+      }
+      record_payout_reversal: {
+        Args: {
+          p_payout_id: number
+          p_reversal_reference: string | null
+          p_reversal_code: string | null
+          p_reason: string | null
+          p_amount: number | null
+        }
+        Returns: string
+      }
+      has_active_payout_freeze: {
+        Args: {
+          p_host_id: string
+        }
+        Returns: boolean
+      }
+      release_payout_freeze: {
+        Args: {
+          p_host_id: string
+          p_note: string
+        }
+        Returns: undefined
+      }
+      claim_payout_transfer: {
+        Args: {
+          p_payout_id: number
+        }
+        Returns: string
+      }
+      stamp_payout_transfer: {
+        Args: {
+          p_payout_id: number
+          p_transfer_code: string
+          p_transfer_reference: string
+        }
+        Returns: undefined
+      }
+      release_payout_transfer_claim: {
+        Args: {
+          p_payout_id: number
+        }
+        Returns: undefined
+      }
+      record_payment_event_outcome: {
+        Args: {
+          p_event_id: string
+          p_outcome: string
+        }
+        Returns: undefined
+      }
+      payment_reconciliation: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          payment_ref: string
+          order_count: number
+          order_total: number
+          confirmed_count: number
+          last_event_at: string | null
+        }[]
       }
     }
     Enums: {

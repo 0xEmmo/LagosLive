@@ -1443,6 +1443,27 @@ describe('the platform functions are not reachable by ordinary users', () => {
 
   it('every payout money function has a fixed search_path and a controlled owner', async () => {
     const client = await adminClient();
+    // Two different jobs, two different rules.
+    //
+    // A function that reads or writes money on a caller's behalf must be
+    // SECURITY DEFINER, or an RLS-restricted caller could not reach the row.
+    //
+    // A trigger guard must NOT be. It only inspects NEW and OLD, so it needs no
+    // elevated rights, and SECURITY DEFINER actively breaks it: inside a
+    // definer function current_user is the owner for every request, so a guard
+    // written as `current_user not in ('anon','authenticated')` compares the
+    // owner against the list, finds it absent, and returns NEW without checking
+    // a single column. guard_payout_money_columns shipped that way in 00039 and
+    // 00040 and never fired once; 00041 corrects it to SECURITY INVOKER.
+    const dataFunctions = [
+      'mark_payout_paid', 'record_payout_reversal', 'claim_payout_transfer',
+      'stamp_payout_transfer', 'release_payout_transfer_claim',
+      'transition_payout', 'request_payout', 'register_bank_account',
+      'remove_bank_account', 'record_transfer_event', 'has_active_payout_freeze',
+      'release_payout_freeze',
+    ];
+    const triggerGuards = ['guard_payout_money_columns'];
+
     const { rows } = await client.query(
       `select p.proname,
               p.prosecdef as is_definer,
@@ -1451,17 +1472,24 @@ describe('the platform functions are not reachable by ordinary users', () => {
          from pg_proc p
          join pg_namespace n on n.oid = p.pronamespace
         where n.nspname = 'public'
-          and p.proname in (
-            'mark_payout_paid', 'record_payout_reversal', 'claim_payout_transfer',
-            'stamp_payout_transfer', 'release_payout_transfer_claim',
-            'transition_payout', 'request_payout', 'register_bank_account',
-            'remove_bank_account', 'record_transfer_event', 'has_active_payout_freeze',
-            'release_payout_freeze', 'guard_payout_money_columns'
-          )`,
+          and p.proname = any($1::text[])`,
+      [[...dataFunctions, ...triggerGuards]],
     );
-    assert.ok(rows.length >= 13, `expected the payout functions to exist, found ${rows.length}`);
+    assert.equal(
+      rows.length,
+      dataFunctions.length + triggerGuards.length,
+      'every function under test must exist',
+    );
+
     for (const row of rows) {
-      assert.equal(row.is_definer, true, `${row.proname} is not SECURITY DEFINER`);
+      const isGuard = triggerGuards.includes(row.proname);
+      assert.equal(
+        row.is_definer,
+        !isGuard,
+        isGuard
+          ? `${row.proname} is a trigger guard and must be SECURITY INVOKER, or current_user is meaningless inside it`
+          : `${row.proname} is not SECURITY DEFINER`,
+      );
       assert.deepEqual(
         row.proconfig,
         ['search_path=public'],
@@ -1473,6 +1501,38 @@ describe('the platform functions are not reachable by ordinary users', () => {
         `${row.proname} is owned by a role the application signs in as`,
       );
     }
+  });
+
+  it('the payout money guard actually refuses a client edit', async () => {
+    // The invariant above is only worth anything if the guard runs. This is the
+    // test that was missing while 00039/00040 shipped a guard that could not
+    // fire: pg_proc said SECURITY DEFINER, so the shape looked right, and the
+    // function silently approved every edit it was written to reject.
+    const client = await adminClient();
+    await setHostVerified(host.id);
+    await setAccountStatus(host.id, 'active');
+    await registerBankAccount(host.id);
+    const payoutId = await asUser(host.id, (c) => attemptValue<number>(c, `select public.request_payout()`));
+    assert.equal(payoutId.ok, true, `request_payout failed: ${payoutId.error}`);
+
+    // A host owns their payout row, so RLS permits this UPDATE. Only the guard
+    // can stop it - which is exactly why the guard has to work.
+    const edit = await asUser(host.id, (c) =>
+      attempt(c, `update public.payouts set amount = 5000000, revenue = 5000000 where id = $1`, [
+        payoutId.value,
+      ]),
+    );
+    assert.equal(
+      edit.ok,
+      false,
+      'the host rewrote their own payout figures - the guard did not fire',
+    );
+    assert.equal(edit.errorCode, '42501');
+
+    const after = await asUser(host.id, (c) =>
+      attemptValue<number>(c, `select amount from public.payouts where id = $1`, [payoutId.value]),
+    );
+    assert.ok(Number(after.value) < 5_000_000, 'the payout amount is unchanged');
   });
 
   it('the internal timing constant is not part of the client API', async () => {

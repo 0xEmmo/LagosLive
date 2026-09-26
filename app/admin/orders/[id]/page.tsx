@@ -42,7 +42,12 @@ export default function AdminOrderDetailPage() {
   const { hasPermission: canRefundTx } = usePermission('transactions.refund');
   const { hasPermission: canResend } = usePermission('orders.resend_ticket');
   const { hasPermission: canWriteNotes } = usePermission('support.reply');
-  const canRefundOrder = canRefund || canRefundTx;
+  // The two refund powers are deliberately not merged. Recording a decision
+  // needs orders.refund, which only super_admin holds; actually returning money
+  // needs transactions.refund, which finance holds. Showing finance a "Decline
+  // refund" button would just be a 403 with a delay.
+  const canDecideRefund = canRefund;
+  const canIssueRefund = canRefundTx;
   const showToast = useLagosLiveStore((s) => s.showToast);
 
   const [order, setOrder] = useState<AdminOrderJoined | null>(null);
@@ -89,7 +94,12 @@ export default function AdminOrderDetailPage() {
       const data = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok || !data.ok) throw new Error(data.error ?? 'Request failed');
       setOrder((o) => (o ? { ...o, refund_status: refundStatus } : o));
-      showToast('Refund updated', `Refund status set to ${refundStatus}.`);
+      showToast(
+        'Refund decision recorded',
+        refundStatus === 'rejected'
+          ? 'Refund declined. The guest keeps their ticket and the revenue is available for payout.'
+          : 'Marked as under review. Payout stays blocked while the refund is open.',
+      );
     } catch (err) {
       showToast('Something went wrong', err instanceof Error ? err.message : "Couldn't update the refund status.");
     } finally {
@@ -211,35 +221,48 @@ export default function AdminOrderDetailPage() {
             )}
 
             <div className="mt-5 grid gap-4 lg:grid-cols-2">
-              {canRefundOrder && (
+              {(canDecideRefund || canIssueRefund) && (
               <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <div className="mb-3 text-[12px] font-bold" style={{ color: '#FFFFFF' }}>Refund</div>
                 <div className="mb-4">
                   <span className="text-xs" style={{ color: '#6B6C80' }}>Current refund status: </span>
                   {rs && <Badge label={rs.label} bg={rs.bg} color={rs.color} />}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {(['requested', 'refunded', 'rejected'] as const).map((s) => (
-                    <button
-                      key={s}
-                      disabled={refundBusy}
-                      onClick={() => setRefund(s)}
-                      className="rounded-[9px] border px-3 py-2 text-[12px] font-semibold capitalize disabled:opacity-50"
-                      style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.1)', color: '#D5D6E0' }}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                  {(order.refund_status === 'failed' || order.refund_status === 'none') && (
-                    <button
-                      disabled={refundBusy}
-                      onClick={retryRefund}
-                      className="rounded-[9px] border px-3 py-2 text-[12px] font-semibold disabled:opacity-50"
-                      style={{ background: 'rgba(255,138,0,0.1)', borderColor: 'rgba(255,138,0,0.35)', color: '#FF8A00' }}
-                    >
-                      {refundBusy ? 'Retrying…' : 'Retry refund'}
-                    </button>
+                <div className="mb-3 text-[12px]" style={{ color: '#6B6C80' }}>
+                  {canDecideRefund && canIssueRefund
+                    ? 'These record a decision only. Returning money goes through Paystack via '
+                    : 'Returning money goes through Paystack via '}
+                  {canIssueRefund && (
+                    <>
+                      <span className="font-semibold">Retry refund</span>, which is the only
+                      way an order can be marked refunded.
+                    </>
                   )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {canDecideRefund &&
+                    (['requested', 'rejected'] as const).map((s) => (
+                      <button
+                        key={s}
+                        disabled={refundBusy}
+                        onClick={() => setRefund(s)}
+                        className="rounded-[9px] border px-3 py-2 text-[12px] font-semibold capitalize disabled:opacity-50"
+                        style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.1)', color: '#D5D6E0' }}
+                      >
+                        {s === 'requested' ? 'Mark under review' : 'Decline refund'}
+                      </button>
+                    ))}
+                  {canIssueRefund &&
+                    (order.refund_status === 'failed' || order.refund_status === 'none') && (
+                      <button
+                        disabled={refundBusy}
+                        onClick={retryRefund}
+                        className="rounded-[9px] border px-3 py-2 text-[12px] font-semibold disabled:opacity-50"
+                        style={{ background: 'rgba(255,138,0,0.1)', borderColor: 'rgba(255,138,0,0.35)', color: '#FF8A00' }}
+                      >
+                        {refundBusy ? 'Retrying…' : 'Retry refund'}
+                      </button>
+                    )}
                 </div>
               </div>
               )}

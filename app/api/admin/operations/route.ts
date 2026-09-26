@@ -3,6 +3,7 @@ import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/serv
 import { sendRefundProcessedEmail, sendTicketConfirmation } from '@/lib/resend';
 import { claimNotification, recordNotificationOutcome } from '@/lib/notify';
 import { buildTicketUrl } from '@/lib/ticket-access';
+import { paystackRefundTransaction } from '@/lib/paystack-server';
 
 type Op =
   | { action: 'set_refund'; orderId: string; refundStatus: string; refundAmount: number }
@@ -11,33 +12,10 @@ type Op =
   | { action: 'set_role'; targetUserId: string; role: string }
   | { action: 'audit'; targetType: string; targetId: string; logAction: string; details?: Record<string, unknown> };
 
-const PAYSTACK_API = 'https://api.paystack.co';
-
-async function issuePaystackRefund(paymentRef: string, totalNaira: number): Promise<boolean> {
-  if (!process.env.PAYSTACK_SECRET_KEY || !paymentRef || totalNaira <= 0) return false;
-  try {
-    const response = await fetch(`${PAYSTACK_API}/refund`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ transaction: paymentRef, amount: Math.round(totalNaira * 100) }),
-    });
-    const json = (await response.json().catch(() => null)) as { status?: boolean; message?: string } | null;
-    return (
-      response.ok &&
-      (json?.status === true || (json !== null && String(json.message ?? '').toLowerCase().includes('refund')))
-    );
-  } catch {
-    return false;
-  }
-}
-
 // Tells the guest their money is on its way after a refund actually went out
-// (manual set_refund to 'refunded' or a successful issue_refund retry). Deduped
-// per order id so a re-set or re-issue cannot double-email; best-effort so a
-// missing email/party never fails the refund itself.
+// (a successful issue_refund, recorded against a provider refund id). Deduped
+// per order id so a re-issue cannot double-email; best-effort so a missing
+// email/party never fails the refund itself.
 async function sendRefundEmailIfDue({
   service,
   orderId,
@@ -133,36 +111,45 @@ export async function POST(request: Request) {
     const service = createServiceSupabase();
 
     if (body.action === 'set_refund') {
+      // Records a finance decision that moves no money: a refund was declined,
+      // or parked as awaiting review.
+      //
+      // It deliberately does NOT accept refundStatus/refundAmount from the
+      // request body to write onto the order. The previous version did exactly
+      // that, which let any caller with the refund permission mark an arbitrary
+      // order refunded for any amount while moving no money - the order looked
+      // paid back, the host's revenue was released, and the guest had none of
+      // their money.
+      //
+      // The remaining states are not decisions anyone may make by hand:
+      // 'refunded' can only come from complete_order_refund() with a provider
+      // refund id, because it is a claim about Paystack rather than a call
+      // about a person. See 'issue_refund' below.
       const op = body as Extract<Op, { action: 'set_refund' }>;
       if (!(await permOk(supabase, user.id, 'orders.refund'))) {
         return NextResponse.json({ error: 'You need refund permission to do this.' }, { status: 403 });
       }
-      const { data: order } = await service
-        .from('orders')
-        .select('id, total, customer_email, guest_name, order_ref, party_id')
-        .eq('id', op.orderId)
-        .maybeSingle();
-      if (!order) return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
-      await service.from('orders').update({ refund_status: op.refundStatus, refund_amount: op.refundAmount }).eq('id', op.orderId);
-      await service.rpc('write_audit_log', {
-        p_action: `refund_${op.refundStatus}`,
-        p_target_type: 'order',
-        p_target_id: op.orderId,
-        p_details: { refund_amount: op.refundAmount },
-      } as never);
 
-      // When a manual refund is marked as actually refunded, tell the guest.
-      if (op.refundStatus === 'refunded' && op.refundAmount > 0) {
-        await sendRefundEmailIfDue({
-          service,
-          orderId: op.orderId,
-          customerEmail: order.customer_email,
-          guestName: order.guest_name ?? undefined,
-          partyId: order.party_id,
-          orderRef: order.order_ref,
-          amountNaira: op.refundAmount,
-        });
+      if (op.refundStatus !== 'requested' && op.refundStatus !== 'rejected') {
+        return NextResponse.json(
+          {
+            error:
+              'Only a refund decision can be recorded here. To return money, issue a real refund so Paystack moves it and the ledger records it.',
+          },
+          { status: 400 }
+        );
       }
+
+      const { error: decisionError } = await service.rpc('record_refund_decision', {
+        p_order_id: op.orderId,
+        p_decision: op.refundStatus,
+        p_reason: 'Recorded by finance from the admin order page',
+        p_actor: user.id,
+      });
+      if (decisionError) {
+        return NextResponse.json({ error: decisionError.message }, { status: 400 });
+      }
+
       return NextResponse.json({ ok: true });
     }
 
@@ -179,27 +166,90 @@ export async function POST(request: Request) {
         .eq('payment_status', 'confirmed')
         .maybeSingle();
       if (!order) return NextResponse.json({ error: 'Order not found or not confirmed.' }, { status: 404 });
-      if (order.refund_status !== 'failed' && order.refund_status !== 'none') {
-        return NextResponse.json({ error: 'Refund is already handled or in progress.' }, { status: 409 });
+
+      // 1. Ledger row first, committed. From here the attempt is findable even
+      //    if the process dies mid-request.
+      //
+      //    No idempotency key on purpose: a genuinely new attempt must be able
+      //    to create a new row, because mark_refund_submitted() will not reopen
+      //    a `failed` one. A fixed key would pin every future retry to the first
+      //    failed row forever. Double-clicks are already covered by the
+      //    one-open-refund-per-order index, which hands back the row that won.
+      const { data: created, error: createError } = await service.rpc('create_order_refund', {
+        p_order_id: op.orderId,
+        p_amount: order.total,
+        p_reason: 'Refund retried by finance',
+        p_actor: user.id,
+      });
+      if (createError || !created) {
+        return NextResponse.json(
+          { error: createError?.message ?? 'Could not start the refund.' },
+          { status: 409 }
+        );
       }
-      const accepted = await issuePaystackRefund(order.payment_ref ?? '', order.total);
-      const now = new Date().toISOString();
-      await service.from('orders').update({
-        refund_status: accepted ? 'refunded' : 'failed',
-        refund_amount: accepted ? order.total : 0,
-        refunded_at: accepted ? now : null,
-      }).eq('id', op.orderId);
-      try {
-        await service.rpc('write_audit_log', {
-          p_action: accepted ? 'refund_retry_success' : 'refund_retry_failed',
-          p_target_type: 'order',
-          p_target_id: op.orderId,
-          p_details: { amount: order.total, payment_ref: order.payment_ref ?? null },
-        } as never);
-      } catch {
-        // Best-effort auditing.
+      const refund = created as { id: string; status: string };
+
+      if (refund.status === 'refunded') {
+        // A replay of a refund that already succeeded.
+        return NextResponse.json({ ok: true, already_refunded: true });
       }
-      if (!accepted) return NextResponse.json({ error: 'Paystack did not accept the refund. Please try again.' }, { status: 502 });
+
+      // 2. Committed as submitted, then Paystack is called.
+      const { error: submitError } = await service.rpc('mark_refund_submitted', {
+        p_refund_id: refund.id,
+      });
+      if (submitError) {
+        // A refund already handed to Paystack is not ours to restart: calling
+        // again risks paying the guest twice. Say so plainly instead of
+        // implying the attempt failed.
+        const { data: current } = await service
+          .from('refunds')
+          .select('status')
+          .eq('id', refund.id)
+          .maybeSingle();
+        const inFlight = current?.status === 'submitted' || current?.status === 'processing';
+        return NextResponse.json(
+          {
+            error: inFlight
+              ? 'This refund is already with Paystack and its outcome is not yet known. Check the Paystack dashboard before retrying.'
+              : submitError.message,
+            needs_reconciliation: inFlight,
+          },
+          { status: 409 }
+        );
+      }
+
+      // 3. The provider decides, and only a provider refund id counts as success.
+      const result = await paystackRefundTransaction(order.payment_ref ?? '', order.total);
+      const { error: completeError } = await service.rpc('complete_order_refund', {
+        p_refund_id: refund.id,
+        p_outcome: result.outcome,
+        p_provider_refund_id: result.providerRefundId,
+        p_provider_status: result.providerStatus,
+        p_failure_reason: result.message,
+      });
+      if (completeError) {
+        console.error('[admin] could not record refund outcome', completeError.message);
+      }
+
+      if (result.outcome === 'unknown') {
+        // Not a failure we can safely retry, and not a success we can claim.
+        return NextResponse.json(
+          {
+            error:
+              'Paystack did not give a clear answer, so the refund has been left open for reconciliation rather than retried. Check the Paystack dashboard before trying again.',
+            needs_reconciliation: true,
+          },
+          { status: 502 }
+        );
+      }
+      if (result.outcome === 'failed') {
+        return NextResponse.json(
+          { error: result.message || 'Paystack did not accept the refund. Please try again.' },
+          { status: 502 }
+        );
+      }
+
       await sendRefundEmailIfDue({
         service,
         orderId: op.orderId,

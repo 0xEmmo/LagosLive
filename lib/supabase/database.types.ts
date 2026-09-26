@@ -1603,6 +1603,93 @@ page_views: number
         }
         Relationships: []
       }
+      refunds: {
+        Row: {
+          amount: number
+          approved_by: string | null
+          completed_at: string | null
+          created_at: string
+          currency: string
+          failure_reason: string | null
+          id: string
+          idempotency_key: string
+          inventory_released_at: string | null
+          order_id: string
+          party_id: number
+          provider: string
+          provider_message: string | null
+          provider_refund_id: string | null
+          provider_status: string | null
+          reason: string | null
+          requested_by: string | null
+          reversed_at: string | null
+          status: string
+          submitted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          approved_by?: string | null
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          failure_reason?: string | null
+          id?: string
+          idempotency_key: string
+          inventory_released_at?: string | null
+          order_id: string
+          party_id: number
+          provider?: string
+          provider_message?: string | null
+          provider_refund_id?: string | null
+          provider_status?: string | null
+          reason?: string | null
+          requested_by?: string | null
+          reversed_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          approved_by?: string | null
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          failure_reason?: string | null
+          id?: string
+          idempotency_key?: string
+          inventory_released_at?: string | null
+          order_id?: string
+          party_id?: number
+          provider?: string
+          provider_message?: string | null
+          provider_refund_id?: string | null
+          provider_status?: string | null
+          reason?: string | null
+          requested_by?: string | null
+          reversed_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refunds_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refunds_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "parties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1930,6 +2017,56 @@ page_views: number
           confirmed_count: number
           last_event_at: string | null
         }[]
+      }
+      create_order_refund: {
+        Args: {
+          p_order_id: string
+          p_amount: number
+          p_reason: string
+          p_actor: string
+          p_idempotency_key?: string | null
+        }
+        Returns: Database["public"]["Tables"]["refunds"]["Row"]
+      }
+      mark_refund_submitted: {
+        Args: {
+          p_refund_id: string
+        }
+        Returns: Database["public"]["Tables"]["refunds"]["Row"]
+      }
+      complete_order_refund: {
+        Args: {
+          p_refund_id: string
+          p_outcome: string
+          p_provider_refund_id?: string | null
+          p_provider_status?: string | null
+          p_failure_reason?: string | null
+        }
+        Returns: Database["public"]["Tables"]["refunds"]["Row"]
+      }
+      begin_event_cancellation: {
+        Args: {
+          p_party_id: number
+          p_reason: string
+          p_actor: string
+        }
+        Returns: Json[]
+      }
+      record_refund_decision: {
+        Args: {
+          p_order_id: string
+          p_decision: string
+          p_reason: string
+          p_actor: string
+        }
+        Returns: undefined
+      }
+      release_order_inventory: {
+        Args: {
+          p_order_id: string
+          p_quantity: number
+        }
+        Returns: undefined
       }
     }
     Enums: {

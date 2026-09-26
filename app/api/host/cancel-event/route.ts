@@ -2,55 +2,25 @@ import { NextResponse } from 'next/server';
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/server';
 import { sendEventCancellationEmail } from '@/lib/resend';
 import { claimNotification, recordNotificationOutcome } from '@/lib/notify';
+import { paystackRefundTransaction } from '@/lib/paystack-server';
 
-const PAYSTACK_API = 'https://api.paystack.co';
-
-function paystackHeaders() {
-  if (!process.env.PAYSTACK_SECRET_KEY) {
-    throw new Error('PAYSTACK_SECRET_KEY is not configured');
-  }
-  return {
-    Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-    'Content-Type': 'application/json',
-  };
-}
-
-// Best-effort Paystack refund. Accepts the quirky Paystack refund response
-// (HTTP 200 with `status: true`, or the documented "Successfully Refunded"
-// shape) and never throws — a failed refund must not block the cancellation.
-async function issuePaystackRefund(paymentRef: string, totalNaira: number): Promise<boolean> {
-  if (!paymentRef || totalNaira <= 0) return false;
-  try {
-    const response = await fetch(`${PAYSTACK_API}/refund`, {
-      method: 'POST',
-      headers: paystackHeaders(),
-      body: JSON.stringify({
-        transaction: paymentRef,
-        amount: Math.round(totalNaira * 100), // kobo
-      }),
-    });
-    const json = (await response.json().catch(() => null)) as {
-      status?: boolean;
-      message?: string;
-    } | null;
-    const accepted =
-      response.ok &&
-      (json?.status === true ||
-        (json !== null && String(json.message ?? '').toLowerCase().includes('refund')));
-    if (!accepted) {
-      console.warn('[cancel-event] Paystack refund not accepted', {
-        paymentRef,
-        status: response.status,
-        body: json,
-      });
-    }
-    return accepted;
-  } catch (err) {
-    console.error('[cancel-event] Paystack refund error', paymentRef, err);
-    return false;
-  }
-}
-
+/**
+ * Cancelling an event is two phases, and the split is deliberate.
+ *
+ * Phase 1 is a single database transaction: begin_event_cancellation() takes
+ * the event's row lock, sets cancelled_at, and writes one refund row per
+ * confirmed order. Because cancelled_at lands in the SAME transaction, there is
+ * no window in which a sold-out, already-cancelled event still accepts checkout
+ * - which is exactly what the previous version did, since it refunded every
+ * guest in a loop and only marked the event cancelled at the very end.
+ *
+ * Phase 2 is one Paystack call per refund row, outside any transaction, each one
+ * bracketed by mark_refund_submitted() and complete_order_refund(). A crash
+ * halfway through leaves some rows `submitted` and the rest `requested`, and
+ * every one of them is findable afterwards. The old version wrote nothing before
+ * calling Paystack, so a timeout mid-loop silently lost the fact that a refund
+ * had been attempted and a retry would refund the same guest again.
+ */
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as { event_id?: unknown; reason?: unknown };
@@ -72,133 +42,177 @@ export async function POST(request: Request) {
 
     const service = createServiceSupabase();
 
-    // Organizers can only cancel their own events; admins may cancel any.
     const { data: party, error: partyError } = await service
       .from('parties')
-      .select('*')
+      .select('id, title, capacity, spots_left, created_by, cancelled_at')
       .eq('id', eventId)
       .maybeSingle();
     if (partyError || !party) {
       return NextResponse.json({ error: 'Event not found.' }, { status: 404 });
     }
-    if (party.cancelled_at) {
-      // Already cancelled — this is an idempotent retry. We only re-process
-      // orders whose refund previously FAILED; everything else is left alone.
-    }
-    const { data: profile } = await service
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle();
-    const isStaff = ['admin', 'super_admin', 'support'].includes(profile?.role ?? '');
-    if (party.created_by !== user.id && !isStaff) {
-      return NextResponse.json({ error: 'You can only cancel your own events.' }, { status: 403 });
+
+    // Who may cancel is decided inside begin_event_cancellation(), against the
+    // caller's real permissions, and nowhere else.
+    //
+    // There used to be a second, hand-maintained copy of that rule here: a list
+    // of role strings. It drifted from the database, which is how 'support'
+    // ended up able to cancel live events and move other people's money. A
+    // duplicated permission check is a vulnerability waiting for a role to be
+    // added, so it is gone rather than kept in sync. The function below refuses
+    // with 42501, which the error handler turns into a 403.
+
+    // ---- Phase 1: close the event and queue the refunds, atomically ----------
+    const { data: queued, error: queueError } = await service.rpc('begin_event_cancellation', {
+      p_party_id: eventId,
+      p_reason: reason,
+      p_actor: user.id,
+    });
+    if (queueError) {
+      // 42501 is the permission failure raised by the function.
+      const forbidden = queueError.code === '42501';
+      console.error('[cancel-event] could not begin cancellation', queueError.code, queueError.message);
+      return NextResponse.json(
+        { error: forbidden ? 'You can only cancel your own events.' : 'Cancellation failed.' },
+        { status: forbidden ? 403 : 500 }
+      );
     }
 
-    // 1. Everything happens in one transaction-safe pass: refund each confirmed
-    //    order, restore its spots, and notify the buyer.
-    const { data: orders } = await service
-      .from('orders')
-      .select('*')
-      .eq('party_id', eventId)
-      .eq('payment_status', 'confirmed');
+    const workList = (queued ?? []) as Array<{
+      order_id: string;
+      order_ref: string;
+      refund_id: string | null;
+      amount: number;
+      quantity: number;
+      customer_email: string | null;
+      guest_name: string | null;
+      needs_refund: boolean;
+    }>;
 
+    // ---- Phase 2: talk to Paystack, one refund row at a time -----------------
     let refundedCount = 0;
     let failedCount = 0;
+    let pendingCount = 0;
     let notifiedCount = 0;
-    let spotsLeft = party.spots_left;
-    const now = new Date().toISOString();
 
-    for (const order of orders ?? []) {
-      const alreadyFinal = ['refunded', 'requested', 'processing', 'rejected'].includes(order.refund_status);
-      const shouldRetry = order.refund_status === 'failed';
-      // Whether the guest's money is actually on its way: only a refunded
-      // (or newly accepted) order claims a refund was processed in the email.
-      const refundedOk = order.refund_status === 'refunded';
-
-      let refundAccepted = false;
-      if (alreadyFinal && !shouldRetry) {
-        // Nothing to refund; just make sure the guest sees why the event is gone.
-        if (order.refund_status !== 'refunded') {
-          await service
-            .from('orders')
-            .update({ cancellation_reason: reason })
-            .eq('id', order.id);
-        }
-      } else {
-        refundAccepted = await issuePaystackRefund(order.payment_ref ?? '', order.total);
-        if (refundAccepted) {
-          refundedCount += 1;
-          spotsLeft = Math.min(party.capacity, spotsLeft + order.quantity);
-        } else {
-          failedCount += 1;
-        }
-        await service
-          .from('orders')
-          .update({
-            refund_status: refundAccepted ? 'refunded' : 'failed',
-            refund_amount: refundAccepted ? order.total : 0,
-            refunded_at: refundAccepted ? now : null,
-            cancellation_reason: reason,
-          })
-          .eq('id', order.id);
+    // The payment reference is needed to call Paystack, and the user id keys the
+    // notification dedupe. Neither is returned by the function: the work list
+    // stays free of anything that could leak if it were ever logged.
+    const orderIds = workList.map((w) => w.order_id);
+    const paymentRefs = new Map<string, string>();
+    const orderOwners = new Map<string, string | null>();
+    if (orderIds.length > 0) {
+      const { data: refs } = await service
+        .from('orders')
+        .select('id, payment_ref, user_id')
+        .in('id', orderIds);
+      for (const row of refs ?? []) {
+        if (row.payment_ref) paymentRefs.set(row.id, row.payment_ref);
+        orderOwners.set(row.id, row.user_id);
       }
-      const wasRefunded = refundedOk || refundAccepted;
+    }
 
-      if (order.customer_email) {
-        // Dedupe per order: retrying this endpoint (or an overlapping host
-        // click) can never email the same guest twice about one cancellation.
+    for (const item of workList) {
+      let guestWasRefunded = false;
+
+      if (item.needs_refund && item.refund_id) {
+        const refundId = item.refund_id;
+        const paymentRef = paymentRefs.get(item.order_id) ?? '';
+
+        // Committed BEFORE the provider call. From here on the row says we asked
+        // Paystack, and `submitted` is never retried automatically.
+        const { error: submitError } = await service.rpc('mark_refund_submitted', {
+          p_refund_id: refundId,
+        });
+        if (submitError) {
+          // Someone already moved this refund along. Leave it exactly as it is
+          // rather than calling Paystack a second time.
+          console.warn('[cancel-event] refund not in a submittable state', refundId, submitError.message);
+          pendingCount += 1;
+        } else {
+          const result = await paystackRefundTransaction(paymentRef, item.amount);
+          const { error: completeError } = await service.rpc('complete_order_refund', {
+            p_refund_id: refundId,
+            p_outcome: result.outcome,
+            p_provider_refund_id: result.providerRefundId,
+            p_provider_status: result.providerStatus,
+            p_failure_reason: result.message,
+          });
+
+          if (completeError) {
+            // The ledger keeps the row in flight, which is the safe direction:
+            // a human reconciles it rather than the guest being told their money
+            // is back when we do not know.
+            console.error('[cancel-event] could not record refund outcome', completeError.message);
+            pendingCount += 1;
+          } else if (result.outcome === 'refunded') {
+            refundedCount += 1;
+            guestWasRefunded = true;
+          } else if (result.outcome === 'failed') {
+            failedCount += 1;
+            console.warn('[cancel-event] Paystack refused a refund', {
+              orderRef: item.order_ref,
+              status: result.providerStatus,
+              message: result.message,
+            });
+          } else {
+            pendingCount += 1;
+            console.warn('[cancel-event] Paystack refund outcome unknown, needs reconciliation', {
+              orderRef: item.order_ref,
+              message: result.message,
+            });
+          }
+        }
+      }
+
+      // Tell the guest what happened either way. The amount claimed is only ever
+      // the amount Paystack confirmed, so the email cannot promise money that
+      // did not move.
+      if (item.customer_email) {
         const claimed = await claimNotification(service, {
-          userId: order.user_id,
-          email: order.customer_email,
+          userId: orderOwners.get(item.order_id) ?? undefined,
+          email: item.customer_email,
           type: 'event_cancellation',
-          refId: order.id,
+          refId: item.order_id,
         });
         if (claimed) {
           const sent = await sendEventCancellationEmail({
-            to: order.customer_email,
-            guestName: order.customer_email.split('@')[0] || 'there',
+            to: item.customer_email,
+            guestName: item.guest_name || item.customer_email.split('@')[0] || 'there',
             partyTitle: party.title,
             reason,
-            amountNaira: wasRefunded ? order.total : 0,
+            amountNaira: guestWasRefunded ? item.amount : 0,
           });
           if (sent) notifiedCount += 1;
           await recordNotificationOutcome(service, {
-            email: order.customer_email,
+            email: item.customer_email,
             type: 'event_cancellation',
-            refId: order.id,
+            refId: item.order_id,
             status: sent ? 'sent' : 'failed',
           });
         }
       }
     }
 
-    if (spotsLeft !== party.spots_left) {
-      await service
-        .from('parties')
-        .update({ spots_left: spotsLeft })
-        .eq('id', eventId);
-    }
-
-    // 2. Mark the event cancelled. Guests reach it via saved links and their
-    //    ticket pages, so it still resolves — just rendered as cancelled.
-    await service
-      .from('parties')
-      .update({ cancelled_at: now, cancellation_reason: reason })
-      .eq('id', eventId);
-
-    // 3. Audit trail.
     await service.rpc('write_audit_log', {
       p_action: 'event_cancelled',
       p_target_type: 'event',
       p_target_id: String(eventId),
-      p_details: { reason, refunded_count: refundedCount, failed_count: failedCount, notified_count: notifiedCount },
+      p_details: {
+        reason,
+        refunded_count: refundedCount,
+        failed_count: failedCount,
+        pending_count: pendingCount,
+        notified_count: notifiedCount,
+      },
     });
 
     return NextResponse.json({
       success: true,
       refunded_count: refundedCount,
       failed_count: failedCount,
+      // Surfaced so finance knows a reconciliation queue exists rather than
+      // discovering it from a guest complaint.
+      pending_count: pendingCount,
       notified_count: notifiedCount,
     });
   } catch (err) {

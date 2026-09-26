@@ -130,6 +130,93 @@ export async function paystackVerifyTransaction(reference: string): Promise<Pays
   };
 }
 
+// ---- Refunds ---------------------------------------------------------------
+//
+// POST /refund returns 200 with `status: true` for BOTH an accepted refund and
+// a rejected one, and it has no documented idempotency key. The response body is
+// therefore the only signal available, and it has to be read precisely.
+//
+// The rule this module enforces: a refund counts as refunded ONLY when the
+// response carries a provider refund id. Never infer success from prose. Paystack
+// messages for a refusal contain the word "refund" ("Refund rejected", "Refund
+// not permitted for this transaction"), so any substring check over the message
+// records a refused refund as money returned to the guest.
+//
+// The three outcomes are kept distinct because they are not equally safe to
+// retry:
+//   refunded  - Paystack confirmed it. Terminal.
+//   failed    - Paystack definitively refused. Nothing moved; safe to retry.
+//   unknown   - timeout, 5xx, or a body we cannot read. The money may or may
+//               not have moved, so nothing is retried automatically; the refund
+//               stays in flight for a human to reconcile against the dashboard.
+
+export type PaystackRefundOutcome = 'refunded' | 'failed' | 'unknown';
+
+export interface PaystackRefundResult {
+  outcome: PaystackRefundOutcome;
+  providerRefundId: string | null;
+  providerStatus: string | null;
+  message: string;
+}
+
+export async function paystackRefundTransaction(
+  transactionReference: string,
+  amountNaira: number,
+): Promise<PaystackRefundResult> {
+  const unknown: PaystackRefundResult = {
+    outcome: 'unknown',
+    providerRefundId: null,
+    providerStatus: null,
+    message: 'No response from Paystack',
+  };
+
+  if (!transactionReference || amountNaira <= 0) {
+    return { ...unknown, outcome: 'failed', message: 'Missing transaction reference or amount' };
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(`${PAYSTACK_API}/refund`, {
+      method: 'POST',
+      headers: paystackHeaders(),
+      body: JSON.stringify({
+        transaction: transactionReference,
+        amount: Math.round(amountNaira * 100), // kobo
+      }),
+    });
+  } catch (err) {
+    // A transport failure is the ambiguous case: the request may have been
+    // received and acted on. Never treat it as a refusal.
+    return { ...unknown, message: err instanceof Error ? err.message : 'Refund request failed' };
+  }
+
+  const json = (await res.json().catch(() => null)) as {
+    status?: boolean;
+    message?: string;
+    data?: { id?: number | string; status?: string; reference?: string };
+  } | null;
+
+  const message = String(json?.message ?? '');
+  const providerRefundId =
+    json?.data?.id !== undefined && json?.data?.id !== null ? String(json.data.id) : null;
+  const providerStatus = json?.data?.status ?? null;
+
+  // A refund id is the only proof that money actually moved.
+  if (res.ok && json?.status === true && providerRefundId !== null) {
+    return { outcome: 'refunded', providerRefundId, providerStatus, message };
+  }
+
+  // A well-formed refusal: we know the money did not move, so it is safe to
+  // close the attempt and let a human or a retry try again.
+  if (res.ok && json?.status === false) {
+    return { outcome: 'failed', providerRefundId, providerStatus, message };
+  }
+
+  // Anything else - 5xx, a truncated body, a 200 we could not parse - stays
+  // unknown. Guessing here is what pays a guest twice.
+  return { outcome: 'unknown', providerRefundId, providerStatus, message: message || `HTTP ${res.status}` };
+}
+
 // ---- Transfers (host withdrawals) -------------------------------------------
 //
 // With Paystack in Manual settlement mode, ticket money stays in the platform's

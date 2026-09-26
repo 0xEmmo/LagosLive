@@ -56,8 +56,6 @@ interface WizardForm {
   nin: string;
   idDocumentPath: string | null;
   bankName: string;
-  accountHolder: string;
-  accountNumber: string;
 }
 
 function emptyForm(): WizardForm {
@@ -71,8 +69,6 @@ function emptyForm(): WizardForm {
     nin: '',
     idDocumentPath: null,
     bankName: '',
-    accountHolder: '',
-    accountNumber: '',
   };
 }
 
@@ -92,8 +88,6 @@ function formToPayload(form: WizardForm) {
     nin: form.nin,
     idDocumentPath: form.idDocumentPath,
     bankName: form.bankName,
-    accountHolder: form.accountHolder,
-    accountNumber: form.accountNumber,
   };
 }
 
@@ -110,8 +104,6 @@ function validateStep(step: number, form: WizardForm): string | null {
   }
   if (step === 2) {
     if (!form.bankName.trim()) return 'Add your bank name.';
-    if (!form.accountHolder.trim()) return 'Add the account holder name.';
-    if (!/^[0-9]{10}$/.test(form.accountNumber.trim())) return 'Account number must be 10 digits.';
     return null;
   }
   return null;
@@ -168,8 +160,6 @@ export default function HostVerificationPage() {
         nin: row.nin ?? '',
         idDocumentPath: row.idDocumentUrl,
         bankName: row.bankName ?? '',
-        accountHolder: row.accountHolder ?? '',
-        accountNumber: row.accountNumber ?? row.accountLast4 ?? '',
       });
       prefillDone.current = true;
     }
@@ -523,7 +513,15 @@ function PendingPanel({ row }: { row: HostVerificationRow | null }) {
               { label: 'Legal name', value: row.legalName || '—' },
               { label: 'Bank', value: row.bankName || '—' },
               { label: 'NIN', value: maskId(row.nin || '') },
-              { label: 'Account', value: maskId(row.accountNumber ?? row.accountLast4 ?? '') },
+              // The verified account name, which is what Paystack confirmed, and
+              // the last four digits. Never the applicant's own typing, and
+              // never a full number - see migration 00042.
+              {
+                label: 'Payout account',
+                value: row.accountHolder
+                  ? `${row.accountHolder}${row.accountLast4 ? ` ••${row.accountLast4}` : ''}`
+                  : 'Not set yet',
+              },
             ]}
           />
         </div>
@@ -739,12 +737,14 @@ function PayoutReviewStep({ form, setForm }: { form: WizardForm; setForm: (updat
   return (
     <StepCard icon={<Landmark size={15} strokeWidth={2.2} color="#FF9B3E" />} title="Where should we send payouts?" hint="Step 3 of 3">
       <div className="mb-3 rounded-xl p-3.5 text-[11.5px] leading-[1.6]" style={{ background: 'rgba(255,255,255,0.03)', color: '#6B6C80' }}>
-        This is the account your earnings are settled to. Only your bank and the last 4 digits are ever shown publicly.
+        Your payout account is set up separately and verified with your bank, so we never
+        store your account number and never pay an account we have not checked. You can add
+        it now or after you submit.
       </div>
       <div className="flex flex-col gap-3.5">
         <div>
           <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.9px]" style={{ color: '#6B6C80' }}>Bank name</label>
-          <div className="rounded-xl px-3.5 py-2.5" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div className="rounded-xl px-3.5 py-2.5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}>
             <select
               value={form.bankName}
               onChange={(e) => setForm((f) => ({ ...f, bankName: e.target.value }))}
@@ -757,10 +757,21 @@ function PayoutReviewStep({ form, setForm }: { form: WizardForm; setForm: (updat
               ))}
             </select>
           </div>
+          <div className="mt-1.5 text-[11px]" style={{ color: '#6B6C80' }}>
+            Context for the team reviewing your application. Your actual payout account is
+            chosen on the Payouts page, where we check it with your bank first.
+          </div>
         </div>
-        <Field label="Account number" value={form.accountNumber} onChange={(v) => setForm((f) => ({ ...f, accountNumber: v.replace(/[^0-9]/g, '').slice(0, 10) }))} placeholder="10-digit account number" inputMode="numeric" />
-        <Field label="Account holder" value={form.accountHolder} onChange={(v) => setForm((f) => ({ ...f, accountHolder: v }))} placeholder="Name on the account" />
       </div>
+
+      <a
+        href="/host/payouts"
+        className="mt-3 flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[12.5px] font-semibold"
+        style={{ background: 'rgba(0,245,212,0.08)', border: '1px solid rgba(0,245,212,0.25)', color: '#00F5D4' }}
+      >
+        <Landmark size={14} />
+        Add your verified payout account
+      </a>
 
       <div className="mt-4 rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="mb-3 text-[13px] font-bold" style={{ color: '#FFFFFF' }}>Review and submit</div>
@@ -793,7 +804,7 @@ function PayoutReviewStep({ form, setForm }: { form: WizardForm; setForm: (updat
           <SummaryGrid
             rows={[
               { label: 'Bank', value: form.bankName || '—' },
-              { label: 'Account', value: form.accountNumber ? `••••••${form.accountNumber.slice(-4)}` : '—' },
+              { label: 'Payout account', value: 'Added separately, verified with your bank' },
             ]}
           />
         </div>

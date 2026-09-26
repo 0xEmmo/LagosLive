@@ -41,8 +41,14 @@ export interface HostVerificationRow {
   idDocumentUrl: string | null;
 
   // -- Step 3: payout account -------------------------------------------------
+  // bankName is free text the applicant types, kept because an admin reviewing
+  // the application reads it as context. It identifies nobody.
   bankName: string;
-  accountHolder: string;
+  // The name Paystack verified, or null if the host has not added a verified
+  // account. Never applicant-supplied.
+  accountHolder: string | null;
+  // Deprecated and permanently null since 00042. Retained on the row type so
+  // existing admin-queue reads compile; payouts use host_bank_accounts.
   accountNumber: string | null;
   accountLast4: string | null;
 
@@ -53,6 +59,39 @@ export interface HostVerificationRow {
   reviewReason: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/**
+ * The host's one live Paystack-verified account, or null if they have not set
+ * one up.
+ *
+ * There is at most one live account per host (a partial unique index in 00038),
+ * so this never has to choose between candidates. It reads the name the bank
+ * confirmed rather than anything the host typed, which is the only version of
+ * an account holder name worth putting in front of an admin.
+ */
+async function primaryVerifiedBankAccount(
+  service: ServiceSupabase,
+  userId: string
+): Promise<{ account_name: string; account_number_last4: string } | null> {
+  const { data, error } = await service
+    .from('host_bank_accounts')
+    .select('account_name, account_number_last4')
+    .eq('user_id', userId)
+    .is('removed_at', null)
+    .eq('verification_status', 'verified')
+    .maybeSingle();
+  if (error) {
+    // Not worth failing a KYC submission over: the only consequence is that the
+    // queue shows no account name, and the host can add their account on
+    // /host/payouts.
+    console.warn('[host-verification] could not read verified bank account', {
+      userId,
+      error: error.message,
+    });
+    return null;
+  }
+  return data ?? null;
 }
 
 function toRow(row: Database['public']['Tables']['host_verifications']['Row']): HostVerificationRow {
@@ -71,9 +110,13 @@ function toRow(row: Database['public']['Tables']['host_verifications']['Row']): 
     nin: row.id_number,
     idDocumentUrl: row.id_document_url,
     bankName: row.bank_name,
-    accountHolder: row.account_holder,
+    // Null when the host has not added a verified account yet, which is allowed.
+    accountHolder: row.account_holder ?? null,
+    // Always null since 00042, and typed as such so no caller can start relying
+    // on it. Exposed here only so the admin queue's existing reads keep
+    // compiling; there is nothing left in it to read.
     accountNumber,
-    accountLast4: accountNumber ? accountNumber.slice(-4) : (row.account_last4 ?? null),
+    accountLast4: row.account_last4 ?? null,
     submittedAt: row.submitted_at,
     resubmittedAt: row.resubmitted_at,
     reviewedAt: row.reviewed_at,
@@ -287,15 +330,30 @@ export interface HostVerificationSubmitInput {
   // Step 2 optional document ref (object path returned by createSignedUploadUrl).
   idDocumentPath?: string | null;
 
-  // Step 3: payout account.
+  // Step 3: payout bank, free text and non-identifying.
+  //
+  // There is deliberately no accountNumber or accountHolder here. The payout
+  // destination is a Paystack-verified recipient_code on host_bank_accounts,
+  // set on /host/payouts; a raw number or a typed name arriving with a KYC
+  // submission is exactly what migration 00042 stops being stored.
   bankName: string;
-  accountHolder: string;
-  accountNumber: string;
 }
 
 // Hosts call this to (re)submit their KYC. The row is upserted (a host owns
 // exactly one row); status is set to 'pending' only when coming from
-// unverified/rejected/resubmit_requested — enforced by the DB trigger as well.
+// unverified/rejected/resubmit_requested �?" enforced by the DB trigger as well.
+//
+// Bank details are deliberately absent. This used to take a 10-digit account
+// number and a typed account holder and write both to the row, which kept a
+// permanent identifier for someone's bank account in a table every admin can
+// read, and recorded the account name the applicant typed rather than the one
+// Paystack verified. Neither is needed here: payouts read the Paystack-verified
+// recipient_code from host_bank_accounts, set on /host/payouts.
+//
+// account_holder below is copied from that verified account when the host has
+// one, so an admin reading the queue sees the name the bank confirmed. It is
+// null when they have not added an account yet, which is allowed - KYC and
+// payout setup are separate steps and neither blocks the other.
 export async function submitHostVerification(
   service: ServiceSupabase,
   input: HostVerificationSubmitInput
@@ -305,12 +363,13 @@ export async function submitHostVerification(
   if (!input.legalName.trim()) return { ok: false, error: 'Add your legal name.' };
   if (!/^[0-9]{11}$/.test(input.nin.trim())) return { ok: false, error: 'NIN must be an 11-digit number.' };
   if (!input.bankName.trim()) return { ok: false, error: 'Add a bank name.' };
-  if (!input.accountHolder.trim()) return { ok: false, error: 'Add the account holder name.' };
-  if (!/^[0-9]{10}$/.test(input.accountNumber.trim())) return { ok: false, error: 'Enter the full 10-digit account number.' };
 
   const existing = await getHostVerificationByUserId(service, input.userId);
   const status = 'pending';
-  const accountNumber = input.accountNumber.trim();
+
+  // The verified account name, or null. Never the applicant's own typing.
+  const verified = await primaryVerifiedBankAccount(service, input.userId);
+  const last4 = verified?.account_number_last4 ?? null;
 
   const payload: Database['public']['Tables']['host_verifications']['Insert'] = {
     user_id: input.userId,
@@ -324,9 +383,10 @@ export async function submitHostVerification(
     id_number: input.nin.trim(),
     id_document_url: input.idDocumentPath || null,
     bank_name: input.bankName.trim(),
-    account_holder: input.accountHolder.trim(),
-    account_number: accountNumber,
-    account_last4: accountNumber.slice(-4),
+    account_holder: verified?.account_name ?? null,
+    // Intentionally not written. Migration 00042 nulls this in the database as
+    // well, so the field cannot come back through another caller.
+    account_last4: last4,
   };
 
   const { error } = existing

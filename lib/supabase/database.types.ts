@@ -980,8 +980,8 @@ page_views: number
       }
       host_verifications: {
         Row: {
-          account_holder: string
-          account_last4: string
+          account_holder: string | null
+          account_last4: string | null
           account_number: string | null
           address: string | null
           bank_name: string
@@ -1015,8 +1015,8 @@ page_views: number
           years_in_business: string | null
         }
         Insert: {
-          account_holder: string
-          account_last4: string
+          account_holder: string | null
+          account_last4?: string | null
           account_number?: string | null
           address?: string | null
           bank_name: string
@@ -1050,8 +1050,8 @@ page_views: number
           years_in_business?: string | null
         }
         Update: {
-          account_holder?: string
-          account_last4?: string
+          account_holder?: string | null
+          account_last4?: string | null
           account_number?: string | null
           address?: string | null
           bank_name?: string

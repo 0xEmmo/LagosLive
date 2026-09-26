@@ -27,8 +27,18 @@ function parseInput(
   if (!str(body.legalName).trim()) return { ok: false, error: 'Add your legal name.' };
   if (!/^[0-9]{11}$/.test(str(body.nin).trim())) return { ok: false, error: 'NIN must be an 11-digit number.' };
   if (!str(body.bankName).trim()) return { ok: false, error: 'Add a bank name.' };
-  if (!str(body.accountHolder).trim()) return { ok: false, error: 'Add the account holder name.' };
-  if (!/^[0-9]{10}$/.test(str(body.accountNumber).trim())) return { ok: false, error: 'Enter the full 10-digit account number.' };
+
+  // accountNumber and accountHolder used to be required here and written to the
+  // KYC row. They are refused now rather than quietly dropped, so a stale
+  // client is told plainly instead of believing it handed over bank details
+  // that were thrown away. The verified destination is set on /host/payouts.
+  if (str(body.accountNumber).trim() || str(body.accountHolder).trim()) {
+    return {
+      ok: false,
+      error:
+        'Do not send bank account details with a verification application. Add a verified payout account from the Payouts page instead.',
+    };
+  }
 
   return {
     ok: true,
@@ -42,8 +52,6 @@ function parseInput(
       nin: str(body.nin),
       idDocumentPath: maybeStr(body.idDocumentPath),
       bankName: str(body.bankName),
-      accountHolder: str(body.accountHolder),
-      accountNumber: str(body.accountNumber),
     },
   };
 }

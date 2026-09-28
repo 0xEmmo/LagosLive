@@ -7,6 +7,7 @@ import { Search, Locate, Flame, Loader2, AlertTriangle, RefreshCw } from 'lucide
 import { ALL_VIBES, VC } from '@/lib/data';
 import { useParties } from '@/lib/hooks/useParties';
 import { useLagosLiveStore } from '@/lib/store';
+import ThemeToggle from '@/components/ThemeToggle';
 import type { Vibe } from '@/lib/types';
 
 const EventMap = dynamic(() => import('@/components/EventMap'), { ssr: false });
@@ -149,6 +150,7 @@ export default function MapPage() {
 
       {/* Map action buttons */}
       <div className="absolute right-3.5 top-[116px] z-[1000] flex flex-col gap-2.5">
+        <ThemeToggle className="theme-toggle-wrap--compact" />
         <button
           type="button"
           onClick={() => setShowHeatmap((v) => !v)}

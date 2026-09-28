@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import BackButton from '@/components/BackButton';
 import { SiteLogo, Wordmark } from '@/components/Logo';
+import ThemeToggle from '@/components/ThemeToggle';
 
 type AuthMode = 'login' | 'signup';
 
@@ -34,6 +35,7 @@ export default function AuthSplitLayout({ mode, children }: { mode: AuthMode; ch
         <header className="auth-split-layout__topbar">
           <BackButton href="/" label="Home" />
           <SiteLogo priority className="auth-split-layout__wordmark" />
+          <ThemeToggle />
         </header>
 
         <div className="auth-split-layout__content">{children}</div>

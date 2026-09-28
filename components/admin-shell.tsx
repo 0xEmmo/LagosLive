@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useMemo } from 'react';
 import { ShieldCheck } from 'lucide-react';
 import AdminDashboardNav, { ADMIN_NAV_GROUPS, filterAdminNav, type AdminNavItem } from '@/components/AdminDashboardNav';
+import ThemeToggle from '@/components/ThemeToggle';
 import { useLagosLiveStore } from '@/lib/store';
 
 export { type AdminNavItem, ADMIN_NAV } from '@/components/AdminDashboardNav';
@@ -65,10 +66,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           ))}
         </nav>
 
-        <div className="hidden border-t px-5 py-4 md:block" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+        <div className="hidden items-center justify-between border-t px-5 py-4 md:flex" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <Link href="/" className="flex items-center gap-2 text-[12px] font-semibold transition-colors hover:text-white" style={{ color: '#828B99' }}>
             ← Back to site
           </Link>
+          <ThemeToggle className="theme-toggle-wrap--compact" />
         </div>
       </aside>
 

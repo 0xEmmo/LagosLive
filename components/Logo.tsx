@@ -1,26 +1,27 @@
 'use client';
 
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
 
-export function SiteLogo({ className = '' }: { className?: string }) {
-  const pathname = usePathname();
-  if (pathname !== '/') {
-    return (
-      <span className={`inline-flex items-baseline font-display text-[25px] leading-none tracking-[1.4px] ${className}`} style={{ color: '#F4F7FF' }}>
-        LAGOS LIVE<span style={{ color: '#75A1FF' }}>.</span>
-      </span>
-    );
-  }
+const LOGO_SRC = '/LagosLiveLogo.webp';
+const LOGO_WIDTH = 384;
+const LOGO_HEIGHT = 256;
 
+export function SiteLogo({
+  className = '',
+  priority = false,
+}: {
+  className?: string;
+  priority?: boolean;
+}) {
   return (
     <Image
-      src="/Lagoslivelogo.png"
+      src={LOGO_SRC}
       alt="Lagos Live"
-      width={1536}
-      height={1024}
-      className={`h-auto w-auto max-h-[52px] ${className}`}
-      priority
+      width={LOGO_WIDTH}
+      height={LOGO_HEIGHT}
+      sizes="66px"
+      className={`block h-auto w-auto max-h-[44px] max-w-[66px] object-contain ${className}`}
+      priority={priority}
     />
   );
 }
@@ -40,17 +41,14 @@ export function LogoMark({ size = 33 }: { size?: number }) {
 
 export function Wordmark({ size = 24 }: { size?: number }) {
   return (
-    <span
-      className="font-display tracking-[3.5px]"
-      style={{
-        fontSize: size,
-        background: 'linear-gradient(135deg,#1559F7,#75A1FF)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-        backgroundClip: 'text',
-      }}
-    >
-      LAGOS LIVE
-    </span>
+    <Image
+      src={LOGO_SRC}
+      alt="Lagos Live"
+      width={LOGO_WIDTH}
+      height={LOGO_HEIGHT}
+      sizes={`${Math.ceil(size * 1.5)}px`}
+      className="block shrink-0 object-contain"
+      style={{ width: size * 1.5, height: size }}
+    />
   );
 }

@@ -1,11 +1,11 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { type FormEvent, Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import BackButton from '@/components/BackButton';
+import AuthPasswordField from '@/components/auth/AuthPasswordField';
+import AuthSplitLayout from '@/components/auth/AuthSplitLayout';
 import GoogleAuthButton from '@/components/GoogleAuthButton';
-import { SiteLogo } from '@/components/Logo';
 import { useLagosLiveStore } from '@/lib/store';
 import { supabase } from '@/lib/supabase/client';
 import {
@@ -61,6 +61,11 @@ function SignupPageContent() {
     }
   };
 
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void submit();
+  };
+
   const signInWithGoogle = async () => {
     if (googleLoading || submitting) return;
 
@@ -87,100 +92,118 @@ function SignupPageContent() {
 
   if (confirmationSent) {
     return (
-      <div className="flex min-h-screen flex-col animate-fade-in">
-        <div className="px-5 py-4">
-          <BackButton href="/" />
-        </div>
-        <div className="mx-auto flex w-full max-w-[400px] flex-1 flex-col items-center justify-center px-7 pb-[60px] text-center">
-          <div className="flex justify-center"><SiteLogo /></div>
-          <h1 className="font-display mb-1.5 mt-2 text-[34px] tracking-[1px]" style={{ color: '#FFFFFF' }}>
+      <AuthSplitLayout mode="signup">
+        <div className="auth-form-stack auth-confirmation">
+          <p className="auth-form-eyebrow">ONE LAST STEP</p>
+          <h1 className="font-display mb-2 mt-2 text-[34px] tracking-[1px]" style={{ color: '#FFFFFF' }}>
             Check Your Email
           </h1>
-          <p className="max-w-[300px] text-sm" style={{ color: '#A7A8B5' }}>
+          <p className="text-sm" style={{ color: '#A7A8B5' }}>
             We sent a confirmation link to <strong style={{ color: '#FFFFFF' }}>{email}</strong>. Confirm your email, then log in.
           </p>
-          <Link
-            href={`/login${nextQuery}`}
-            className="btn-primary mt-7 w-full py-[15px] text-center text-sm font-bold"
-          >
+          <Link href={`/login${nextQuery}`} className="btn-primary auth-submit mt-7 block w-full py-[15px] text-center text-sm font-bold">
             Go to Login
           </Link>
         </div>
-      </div>
+      </AuthSplitLayout>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col animate-fade-in">
-      <div className="px-5 py-4">
-        <BackButton href="/" />
-      </div>
-      <div className="mx-auto flex w-full max-w-[400px] flex-1 flex-col justify-center px-7 pb-[60px]">
-        <div className="mb-7 text-center">
-          <div className="flex justify-center"><SiteLogo /></div>
+    <AuthSplitLayout mode="signup">
+      <div className="auth-form-stack">
+        <div className="mb-6">
+          <p className="auth-form-eyebrow">CREATE YOUR ACCOUNT</p>
           <h1 className="font-display mb-1.5 mt-2 text-[38px] tracking-[1px]" style={{ color: '#FFFFFF' }}>
             Join the Vibe
           </h1>
           <p className="text-sm" style={{ color: '#A7A8B5' }}>
-            Create an account to save your favorite parties
+            Create an account to save your favorite parties.
           </p>
         </div>
 
         {error && (
-          <div className="mb-4 animate-fade-in rounded-[10px] px-3.5 py-2.5 text-[13px]" style={{ background: 'rgba(255,90,46,0.08)', border: '1px solid rgba(255,90,46,0.25)', color: '#FF5A2E' }}>
+          <div className="auth-message auth-message--error" role="alert">
             {error}
           </div>
         )}
 
         <GoogleAuthButton onClick={signInWithGoogle} loading={googleLoading} disabled={submitting} />
 
-        <div className="my-[18px] flex items-center gap-3" aria-hidden="true">
-          <span className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.1)' }} />
-          <span className="text-[11px] uppercase tracking-[1.5px] text-white/40">or</span>
-          <span className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.1)' }} />
+        <div className="auth-divider" aria-hidden="true">
+          <span />
+          <span>OR SIGN UP WITH EMAIL</span>
+          <span />
         </div>
 
-        <div className="mb-[22px] flex flex-col gap-3.5">
-          {[
-            { label: 'Full Name', value: name, set: setName, placeholder: 'Ada Okafor', type: 'text' },
-            { label: 'Email', value: email, set: setEmail, placeholder: 'you@example.com', type: 'email' },
-            { label: 'Phone Number', value: phone, set: setPhone, placeholder: '080X XXX XXXX', type: 'text' },
-            { label: 'Password', value: password, set: setPassword, placeholder: '••••••••', type: 'password' },
-          ].map((f) => (
-            <div key={f.label}>
-              <div className="mb-[7px] text-[11px] font-semibold uppercase tracking-[0.8px]" style={{ color: '#A7A8B5' }}>
-                {f.label}
-              </div>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-5 flex flex-col gap-3">
+            <label className="auth-field" htmlFor="signup-name">
+              <span className="auth-field__label">Full Name</span>
               <input
-                type={f.type}
-                value={f.value}
-                onChange={(e) => f.set(e.target.value)}
-                placeholder={f.placeholder}
-                className="w-full rounded-[10px] px-3.5 py-[13px] text-sm outline-none font-heading transition-all duration-200"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#FFFFFF' }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(255,90,46,0.3)'; }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+                id="signup-name"
+                name="name"
+                type="text"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Ada Okafor"
+                autoComplete="name"
+                required
+                className="auth-input"
               />
-            </div>
-          ))}
-        </div>
+            </label>
+            <label className="auth-field" htmlFor="signup-email">
+              <span className="auth-field__label">Email</span>
+              <input
+                id="signup-email"
+                name="email"
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                required
+                className="auth-input"
+              />
+            </label>
+            <label className="auth-field" htmlFor="signup-phone">
+              <span className="auth-field__label">Phone Number</span>
+              <input
+                id="signup-phone"
+                name="tel"
+                type="tel"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                placeholder="080X XXX XXXX"
+                autoComplete="tel"
+                className="auth-input"
+              />
+            </label>
+            <AuthPasswordField
+              id="signup-password"
+              value={password}
+              onChange={setPassword}
+              autoComplete="new-password"
+            />
+          </div>
 
-        <button
-          onClick={submit}
-          disabled={submitting || googleLoading}
-          className="btn-primary w-full py-[15px] text-sm font-bold disabled:opacity-60"
-        >
-          {submitting ? 'Creating Account...' : 'Create Account'}
-        </button>
+          <button
+            type="submit"
+            disabled={submitting || googleLoading}
+            className="btn-primary auth-submit w-full py-[15px] text-sm font-bold disabled:opacity-60"
+          >
+            {submitting ? 'Creating Account...' : 'Create Account'}
+          </button>
+        </form>
 
-        <p className="mt-[26px] text-center text-[13px]" style={{ color: '#A7A8B5' }}>
+        <p className="mt-6 text-center text-[13px]" style={{ color: '#A7A8B5' }}>
           Already have an account?{' '}
-          <Link href={`/login${nextQuery}`} className="font-semibold" style={{ color: '#FF5A2E' }}>
+          <Link href={`/login${nextQuery}`} className="font-semibold auth-text-link">
             Log in
           </Link>
         </p>
       </div>
-    </div>
+    </AuthSplitLayout>
   );
 }
 

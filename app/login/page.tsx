@@ -1,11 +1,11 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { type FormEvent, Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import BackButton from '@/components/BackButton';
+import AuthPasswordField from '@/components/auth/AuthPasswordField';
+import AuthSplitLayout from '@/components/auth/AuthSplitLayout';
 import GoogleAuthButton from '@/components/GoogleAuthButton';
-import { SiteLogo } from '@/components/Logo';
 import { useLagosLiveStore } from '@/lib/store';
 import { supabase } from '@/lib/supabase/client';
 import {
@@ -41,9 +41,7 @@ function LoginPageContent() {
     if (callbackError) setError(callbackError);
   }, [callbackError]);
 
-  // If we're already signed in (e.g. the user navigates to /login while
-  // authenticated, or auth is restored after a page reload), bounce them to
-  // their dashboard instead of showing the form again.
+  // If we're already signed in, route them to the requested page or dashboard.
   useEffect(() => {
     if (user) router.replace(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -63,6 +61,11 @@ function LoginPageContent() {
     }
     setError('');
     router.push(next);
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void submit();
   };
 
   const signInWithGoogle = async () => {
@@ -90,84 +93,73 @@ function LoginPageContent() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col animate-fade-in">
-      <div className="px-5 py-4">
-        <BackButton href="/" />
-      </div>
-      <div className="mx-auto flex w-full max-w-[400px] flex-1 flex-col justify-center px-7 pb-[60px]">
-        <div className="mb-8 text-center">
-          <div className="flex justify-center"><SiteLogo /></div>
+    <AuthSplitLayout mode="login">
+      <div className="auth-form-stack">
+        <div className="mb-7">
+          <p className="auth-form-eyebrow">SIGN IN TO YOUR ACCOUNT</p>
           <h1 className="font-display mb-1.5 mt-2 text-[38px] tracking-[1px]" style={{ color: '#FFFFFF' }}>
             Welcome Back
           </h1>
           <p className="text-sm" style={{ color: '#A7A8B5' }}>
-            Log in to save parties &amp; get tickets faster
+            Log in to save parties &amp; get tickets faster.
           </p>
         </div>
 
         {error && (
-          <div className="mb-4 animate-fade-in rounded-[10px] px-3.5 py-2.5 text-[13px]" style={{ background: 'rgba(255,90,46,0.08)', border: '1px solid rgba(255,90,46,0.25)', color: '#FF5A2E' }}>
+          <div className="auth-message auth-message--error" role="alert">
             {error}
           </div>
         )}
 
         <GoogleAuthButton onClick={signInWithGoogle} loading={googleLoading} disabled={submitting} />
 
-        <div className="my-[18px] flex items-center gap-3" aria-hidden="true">
-          <span className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.1)' }} />
-          <span className="text-[11px] uppercase tracking-[1.5px] text-white/40">or</span>
-          <span className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.1)' }} />
+        <div className="auth-divider" aria-hidden="true">
+          <span />
+          <span>OR CONTINUE WITH EMAIL</span>
+          <span />
         </div>
 
-        <div className="mb-[22px] flex flex-col gap-3.5">
-          <div>
-            <div className="mb-[7px] text-[11px] font-semibold uppercase tracking-[0.8px]" style={{ color: '#A7A8B5' }}>
-              Email
-            </div>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="w-full rounded-[10px] px-3.5 py-[13px] text-sm outline-none font-heading transition-all duration-200"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#FFFFFF' }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(255,90,46,0.3)'; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
-            />
-          </div>
-          <div>
-            <div className="mb-[7px] text-[11px] font-semibold uppercase tracking-[0.8px]" style={{ color: '#A7A8B5' }}>
-              Password
-            </div>
-            <input
-              type="password"
+        <form onSubmit={handleSubmit}>
+          <div className="mb-5 flex flex-col gap-3.5">
+            <label className="auth-field" htmlFor="login-email">
+              <span className="auth-field__label">Email</span>
+              <input
+                id="login-email"
+                name="email"
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                required
+                className="auth-input"
+              />
+            </label>
+            <AuthPasswordField
+              id="login-password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full rounded-[10px] px-3.5 py-[13px] text-sm outline-none font-heading transition-all duration-200"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#FFFFFF' }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(255,90,46,0.3)'; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+              onChange={setPassword}
+              autoComplete="current-password"
             />
           </div>
-        </div>
 
-        <button
-          onClick={submit}
-          disabled={submitting || googleLoading}
-          className="btn-primary w-full py-[15px] text-sm font-bold disabled:opacity-60"
-        >
-          {submitting ? 'Logging in...' : 'Log In'}
-        </button>
+          <button
+            type="submit"
+            disabled={submitting || googleLoading}
+            className="btn-primary auth-submit w-full py-[15px] text-sm font-bold disabled:opacity-60"
+          >
+            {submitting ? 'Logging in...' : 'Log In'}
+          </button>
+        </form>
 
-        <p className="mt-[26px] text-center text-[13px]" style={{ color: '#A7A8B5' }}>
+        <p className="mt-6 text-center text-[13px]" style={{ color: '#A7A8B5' }}>
           New to Lagos Live?{' '}
-          <Link href={signupHref} className="font-semibold" style={{ color: '#FF5A2E' }}>
+          <Link href={signupHref} className="font-semibold auth-text-link">
             Create an account
           </Link>
         </p>
       </div>
-    </div>
+    </AuthSplitLayout>
   );
 }
 

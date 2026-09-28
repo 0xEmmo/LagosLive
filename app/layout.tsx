@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Bebas_Neue, Montserrat, Inter } from 'next/font/google';
+import { Bebas_Neue, Inter } from 'next/font/google';
 import './globals.css';
 import HashScroll from '@/components/HashScroll';
 import AuthListener from '@/components/AuthListener';
@@ -16,13 +16,6 @@ const bebasNeue = Bebas_Neue({
   weight: '400',
   subsets: ['latin'],
   variable: '--font-bebas',
-  display: 'swap',
-});
-
-const montserrat = Montserrat({
-  weight: ['500', '600', '700', '800'],
-  subsets: ['latin'],
-  variable: '--font-montserrat',
   display: 'swap',
 });
 
@@ -89,7 +82,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="dark" className={`${bebasNeue.variable} ${montserrat.variable} ${inter.variable}`}>
+    <html lang="en" data-theme="dark" className={`${bebasNeue.variable} ${inter.variable}`}>
       <body className="font-heading bg-bg" style={{ paddingBottom: '84px' }}>
         <EntryShutter />
         <div className="fixed inset-0 z-[-1] bg-noise">

@@ -6,8 +6,9 @@ const config: Config = {
     extend: {
       fontFamily: {
         display: ['var(--font-bebas)', 'cursive'],
-        heading: ['var(--font-montserrat)', 'sans-serif'],
+        heading: ['var(--font-inter)', 'sans-serif'],
         body: ['var(--font-inter)', 'sans-serif'],
+        sans: ['var(--font-inter)', 'sans-serif'],
       },
       colors: {
         bg: '#07070B',

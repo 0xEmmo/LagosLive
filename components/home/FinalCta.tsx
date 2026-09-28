@@ -14,11 +14,11 @@ export default function FinalCta() {
         className="relative overflow-hidden rounded-[30px] px-6 py-14 text-center md:py-20"
         style={{
           background:
-            'radial-gradient(ellipse 70% 60% at 50% 0%, rgba(255,45,149,0.18) 0%, transparent 60%), radial-gradient(ellipse 50% 50% at 85% 90%, rgba(0,191,255,0.12) 0%, transparent 60%), #171725',
-          border: '1px solid rgba(255,45,149,0.28)',
+            'radial-gradient(ellipse 70% 60% at 50% 0%, rgba(43,104,255,0.17) 0%, transparent 60%), radial-gradient(ellipse 50% 50% at 85% 90%, rgba(48,99,220,0.1) 0%, transparent 60%), #0d1119',
+          border: '1px solid rgba(86,136,255,0.3)',
         }}
       >
-        <div className="pointer-events-none absolute inset-0 opacity-[0.18]" style={{ background: 'linear-gradient(135deg, #FF2D95, #8A2BE2 45%, #00BFFF)' }} />
+        <div className="pointer-events-none absolute inset-0 opacity-[0.12]" style={{ background: 'linear-gradient(135deg, #1559f7, #3977ff 45%, #86aaff)' }} />
         <div className="relative z-[1] mx-auto max-w-[520px]">
           <h2 className="font-display mb-3 text-[38px] leading-[1] tracking-[1px] md:text-[54px]" style={{ color: '#FFFFFF' }}>
             Lagos is always <span className="gradient-text">live</span>

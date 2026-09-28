@@ -62,10 +62,10 @@ function statusTag(party: Party) {
   const state = eventAvailability(party);
   if (state === 'CANCELLED') return null;
   if (state === 'SOLD_OUT') {
-    return `<span style="display:inline-block;margin-left:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:#A7A8B5;padding:1px 8px;border-radius:10px;font:700 10px/1.6 'Montserrat',sans-serif;text-transform:uppercase;letter-spacing:0.4px">Sold Out</span>`;
+    return `<span style="display:inline-block;margin-left:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:#A7A8B5;padding:1px 8px;border-radius:10px;font:700 10px/1.6 var(--font-inter),sans-serif;text-transform:uppercase;letter-spacing:0.4px">Sold Out</span>`;
   }
   if (state === 'CLOSED') {
-    return `<span style="display:inline-block;margin-left:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:#A7A8B5;padding:1px 8px;border-radius:10px;font:700 10px/1.6 'Montserrat',sans-serif;text-transform:uppercase;letter-spacing:0.4px">Event Closed</span>`;
+    return `<span style="display:inline-block;margin-left:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:#A7A8B5;padding:1px 8px;border-radius:10px;font:700 10px/1.6 var(--font-inter),sans-serif;text-transform:uppercase;letter-spacing:0.4px">Event Closed</span>`;
   }
   return null;
 }
@@ -117,17 +117,17 @@ function popupHtml(party: Party) {
     </style>
     <div style="position:relative;height:88px">
       ${cover}
-      <span style="position:absolute;left:8px;bottom:8px;background:${party.vibe in VC ? VC[party.vibe] : '#FF2D95'};color:#fff;padding:2px 9px;border-radius:12px;font:700 10px/1.5 'Montserrat',sans-serif;text-transform:uppercase;letter-spacing:0.4px">${esc(party.vibe)}</span>
+      <span style="position:absolute;left:8px;bottom:8px;background:${party.vibe in VC ? VC[party.vibe] : '#FF2D95'};color:#fff;padding:2px 9px;border-radius:12px;font:700 10px/1.5 var(--font-inter),sans-serif;text-transform:uppercase;letter-spacing:0.4px">${esc(party.vibe)}</span>
     </div>
     <div style="padding:10px 12px 12px">
-      <div style="font:700 14px/1.35 'Montserrat',sans-serif;color:#fff;margin-bottom:3px">${esc(party.title)}${statusTag(party) ?? ''}</div>
+      <div style="font:700 14px/1.35 var(--font-inter),sans-serif;color:#fff;margin-bottom:3px">${esc(party.title)}${statusTag(party) ?? ''}</div>
       <div style="color:#A7A8B5;font-size:12px;line-height:1.5;margin-bottom:2px">${esc(party.date)} &middot; ${esc(party.time)}</div>
       <div style="color:#A7A8B5;font-size:12px;line-height:1.5;margin-bottom:10px">${esc(party.location)}</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <span style="color:#00F5D4;font-weight:700;font-size:14px">${esc(priceLabel)}</span>
         <span style="color:#6B6C80;font-size:10px;text-transform:uppercase;letter-spacing:0.4px">${party.feeNum === 0 ? 'Free Entry' : 'Starting price'}</span>
       </div>
-      <button type="button" data-ll-view="${party.id}" style="width:100%;background:linear-gradient(135deg,#FF2D95,#8A2BE2);border:none;border-radius:8px;padding:9px;color:#fff;font:700 12px/1 'Montserrat',sans-serif;cursor:pointer">View Event</button>
+      <button type="button" data-ll-view="${party.id}" style="width:100%;background:linear-gradient(135deg,#FF2D95,#8A2BE2);border:none;border-radius:8px;padding:9px;color:#fff;font:700 12px/1 var(--font-inter),sans-serif;cursor:pointer">View Event</button>
     </div>`;
 }
 

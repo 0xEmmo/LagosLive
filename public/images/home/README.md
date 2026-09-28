@@ -1,9 +1,11 @@
 # Lagos Live homepage image sources
 
-These locally compressed WebP assets are decorative editorial imagery for the homepage. They are not presented as artwork for a listed event; event cards use the cover uploaded for that event or a neutral no-cover state.
+These compressed WebP images are decorative homepage artwork, not fabricated covers for listed events. Event cards continue to use each event's own uploaded cover or a neutral no-cover state.
 
-- `hero-concert.webp` — Luis Quintero, “Blue Light over Crowd at Concert at Night,” Pexels: https://www.pexels.com/photo/blue-light-over-crowd-at-concert-at-night-14399265/
-- `lagos-cultural-festival.webp` — Bolaji Oladeinde, “Nigerian Cultural Festival Crowd in Lagos,” Pexels: https://www.pexels.com/photo/nigerian-cultural-festival-crowd-in-lagos-36808348/
-- `rooftop-gathering.webp` — Vitaly Gariev, “Diverse Group of Friends Enjoying Rooftop Party,” Pexels: https://www.pexels.com/photo/diverse-group-of-friends-enjoying-rooftop-party-36729915/
+- `hero-concert.webp` — user-uploaded image for the top “What’s happening in Lagos?” hero.
+- `next-night-out.webp` — user-uploaded wide festival-crowd image for “Your Next Great Night Starts Here.”
+- `beat-of-city.webp` — user-selected Pinterest pin “Kaytranada and amine after party on film”: https://pin.it/2059btSub (pin image: https://i.pinimg.com/736x/6c/ef/c2/6cefc2e7253394829bd691bb583858d7.jpg). Used for “The Beat of the City.”
+- `organizer-festival.webp` — user-selected Pinterest pin “African Festival”: https://pin.it/4IEAwkDnz (pin image: https://i.pinimg.com/736x/7d/6f/6e/7d6f6e7c879cd8dc965704875d0d0936.jpg). Used alongside “Your Event Deserves to Be Seen.”
+- `lagos-cultural-festival.webp` — Bolaji Oladeinde, “Nigerian Cultural Festival Crowd in Lagos,” Pexels: https://www.pexels.com/photo/nigerian-cultural-festival-crowd-in-lagos-36808348/. Retained for the empty featured-event fallback.
 
-The imagery is used under the Pexels license. Each file was resized and converted to WebP before being added to the app.
+The uploaded originals were left unchanged. Local display copies were converted to WebP and kept in their original aspect ratios.

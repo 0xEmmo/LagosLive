@@ -207,7 +207,7 @@ function EmptyFeatured({ error, retry, hostHref }: { error: string | null; retry
     <div className="ll-featured-empty">
       <div className="ll-featured-empty__copy">
         <span className="ll-featured-card__label">{error ? 'EVENTS UNAVAILABLE' : 'THE CITY IS OPEN'}</span>
-        <h3>{error ? 'WE’LL BE BACK IN A MOMENT.' : 'YOUR NEXT GREAT NIGHT STARTS HERE.'}</h3>
+        <h3>{error ? 'WE’LL BE BACK IN A MOMENT.' : 'THE NEXT PLAN IS OUT THERE.'}</h3>
         <p>
           {error
             ? 'The current event lineup could not be loaded. Try again, or come back shortly.'
@@ -328,14 +328,37 @@ function VibeSection({ counts }: { counts: Record<Vibe, number> }) {
   );
 }
 
+function NextNightSection() {
+  return (
+    <section className="ll-section ll-night-section" aria-labelledby="next-night-title">
+      <div className="ll-shell ll-night-card">
+        <Image
+          src="/images/home/next-night-out.webp"
+          alt="A crowd at an outdoor Lagos music festival beneath bright stage lights"
+          fill
+          sizes="(max-width: 768px) calc(100vw - 34px), 92vw"
+          className="ll-night-card__image"
+        />
+        <div className="ll-night-card__shade" aria-hidden="true" />
+        <div className="ll-night-card__copy">
+          <p className="ll-eyebrow">MAKE TONIGHT YOURS</p>
+          <h2 id="next-night-title">YOUR NEXT<br />GREAT NIGHT<br /><span>STARTS HERE</span></h2>
+          <p>Discover live music, late-night parties and the city moments worth showing up for.</p>
+          <Link href="/events" className="ll-button ll-button--blue">Explore events <ArrowRight size={15} /></Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function SoundSection() {
   return (
     <section className="ll-section ll-sound-section">
       <div className="ll-shell ll-sound-card">
         <div className="ll-sound-card__image">
           <Image
-            src="/images/home/lagos-cultural-festival.webp"
-            alt="People enjoying a cultural festival in Lagos"
+            src="/images/home/beat-of-city.webp"
+            alt="A DJ performing an after-party set behind a mixing console"
             fill
             sizes="(max-width: 768px) 100vw, 48vw"
           />
@@ -361,8 +384,8 @@ function OrganizerSection({ user }: { user: { id: string } | null }) {
       <div className="ll-shell ll-organizer-card">
         <div className="ll-organizer-card__visual">
           <Image
-            src="/images/home/rooftop-gathering.webp"
-            alt="Friends sharing a night out together"
+            src="/images/home/organizer-festival.webp"
+            alt="Festival-goers celebrating together at an African music event"
             fill
             sizes="(max-width: 768px) 100vw, 45vw"
           />
@@ -424,7 +447,7 @@ export default function HomeLandingPage() {
       <section className="ll-hero">
         <Image
           src="/images/home/hero-concert.webp"
-          alt="A concert crowd beneath blue stage lights"
+          alt="A woman enjoying live music in a blue-lit concert crowd"
           fill
           priority
           sizes="100vw"
@@ -505,6 +528,7 @@ export default function HomeLandingPage() {
         emptyBody="Check back soon, or browse everything currently listed."
       />
 
+      <NextNightSection />
       <LagosLocationSection />
       <VibeSection counts={vibeCounts} />
       <SoundSection />

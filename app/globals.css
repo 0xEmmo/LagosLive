@@ -729,7 +729,7 @@ select option {
   isolation: isolate;
   background: #050608;
 }
-.ll-hero__image { z-index: -3; object-fit: cover; object-position: 56% 47%; animation: ll-hero-image-arrive 1.25s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.ll-hero__image { z-index: -3; object-fit: cover; object-position: 0% 47%; animation: ll-hero-image-arrive 1.25s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 .ll-hero__shade {
   position: absolute;
   z-index: -2;
@@ -952,11 +952,23 @@ select option {
 .ll-vibe-all { display: inline-flex; align-items: center; gap: 6px; color: #cfd6e3; font-size: 9px; white-space: nowrap; }
 .ll-vibe-all:hover { color: #85aaff; }
 
+/* Wide crowd-photo callout between the event shelves and city discovery. */
+.ll-night-section { padding-top: 14px; padding-bottom: 62px; }
+.ll-night-card { position: relative; min-height: 380px; display: flex; align-items: flex-end; overflow: hidden; isolation: isolate; background: #080a0e; border: 1px solid rgba(255,255,255,0.13); }
+.ll-night-card__image { z-index: 0; object-fit: cover; object-position: 58% 48%; filter: saturate(0.9) brightness(0.82); transition: transform 700ms cubic-bezier(0.2,0.7,0.2,1); }
+.ll-night-card:hover .ll-night-card__image { transform: scale(1.025); }
+.ll-night-card__shade { position: absolute; z-index: 1; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(3,4,6,0.88) 0%, rgba(3,4,6,0.59) 43%, rgba(3,4,6,0.08) 100%), linear-gradient(0deg, rgba(3,4,6,0.66), transparent 68%); }
+.ll-night-card__copy { position: relative; z-index: 2; width: min(100%, 680px); padding: clamp(26px,5vw,60px); }
+.ll-night-card__copy .ll-eyebrow { margin-bottom: 12px; }
+.ll-night-card__copy h2 { margin: 0; color: #fff; font: 400 clamp(58px,7vw,92px)/0.8 var(--font-bebas), sans-serif; letter-spacing: -0.015em; }
+.ll-night-card__copy h2 span { color: #a9c5ff; }
+.ll-night-card__copy > p:not(.ll-eyebrow) { max-width: 390px; margin: 15px 0 19px; color: #e0e4ec; font-size: 11px; line-height: 1.7; }
+
 /* Sound and organizer features */
 .ll-sound-section { padding-top: 62px; padding-bottom: 62px; }
 .ll-sound-card { min-height: 270px; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); overflow: hidden; background: #090b0e; border: 1px solid rgba(255,255,255,0.12); }
 .ll-sound-card__image { position: relative; min-height: 270px; overflow: hidden; }
-.ll-sound-card__image img { object-fit: cover; object-position: center 38%; filter: saturate(0.82) brightness(0.72); }
+.ll-sound-card__image img { object-fit: cover; object-position: center 18%; filter: saturate(0.82) brightness(0.72); }
 .ll-sound-card__image::after { position: absolute; inset: 0; background: linear-gradient(90deg, transparent 55%, #090b0e 100%), linear-gradient(0deg, rgba(0,0,0,0.38), transparent 65%); content: ''; }
 .ll-sound-card__image span { position: absolute; z-index: 1; bottom: 15px; left: 17px; color: #fff; font-size: 8px; letter-spacing: 0.15em; }
 .ll-sound-card__copy { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding: clamp(22px, 4vw, 48px); }
@@ -1019,7 +1031,7 @@ select option {
   .ll-section-heading__body { max-width: 320px; margin-top: 8px; font-size: 10px; }
   .ll-text-link { font-size: 8px; }
   .ll-hero { min-height: 660px; min-height: min(760px, calc(100svh - 56px)); min-height: max(620px, min(760px, calc(100svh - 56px))); align-items: flex-end; }
-  .ll-hero__image { object-position: 61% 50%; }
+  .ll-hero__image { object-position: 29% 50%; }
   .ll-hero__shade { background: linear-gradient(90deg, rgba(3,4,6,0.94), rgba(3,4,6,0.48) 72%, rgba(3,4,6,0.2)), linear-gradient(0deg, rgba(3,4,6,0.98) 0%, rgba(3,4,6,0.78) 32%, rgba(3,4,6,0.05) 100%); }
   .ll-hero__content { padding-top: 100px; padding-bottom: 64px; }
   .ll-hero__eyebrow { margin-bottom: 17px; font-size: 8px; }
@@ -1065,6 +1077,13 @@ select option {
   .ll-vibe-intro h2 { font-size: 27px; }
   .ll-vibe-list { margin-right: -17px; padding-right: 17px; }
   .ll-vibe-list a { min-width: 116px; }
+  .ll-night-section { padding-top: 0; padding-bottom: 42px; }
+  .ll-night-card { min-height: 390px; }
+  .ll-night-card__image { object-position: 58% 48%; }
+  .ll-night-card__shade { background: linear-gradient(90deg, rgba(3,4,6,0.82), rgba(3,4,6,0.27)), linear-gradient(0deg, rgba(3,4,6,0.82), rgba(3,4,6,0.05) 82%); }
+  .ll-night-card__copy { padding: 23px; }
+  .ll-night-card__copy h2 { font-size: clamp(44px,12vw,56px); }
+  .ll-night-card__copy > p:not(.ll-eyebrow) { max-width: 300px; font-size: 10px; }
   .ll-sound-section { padding-top: 42px; padding-bottom: 42px; }
   .ll-sound-card { grid-template-columns: 1fr; }
   .ll-sound-card__image { min-height: 205px; }

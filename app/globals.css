@@ -1584,7 +1584,7 @@ body:has(.auth-split-layout) {
 @media (max-width: 860px) {
   .auth-split-layout {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: clamp(170px, 26svh, 245px) minmax(0, 1fr);
+    grid-template-rows: clamp(150px, 20svh, 205px) minmax(0, 1fr);
     grid-template-areas:
       "visual"
       "form";

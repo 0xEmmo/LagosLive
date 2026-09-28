@@ -57,7 +57,7 @@ export default function AuthSplitLayout({ mode, children }: { mode: AuthMode; ch
         <div className="auth-split-layout__visual-kicker">LAGOS LIVE <span>/</span> AFTER DARK</div>
         <div className="auth-split-layout__visual-copy">
           <p className="auth-split-layout__eyebrow">{copy.kicker}</p>
-          <h2>
+          <h2 className="font-display">
             {copy.title}
             <span>{copy.accent}</span>
           </h2>

@@ -4,7 +4,6 @@ import './globals.css';
 import HashScroll from '@/components/HashScroll';
 import AuthListener from '@/components/AuthListener';
 import ReminderScheduler from '@/components/ReminderScheduler';
-import NewsletterModal from '@/components/NewsletterModal';
 import Toast from '@/components/Toast';
 import GlobalChrome from '@/components/GlobalChrome';
 import EntryShutter from '@/components/EntryShutter';
@@ -92,7 +91,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthListener />
         <ReminderScheduler />
         <Toast />
-        <NewsletterModal />
         <GlobalChrome placement="header" />
         {children}
         <GlobalChrome placement="footer" />

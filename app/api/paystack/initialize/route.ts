@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/server';
 import { generatePaymentRef, paystackInitialize } from '@/lib/paystack-server';
-import { buildTicketUrl, generateTicketAccessToken, isValidEmail } from '@/lib/ticket-access';
+import { buildTicketUrl, generateTicketAccessToken, isValidEmail, ticketAccessExpiryDate } from '@/lib/ticket-access';
 import { sendTicketConfirmation } from '@/lib/resend';
 import { claimNotification, recordNotificationOutcome } from '@/lib/notify';
 import { lineDiscount, MAX_QTY_PER_TYPE } from '@/lib/tickets';
@@ -258,6 +258,7 @@ export async function POST(request: Request) {
       guest_name: guestName || null,
       guest_phone: guestPhone || null,
       ticket_access_token: userId ? null : generateTicketAccessToken(),
+      ticket_access_expires_at: userId ? null : ticketAccessExpiryDate(),
       party_id: party.id,
       ticket_type_id: line.ticketTypeId,
       tier: 'regular',

@@ -1265,3 +1265,61 @@ body:has(.route-scope--host-checkin) .ll-global-background .bg-glow-bottom,
 body:has(.route-scope--checkin) .ll-global-background .bg-glow-bottom {
   background: radial-gradient(circle at 50% 100%, rgba(25, 58, 132, 0.07) 0%, transparent 50%);
 }
+
+
+@media print {
+  @page {
+    size: A5 portrait;
+    margin: 0.28in;
+  }
+
+  html,
+  body {
+    min-height: 0 !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  #ticket-print-area,
+  #ticket-print-area * {
+    visibility: visible !important;
+  }
+
+  #ticket-print-area {
+    position: absolute !important;
+    inset: 0 !important;
+    display: flex !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  #ticket-print-area .ticket-actions,
+  .ticket-app-header {
+    display: none !important;
+  }
+
+  #ticket-print-area .ticket-card {
+    width: 3.75in !important;
+    max-width: 3.75in !important;
+    margin: 0 auto !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #ticket-print-area .ticket-card * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

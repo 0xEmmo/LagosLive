@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import QRCode from 'react-qr-code';
 import {
@@ -17,6 +17,7 @@ import {
   Ban,
   Ticket,
   CheckCheck,
+  Download,
 } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import PartyPhoto from '@/components/PartyPhoto';
@@ -55,6 +56,29 @@ function TicketStatusBadge({ status }: { status: OrderPaymentStatus }) {
       <Icon size={12} strokeWidth={2.5} />
       {status}
     </span>
+  );
+}
+
+function ticketSkin(ticketTypeName: string, eventGradient: string) {
+  const name = ticketTypeName.toLowerCase();
+  if (/\bvvip\b|\bsilver\b/.test(name)) {
+    return { kind: 'silver', accent: '#D4D9E2', frame: 'linear-gradient(135deg,#F1F4F8,#8F9AA9 55%,#E5EAF0)' };
+  }
+  if (/\bvip\b|\bgold\b/.test(name)) {
+    return { kind: 'gold', accent: '#FFD36A', frame: 'linear-gradient(135deg,#FFE9A8,#B77A19 55%,#F6CF73)' };
+  }
+  if (/early[\s-]?bird/.test(name)) {
+    return { kind: 'early', accent: '#71E0BC', frame: 'linear-gradient(135deg,#71E0BC,#258D82 55%,#C1FFE9)' };
+  }
+  return { kind: 'regular', accent: '#FF8A68', frame: eventGradient };
+}
+
+function EarlyBirdMark() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none">
+      <path d="M3 14.5c2.5-.2 4.6-1.5 6.1-3.5 1.4-1.8 2.5-4.5 4.1-5.1 1.2-.5 2.3.1 2.5 1.3l.2 1.2 3.6-1.1-1.9 3.2 3.3 1.1-4.4 1.1c-.5 2.4-2.3 4.3-4.8 5.1-2.7.9-5.8.2-8.7-1.1l2.5-.8L3 14.5Z" fill="currentColor" />
+      <circle cx="15.1" cy="7.7" r=".55" fill="#10151B" />
+    </svg>
   );
 }
 
@@ -158,10 +182,24 @@ function ConfirmedTicket({
   used: boolean;
 }) {
   const { party } = ticket;
+  const skin = ticketSkin(ticket.ticketTypeName, party.gradient);
   return (
-    <div className="w-full max-w-[380px] animate-fade-in">
+    <div id="ticket-print-area" className="ticket-print-area w-full max-w-[420px]">
+      <div className="ticket-actions mb-4 flex flex-col items-center gap-2 text-center">
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="btn-primary inline-flex items-center gap-2 px-5 py-3 text-sm font-bold"
+          aria-label="Download ticket as PDF or print"
+        >
+          <Download size={16} strokeWidth={2.5} />
+          Download ticket
+        </button>
+        <p className="text-[11px]" style={{ color: '#A7A8B5' }}>Choose “Save as PDF” in your browser&apos;s print dialog.</p>
+      </div>
+      <div className="ticket-card w-full max-w-[380px] animate-fade-in">
       {/* Outer glow wrapper */}
-      <div className="rounded-[28px] p-[1.5px]" style={{ background: 'linear-gradient(135deg, rgba(255,90,46,0.55), rgba(255,127,92,0.4), rgba(255,179,71,0.35))', boxShadow: '0 24px 80px rgba(0,0,0,0.55), 0 0 60px rgba(255,90,46,0.18)' }}>
+      <div className="rounded-[28px] p-[1.5px]" style={{ background: skin.frame, boxShadow: `0 24px 80px rgba(0,0,0,0.55), 0 0 48px ${skin.accent}30` }}>
         <div className="overflow-hidden rounded-[26.5px]" style={{ background: '#161619' }}>
           {/* Event image header */}
           <div className="relative" style={{ height: 170, background: party.gradient }}>
@@ -186,8 +224,9 @@ function ConfirmedTicket({
           {/* Body */}
           <div className="px-5 pb-5 pt-4">
             <div className="mb-4 flex flex-wrap gap-1.5">
-              <span className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.5px]" style={{ background: 'rgba(255,90,46,0.14)', border: '1px solid rgba(255,90,46,0.3)', color: '#FF7F5C' }}>
+              <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.5px]" style={{ background: `${skin.accent}20`, border: `1px solid ${skin.accent}70`, color: skin.accent }}>
                 {ticket.ticketTypeName}
+                {skin.kind === 'early' && <span className="ml-0.5 inline-flex" aria-label="Early bird"><EarlyBirdMark /></span>}
               </span>
               <span className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.5px]" style={{ background: 'rgba(255,179,71,0.14)', border: '1px solid rgba(255,179,71,0.3)', color: '#FFB347' }}>
                 {ticket.quantity} {ticket.quantity === 1 ? 'ticket' : 'tickets'}
@@ -196,7 +235,7 @@ function ConfirmedTicket({
 
             <div className="mb-1 flex flex-col gap-2.5 text-[13px]">
               <div className="flex items-start gap-2.5">
-                <Calendar size={15} strokeWidth={2} className="mt-0.5 flex-shrink-0" style={{ color: '#FF5A2E' }} />
+                  <Calendar size={15} strokeWidth={2} className="mt-0.5 flex-shrink-0" style={{ color: skin.accent }} />
                 <div>
                   <div style={{ color: '#FFFFFF' }}>{party.date}</div>
                   <div style={{ color: '#A7A8B5' }}>{party.time}</div>
@@ -271,12 +310,12 @@ function ConfirmedTicket({
           </div>
         </div>
       </div>
+      </div>
     </div>
   );
 }
 
 export default function TicketPage({ params }: { params: { id: string } }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token') ?? '';
   const user = useLagosLiveStore((s) => s.user);
@@ -288,12 +327,10 @@ export default function TicketPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!token && !user) router.replace('/login');
-  }, [authLoading, token, user, router]);
-
-  useEffect(() => {
-    if (authLoading) return;
-    if (!token && !user) return;
+    if (!token && !user) {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -331,17 +368,15 @@ export default function TicketPage({ params }: { params: { id: string } }) {
     };
   }, [params.id, token, user, authLoading, attempt]);
 
-  if (!user && !token) return null;
-
   return (
     <div className="relative mx-auto flex min-h-screen max-w-[520px] flex-col animate-fade-in md:max-w-[900px]">
       <div
         className="sticky top-0 z-40 flex items-center gap-3 border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150"
         style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}
       >
-        <BackButton href="/profile" />
-        <span className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>
-          My Ticket
+          <BackButton href={user ? '/profile' : '/tickets'} />
+          <span className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>
+          {user ? 'My Ticket' : 'Guest Ticket'}
         </span>
         {ticket && !loading && (
           <div className="ml-auto">
@@ -351,7 +386,21 @@ export default function TicketPage({ params }: { params: { id: string } }) {
       </div>
 
       <div className="flex flex-1 flex-col items-center px-5 py-8">
-        {loading ? (
+        {authLoading ? (
+          <div className="flex min-h-[55vh] items-center justify-center">
+            <Loader2 size={28} strokeWidth={2} color="#FF5A2E" className="animate-spin" />
+          </div>
+        ) : !user && !token ? (
+          <div className="flex w-full max-w-[380px] flex-col items-center gap-4 py-[72px] text-center">
+            <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full" style={{ background: 'rgba(255,179,71,0.08)', border: '1px solid rgba(255,179,71,0.2)' }}>
+              <Ticket size={32} strokeWidth={1.5} color="#FFB347" />
+            </div>
+            <h1 className="font-display text-[26px]" style={{ color: '#FFFFFF' }}>Open your guest ticket</h1>
+            <p className="max-w-[290px] text-sm" style={{ color: '#A7A8B5' }}>This link is missing its secure access key. You can find the purchase with the email and order reference used at checkout.</p>
+            <Link href="/tickets" className="btn-primary mt-2 px-7 py-3 text-sm font-semibold">Find my ticket</Link>
+            <Link href="/login" className="text-sm font-semibold hover:underline" style={{ color: '#A7A8B5' }}>Sign in to an account instead</Link>
+          </div>
+        ) : loading ? (
           <div className="flex w-full max-w-[380px] flex-col gap-4 animate-pulse">
             <div className="h-[210px] rounded-[26px]" style={{ background: 'rgba(255,255,255,0.05)' }} />
             <div className="h-[52px] rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)' }} />
@@ -387,8 +436,8 @@ export default function TicketPage({ params }: { params: { id: string } }) {
             <div className="max-w-[280px] text-sm" style={{ color: '#A7A8B5' }}>
               This ticket doesn&apos;t exist or the link isn&apos;t valid.
             </div>
-            <Link href="/profile" className="btn-primary mt-2 px-7 py-3 text-sm font-semibold">
-              My Tickets
+            <Link href={user ? '/profile' : '/tickets'} className="btn-primary mt-2 px-7 py-3 text-sm font-semibold">
+              {user ? 'My Tickets' : 'Find my ticket'}
             </Link>
             <Link href="/tickets" className="mt-3 text-sm font-semibold hover:underline" style={{ color: '#FFB347' }}>
               Find my ticket

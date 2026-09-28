@@ -4,6 +4,7 @@ import type { CustomerTicket, Party, PartyStatus, Review, TicketType, Vibe } fro
 import { formatNaira } from './filters';
 import { haversineKm } from './geo';
 import { appUrl, slugify } from './seo';
+import { isAccountTicketOwner } from './ticket-account-policy';
 
 type PartyRow = Database['public']['Tables']['parties']['Row'];
 type PartyInsert = Database['public']['Tables']['parties']['Insert'];
@@ -586,7 +587,8 @@ export async function fetchTicketById(orderId: string, userId: string): Promise<
     .eq('user_id', userId)
     .maybeSingle();
   if (error) throw error;
-  return data ? toCustomerTicket(data as OrderRow) : null;
+  if (!data || !isAccountTicketOwner({ requestedOrderId: orderId, userId, order: data })) return null;
+  return toCustomerTicket(data as OrderRow);
 }
 
 export async function deleteParty(id: number): Promise<void> {

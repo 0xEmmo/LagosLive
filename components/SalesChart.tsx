@@ -35,7 +35,7 @@ export default function SalesChart({ data }: { data: SalesPoint[] }) {
           <div
             key={`v-${i}`}
             className="flex-1 text-center text-[9px] font-bold"
-            style={{ color: d.tickets > 0 ? '#FF7AB8' : 'transparent' }}
+            style={{ color: d.tickets > 0 ? '#8DB1FF' : 'transparent' }}
           >
             {d.tickets}
           </div>
@@ -51,8 +51,8 @@ export default function SalesChart({ data }: { data: SalesPoint[] }) {
               className="flex-1 rounded-t-[3px] transition-all duration-300"
               style={{
                 height: `${height}%`,
-                background: d.tickets > 0 ? 'linear-gradient(to top, #8A2BE2, #FF2D95)' : 'rgba(255,255,255,0.07)',
-                boxShadow: d.tickets > 0 ? '0 0 12px rgba(255,45,149,0.25)' : undefined,
+                background: d.tickets > 0 ? 'linear-gradient(to top, #6E8DFF, #2B68FF)' : 'rgba(255,255,255,0.07)',
+                boxShadow: d.tickets > 0 ? '0 0 12px rgba(43,104,255,0.25)' : undefined,
               }}
             />
           );

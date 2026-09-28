@@ -52,7 +52,7 @@ const FAQS = [
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="overflow-hidden rounded-[16px]" style={{ background: '#171725', border: '1px solid rgba(255,255,255,0.08)' }}>
+    <div className="overflow-hidden rounded-[16px]" style={{ background: '#0b0e13', border: '1px solid rgba(255,255,255,0.12)' }}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -66,7 +66,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
           size={17}
           strokeWidth={2}
           className={`flex-shrink-0 transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
-          style={{ color: '#FF2D95' }}
+          style={{ color: '#7ea5ff' }}
         />
       </button>
       {open && (
@@ -100,11 +100,11 @@ export default function Faq() {
 
       <div className="mt-9 text-center text-[13px]" style={{ color: '#A7A8B5' }}>
         Still have a question?{' '}
-        <Link href={hostStartHref(user)} className="font-semibold transition-colors" style={{ color: '#FF2D95' }}>
+        <Link href={hostStartHref(user)} className="font-semibold transition-colors" style={{ color: '#7ea5ff' }}>
           Become a host
         </Link>{' '}
         or{' '}
-        <Link href="/events" className="font-semibold transition-colors" style={{ color: '#00BFFF' }}>
+        <Link href="/events" className="font-semibold transition-colors" style={{ color: '#9ab9ff' }}>
           explore events
         </Link>
         .

@@ -24,7 +24,7 @@ const AXIS_COLOR = '#6B6C80';
 const TOOLTIP_BG = '#171725';
 const TOOLTIP_BORDER = 'rgba(255,255,255,0.1)';
 
-const COLORS = ['#FF2D95', '#8A2BE2', '#00BFFF', '#00F5D4', '#FFD600', '#FF8A00', '#B06AFF', '#FFFFFF'];
+const COLORS = ['#2B68FF', '#6E8DFF', '#75A1FF', '#00F5D4', '#FFD600', '#FF8A00', '#79A3FF', '#FFFFFF'];
 
 interface DataPoint {
   label: string;
@@ -71,15 +71,15 @@ export const TicketsLineChart = memo(function TicketsLineChart({ data }: { data:
       <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
         <defs>
           <linearGradient id="ticketGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#FF2D95" stopOpacity={0.25} />
-            <stop offset="100%" stopColor="#FF2D95" stopOpacity={0} />
+            <stop offset="0%" stopColor="#2B68FF" stopOpacity={0.25} />
+            <stop offset="100%" stopColor="#2B68FF" stopOpacity={0} />
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} />
         <XAxis dataKey="label" tick={{ fontSize: 10, fill: AXIS_COLOR }} tickLine={false} axisLine={false} />
         <YAxis tick={{ fontSize: 10, fill: AXIS_COLOR }} tickLine={false} axisLine={false} />
         <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={LABEL_STYLE} />
-        <Area type="monotone" dataKey="value" stroke="#FF2D95" strokeWidth={2} fill="url(#ticketGrad)" />
+        <Area type="monotone" dataKey="value" stroke="#2B68FF" strokeWidth={2} fill="url(#ticketGrad)" />
       </AreaChart>
     </ResponsiveContainer>
   );

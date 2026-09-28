@@ -135,7 +135,7 @@ export default function AdminTrendingPage() {
           </div>
           <div
             className="rounded-full px-2.5 py-1 text-[11px] font-bold"
-            style={{ background: 'rgba(255,45,149,0.12)', border: '1px solid rgba(255,45,149,0.3)', color: '#FF2D95' }}
+            style={{ background: 'rgba(43,104,255,0.12)', border: '1px solid rgba(43,104,255,0.3)', color: '#2B68FF' }}
           >
             {selection.length} / {MAX_TRENDING}
           </div>
@@ -159,7 +159,7 @@ export default function AdminTrendingPage() {
               >
                 <div
                   className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
-                  style={{ background: 'rgba(255,45,149,0.14)', color: '#FF2D95' }}
+                  style={{ background: 'rgba(43,104,255,0.14)', color: '#2B68FF' }}
                 >
                   {s.position}
                 </div>
@@ -204,7 +204,7 @@ export default function AdminTrendingPage() {
             <button
               onClick={save}
               className="flex items-center gap-1.5 rounded-[10px] px-5 py-2.5 text-[12.5px] font-bold text-white"
-              style={{ background: 'linear-gradient(135deg,#FF2D95,#8A2BE2)' }}
+              style={{ background: 'linear-gradient(135deg,#2B68FF,#6E8DFF)' }}
             >
               <RefreshCw size={13} strokeWidth={2.5} />
               Save selection
@@ -216,7 +216,7 @@ export default function AdminTrendingPage() {
       {/* Picker */}
       <div>
         <div className="mb-3 flex items-center gap-2">
-          <Sparkles size={15} strokeWidth={2} style={{ color: '#FF2D95' }} />
+          <Sparkles size={15} strokeWidth={2} style={{ color: '#2B68FF' }} />
           <div className="font-heading text-[13px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>
             Add events
           </div>
@@ -263,7 +263,7 @@ export default function AdminTrendingPage() {
                       Added
                     </span>
                   ) : (
-                    <span className="flex-shrink-0 text-[20px] leading-none" style={{ color: '#FF2D95' }}>+</span>
+                    <span className="flex-shrink-0 text-[20px] leading-none" style={{ color: '#2B68FF' }}>+</span>
                   )}
                 </button>
               );

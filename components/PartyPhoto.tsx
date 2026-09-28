@@ -6,14 +6,21 @@ interface PartyPhotoProps {
   gradient: string;
   sizes: string;
   priority?: boolean;
+  tone?: 'default' | 'editorial';
 }
 
-export default function PartyPhoto({ src, alt, gradient, sizes, priority }: PartyPhotoProps) {
+export default function PartyPhoto({ src, alt, gradient, sizes, priority, tone = 'default' }: PartyPhotoProps) {
+  const editorial = tone === 'editorial';
+
   if (!src) {
-    // No uploaded cover: render the event's gradient alone as a deliberate
-    // Lagos Live fallback (no broken image, no random stock photo).
-    return <div className="h-full w-full" style={{ background: gradient }} />;
+    return (
+      <div
+        className="h-full w-full"
+        style={{ background: editorial ? 'linear-gradient(135deg, #10151e 0%, #182438 100%)' : gradient }}
+      />
+    );
   }
+
   return (
     <>
       <Image
@@ -23,10 +30,14 @@ export default function PartyPhoto({ src, alt, gradient, sizes, priority }: Part
         sizes={sizes}
         priority={priority}
         className="object-cover"
-        style={{ filter: 'grayscale(0.6) contrast(1.2) brightness(0.7) saturate(1.1)' }}
+        style={{ filter: editorial ? 'contrast(1.08) brightness(0.78) saturate(0.9)' : 'grayscale(0.6) contrast(1.2) brightness(0.7) saturate(1.1)' }}
       />
-      <div className="pointer-events-none absolute inset-0" style={{ background: gradient, mixBlendMode: 'color', opacity: 0.75 }} />
-      <div className="pointer-events-none absolute inset-0" style={{ background: gradient, mixBlendMode: 'soft-light', opacity: 0.45 }} />
+      {!editorial && (
+        <>
+          <div className="pointer-events-none absolute inset-0" style={{ background: gradient, mixBlendMode: 'color', opacity: 0.75 }} />
+          <div className="pointer-events-none absolute inset-0" style={{ background: gradient, mixBlendMode: 'soft-light', opacity: 0.45 }} />
+        </>
+      )}
     </>
   );
 }

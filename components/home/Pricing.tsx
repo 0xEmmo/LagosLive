@@ -5,8 +5,6 @@ import { Check, MessageCircle } from 'lucide-react';
 import { hostStartHref } from '@/lib/data';
 import { useLagosLiveStore } from '@/lib/store';
 
-const WHATSAPP_URL = 'https://wa.me/234XXXXXXXXXX';
-
 const PLANS = [
   {
     tag: 'Free Events',
@@ -48,8 +46,8 @@ const PLANS = [
       'On-site ticketing support',
       'Custom event operations setup',
     ],
-    cta: 'Chat on WhatsApp',
-    href: 'whatsapp',
+    cta: 'Contact support',
+    href: 'support',
     highlight: false,
   },
 ];
@@ -76,22 +74,22 @@ export default function Pricing() {
 
         <div className="mx-auto grid max-w-[1200px] gap-4 md:grid-cols-3">
           {PLANS.map((plan) => {
-            const href = plan.href === 'whatsapp' ? WHATSAPP_URL : hostStartHref(user);
-            const external = plan.href === 'whatsapp';
+            const href = plan.href === 'support' ? '/support' : hostStartHref(user);
+            const external = false;
             return (
               <div
                 key={plan.tag}
                 className="relative flex flex-col rounded-[22px] p-6 md:p-7"
                 style={{
-                  background: plan.highlight ? 'linear-gradient(160deg, rgba(255,45,149,0.08), rgba(138,43,226,0.06))' : '#171725',
-                  border: plan.highlight ? '1px solid rgba(255,45,149,0.4)' : '1px solid rgba(255,255,255,0.08)',
-                  boxShadow: plan.highlight ? '0 20px 50px rgba(255,45,149,0.12)' : 'none',
+                  background: plan.highlight ? 'linear-gradient(160deg, rgba(43,104,255,0.12), rgba(43,104,255,0.035))' : '#101318',
+                  border: plan.highlight ? '1px solid rgba(86,136,255,0.5)' : '1px solid rgba(255,255,255,0.1)',
+                  boxShadow: plan.highlight ? '0 20px 50px rgba(26,74,192,0.14)' : 'none',
                 }}
               >
                 {plan.highlight && (
                   <span
                     className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3.5 py-1 text-[10px] font-bold uppercase tracking-[1px] text-white"
-                    style={{ background: 'linear-gradient(135deg,#FF2D95,#8A2BE2)' }}
+                    style={{ background: 'linear-gradient(135deg,#1559f7,#3977ff)' }}
                   >
                     Most used
                   </span>
@@ -102,7 +100,7 @@ export default function Pricing() {
                 <div className="font-display mb-1 text-[46px] leading-none tracking-[1px]" style={{ color: '#FFFFFF' }}>
                   {plan.price}
                 </div>
-                <div className="mb-4 text-[12.5px]" style={{ color: '#00F5D4' }}>
+                <div className="mb-4 text-[12.5px]" style={{ color: '#8eb1ff' }}>
                   {plan.unit}
                 </div>
                 <p className="mb-5 text-[13px] leading-[1.7]" style={{ color: '#A7A8B5' }}>
@@ -111,7 +109,7 @@ export default function Pricing() {
                 <ul className="mb-8 flex flex-col gap-2.5">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-[13px] leading-snug" style={{ color: '#C9CAD6' }}>
-                      <Check size={15} strokeWidth={2.5} className="mt-[1px] flex-shrink-0" style={{ color: '#00F5D4' }} />
+                      <Check size={15} strokeWidth={2.5} className="mt-[1px] flex-shrink-0" style={{ color: '#8eb1ff' }} />
                       {f}
                     </li>
                   ))}
@@ -122,7 +120,7 @@ export default function Pricing() {
                   rel={external ? 'noopener noreferrer' : undefined}
                   className="mt-auto flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-bold transition-all duration-200 active:scale-95"
                   style={{
-                    background: plan.highlight ? 'linear-gradient(135deg,#FF2D95,#8A2BE2)' : 'rgba(255,255,255,0.05)',
+                    background: plan.highlight ? 'linear-gradient(135deg,#1559f7,#3977ff)' : 'rgba(255,255,255,0.05)',
                     border: plan.highlight ? 'none' : '1px solid rgba(255,255,255,0.12)',
                     color: '#FFFFFF',
                   }}

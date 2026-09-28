@@ -255,7 +255,7 @@ export default function AddressInput({ value, onChange, inputStyle, placeholder 
           <Loader2
             size={16}
             strokeWidth={2}
-            color="#FF2D95"
+            color="#2B68FF"
             className="animate-spin"
             style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)' }}
           />
@@ -283,10 +283,10 @@ export default function AddressInput({ value, onChange, inputStyle, placeholder 
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => selectPlace(s)}
-                className="flex w-full items-start gap-2.5 px-3.5 py-3 text-left transition-colors duration-150 hover:bg-[#ff2d95]/10"
-                style={index === activeIndex ? { background: 'rgba(255,45,149,0.1)' } : undefined}
+                className="flex w-full items-start gap-2.5 px-3.5 py-3 text-left transition-colors duration-150 hover:bg-[#2B68FF]/10"
+                style={index === activeIndex ? { background: 'rgba(43,104,255,0.1)' } : undefined}
               >
-                <MapPin size={15} strokeWidth={2} color="#FF2D95" className="mt-0.5 flex-shrink-0" />
+                <MapPin size={15} strokeWidth={2} color="#2B68FF" className="mt-0.5 flex-shrink-0" />
                 <span className="min-w-0">
                   <span className="block truncate text-[13px] font-semibold" style={{ color: '#FFFFFF' }}>
                     {s.line1 || s.formatted}

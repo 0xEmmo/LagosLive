@@ -17,8 +17,8 @@ export default function HowItWorks() {
   return (
     <section id="how-it-works" className="w-full scroll-mt-20 px-5 py-14 md:px-8 md:py-16">
       <div className="mb-9 flex flex-col items-center text-center">
-        <div className="mb-3 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5" style={{ background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.2)' }}>
-          <span className="text-[10px] font-bold uppercase tracking-[1.2px]" style={{ color: '#00BFFF' }}>
+        <div className="mb-3 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5" style={{ background: 'rgba(43,104,255,0.1)', border: '1px solid rgba(43,104,255,0.25)' }}>
+          <span className="text-[10px] font-bold uppercase tracking-[1.2px]" style={{ color: '#7ea5ff' }}>
             How it works
           </span>
         </div>
@@ -37,8 +37,8 @@ export default function HowItWorks() {
             <div className="font-display mb-3 text-[30px] leading-none" style={{ color: 'rgba(255,255,255,0.14)' }}>
               0{i + 1}
             </div>
-            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: 'rgba(0,245,212,0.1)', border: '1px solid rgba(0,245,212,0.25)' }}>
-              <Icon size={16} strokeWidth={2} color="#00F5D4" />
+            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: 'rgba(43,104,255,0.12)', border: '1px solid rgba(43,104,255,0.28)' }}>
+              <Icon size={16} strokeWidth={2} color="#7ea5ff" />
             </div>
             <div className="font-heading mb-1.5 text-[13.5px] font-bold leading-snug" style={{ color: '#FFFFFF' }}>
               {title}
@@ -57,7 +57,7 @@ export default function HowItWorks() {
           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', color: '#FFFFFF' }}
         >
           Create your event
-          <span style={{ color: '#FF2D95' }}>→</span>
+          <span style={{ color: '#5f8fff' }}>→</span>
         </Link>
       </div>
     </section>

@@ -150,7 +150,7 @@ export default function AnalyticsPage() {
   const STATUS_COLORS: Record<string, string> = {
     confirmed: '#00F5D4',
     pending: '#FFD600',
-    failed: '#FF2D95',
+    failed: '#F87171',
     cancelled: '#6B6C80',
   };
 
@@ -182,7 +182,7 @@ export default function AnalyticsPage() {
               className="flex-1 rounded-lg px-3 py-2 text-[11px] font-bold transition-all"
               style={
                 rangeDays === r.days
-                  ? { background: 'rgba(255,45,149,0.15)', color: '#FF2D95' }
+                  ? { background: 'rgba(43,104,255,0.15)', color: '#2B68FF' }
                   : { color: '#6B6C80' }
               }
             >
@@ -200,8 +200,8 @@ export default function AnalyticsPage() {
             {/* Metric cards */}
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <StatCard label="Revenue" value={formatNaira(totalRevenue)} icon={DollarSign} color="#00F5D4" sub={`${rangeDays ? rangeDays + 'd' : 'all'} range`} />
-              <StatCard label="Tickets Sold" value={String(totalTickets)} icon={Ticket} color="#FF2D95" />
-              <StatCard label="Avg Order" value={formatNaira(avgOrderValue)} icon={TrendingUp} color="#B06AFF" />
+              <StatCard label="Tickets Sold" value={String(totalTickets)} icon={Ticket} color="#2B68FF" />
+              <StatCard label="Avg Order" value={formatNaira(avgOrderValue)} icon={TrendingUp} color="#79A3FF" />
               <StatCard label="Refund Rate" value={`${refundRate}%`} icon={AlertTriangle} color="#FF8A00" sub={`${refundOrders} orders`} />
             </div>
 

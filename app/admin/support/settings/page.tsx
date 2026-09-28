@@ -103,7 +103,7 @@ export default function SupportSettingsPage() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className="flex-1 rounded-lg px-3 py-2 text-[11px] font-bold transition-all capitalize"
-              style={activeTab === tab ? { background: 'rgba(255,45,149,0.15)', color: '#FF2D95' } : { color: '#6B6C80' }}
+              style={activeTab === tab ? { background: 'rgba(43,104,255,0.15)', color: '#2B68FF' } : { color: '#6B6C80' }}
             >
               {tab === 'canned' ? 'Canned Responses' : 'FAQ'}
             </button>
@@ -111,7 +111,7 @@ export default function SupportSettingsPage() {
         </div>
 
         {saveError && (
-          <div className="mb-4 flex items-center gap-2 rounded-xl px-4 py-3 text-[12px]" style={{ background: 'rgba(255,45,149,0.1)', border: '1px solid rgba(255,45,149,0.25)', color: '#FF2D95' }}>
+          <div className="mb-4 flex items-center gap-2 rounded-xl px-4 py-3 text-[12px]" style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.25)', color: '#F87171' }}>
             <AlertTriangle size={14} /> {saveError}
           </div>
         )}

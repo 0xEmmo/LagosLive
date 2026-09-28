@@ -16,8 +16,8 @@ import {
 function rideOptions(party: Party) {
   return [
     { key: 'google', label: 'Google Maps', dot: '#00F5D4', action: () => window.open(googleMapsDirectionsUrl(party), '_blank') },
-    { key: 'uber', label: 'Uber', dot: '#FF2D95', action: () => window.open(uberDeepLink(party), '_blank') },
-    { key: 'bolt', label: 'Bolt', dot: '#00BFFF', action: () => openWithFallback(boltDeepLink(party), BOLT_FALLBACK_URL) },
+    { key: 'uber', label: 'Uber', dot: '#2B68FF', action: () => window.open(uberDeepLink(party), '_blank') },
+    { key: 'bolt', label: 'Bolt', dot: '#75A1FF', action: () => openWithFallback(boltDeepLink(party), BOLT_FALLBACK_URL) },
     { key: 'indrive', label: 'inDrive', dot: '#FFD600', action: () => openWithFallback(inDriveDeepLink(party), INDRIVE_FALLBACK_URL) },
   ];
 }

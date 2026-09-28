@@ -97,11 +97,11 @@ function ExplorePageContent() {
         <span className="flex items-center gap-1.5 text-[13px]" style={{ color: '#6B6C80' }}>
           {hasQuery ? (
             <>
-              Results for <span style={{ color: '#FF2D95', fontWeight: 600 }}>“{q}”</span>
+              Results for <span style={{ color: '#2B68FF', fontWeight: 600 }}>“{q}”</span>
             </>
           ) : (
             <>
-              <Sparkles size={13} strokeWidth={2} style={{ color: '#FF2D95' }} />
+              <Sparkles size={13} strokeWidth={2} style={{ color: '#2B68FF' }} />
               Upcoming events
             </>
           )}
@@ -124,8 +124,8 @@ function ExplorePageContent() {
         <SearchSkeleton count={4} />
       ) : error ? (
         <div className="flex flex-col items-center gap-4 px-6 py-[72px] text-center">
-          <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full" style={{ background: 'rgba(255,45,149,0.08)', border: '1px solid rgba(255,45,149,0.18)' }}>
-            <AlertTriangle size={32} strokeWidth={1.5} color="#FF2D95" />
+          <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full" style={{ background: 'rgba(43,104,255,0.08)', border: '1px solid rgba(43,104,255,0.18)' }}>
+            <AlertTriangle size={32} strokeWidth={1.5} color="#2B68FF" />
           </div>
           <div className="font-display text-[30px] tracking-[1px]" style={{ color: '#FFFFFF' }}>
             Couldn&apos;t search
@@ -140,8 +140,8 @@ function ExplorePageContent() {
         </div>
       ) : events.length === 0 ? (
         <div className="flex flex-col items-center gap-4 px-6 py-[72px] text-center">
-          <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full" style={{ background: 'rgba(255,45,149,0.08)', border: '1px solid rgba(255,45,149,0.18)' }}>
-            <SearchIcon size={32} strokeWidth={1.5} color="#FF2D95" />
+          <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full" style={{ background: 'rgba(43,104,255,0.08)', border: '1px solid rgba(43,104,255,0.18)' }}>
+            <SearchIcon size={32} strokeWidth={1.5} color="#2B68FF" />
           </div>
           <div className="font-display text-[30px] tracking-[1px]" style={{ color: '#FFFFFF' }}>
             {hasQuery ? 'No events found' : 'Nothing coming up yet'}

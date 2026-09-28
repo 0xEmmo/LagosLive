@@ -1,32 +1,20 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
-const RINGS = Array.from({ length: 4 });
-const DURATION_MS = 6000;
+const RINGS = Array.from({ length: 3 });
+const DURATION_MS = 1250;
 
 export default function EntryShutter() {
   const pathname = usePathname();
-  const isEntryRoute =
-    pathname === '/' ||
-    pathname.startsWith('/party/') ||
-    pathname.startsWith('/events/') ||
-    pathname.startsWith('/checkout/');
-
+  const shouldPlayRef = useRef(pathname === '/');
   const [open, setOpen] = useState(false);
-  const [visible, setVisible] = useState(isEntryRoute);
-  const playedRef = useRef(false);
+  const [visible, setVisible] = useState(pathname === '/');
 
   useEffect(() => {
-    if (!isEntryRoute) {
-      if (playedRef.current) setVisible(false);
-      return;
-    }
-
-    if (playedRef.current) return;
-    playedRef.current = true;
-
+    if (!shouldPlayRef.current) return;
     setVisible(true);
     setOpen(false);
     const frame = window.requestAnimationFrame(() => setOpen(true));
@@ -36,7 +24,7 @@ export default function EntryShutter() {
       window.cancelAnimationFrame(frame);
       window.clearTimeout(finish);
     };
-  }, [isEntryRoute]);
+  }, []);
 
   if (!visible) return null;
 
@@ -47,11 +35,11 @@ export default function EntryShutter() {
           <span key={index} style={{ '--ring-index': index } as React.CSSProperties} />
         ))}
       </div>
-
       <div className="entry-shutter__logo-lockup">
         <div className="entry-shutter__halo" />
-        <img className="entry-shutter__logo" src="/Lagoslivelogo.png" alt="" />
+        <Image className="entry-shutter__logo" src="/Lagoslivelogo.png" alt="" width={220} height={80} priority />
         <span className="entry-shutter__caption">Good nights start here</span>
+        <span className="entry-shutter__progress"><span /></span>
       </div>
     </div>
   );

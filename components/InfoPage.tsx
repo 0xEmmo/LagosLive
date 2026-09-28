@@ -98,14 +98,14 @@ export function InfoContact({ email }: { email: string }) {
   return (
     <section
       className="rounded-[20px] p-6 md:p-7"
-      style={{ background: 'linear-gradient(160deg, rgba(255,45,149,0.08), rgba(138,43,226,0.06))', border: '1px solid rgba(255,45,149,0.28)' }}
+      style={{ background: 'linear-gradient(160deg, rgba(43,104,255,0.08), rgba(110,141,255,0.06))', border: '1px solid rgba(43,104,255,0.28)' }}
     >
       <h2 className="font-heading mb-2 text-[17px] font-bold" style={{ color: '#FFFFFF' }}>
         Questions?
       </h2>
       <p className="text-[14px] leading-[1.85]" style={{ color: '#A7A8B5' }}>
         Reach the Lagos Live team at{' '}
-        <a href={`mailto:${email}`} className="font-semibold underline" style={{ color: '#00BFFF' }}>
+        <a href={`mailto:${email}`} className="font-semibold underline" style={{ color: '#75A1FF' }}>
           {email}
         </a>
         .

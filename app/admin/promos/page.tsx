@@ -169,7 +169,7 @@ export default function AdminPromosPage() {
           <button
             onClick={form ? () => { setForm(null); setEditingId(null); } : openCreate}
             className="flex items-center gap-1.5 rounded-[10px] px-3.5 py-2 text-[12.5px] font-bold"
-            style={{ background: 'linear-gradient(135deg,#FF2D95,#8A2BE2)', color: '#FFFFFF' }}
+            style={{ background: 'linear-gradient(135deg,#2B68FF,#6E8DFF)', color: '#FFFFFF' }}
           >
             {form ? <X size={14} strokeWidth={2.5} /> : <Plus size={14} strokeWidth={2.5} />}
             {form ? 'Cancel' : 'New Promo'}
@@ -260,7 +260,7 @@ export default function AdminPromosPage() {
               onClick={save}
               disabled={saving}
               className="rounded-[10px] px-5 py-2.5 text-[12.5px] font-bold disabled:opacity-50"
-              style={{ background: 'linear-gradient(135deg,#FF2D95,#8A2BE2)', color: '#FFFFFF' }}
+              style={{ background: 'linear-gradient(135deg,#2B68FF,#6E8DFF)', color: '#FFFFFF' }}
             >
               {saving ? 'Saving…' : editingId ? 'Save Changes' : 'Create Promo'}
             </button>

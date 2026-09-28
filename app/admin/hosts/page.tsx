@@ -130,7 +130,7 @@ export default function AdminHostsPage() {
                   className="rounded-full px-3 py-1.5 text-[11px] font-semibold capitalize transition-colors"
                   style={
                     active
-                      ? { background: 'rgba(255,45,149,0.16)', border: '1px solid rgba(255,45,149,0.4)', color: '#FF2D95' }
+                      ? { background: 'rgba(43,104,255,0.16)', border: '1px solid rgba(43,104,255,0.4)', color: '#2B68FF' }
                       : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#A7A8B5' }
                   }
                 >

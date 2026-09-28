@@ -158,9 +158,9 @@ export default function AdminHostDetailPage() {
 
             {/* Profile Info */}
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <StatCard label="Role" value={ROLE_LABEL[host.role as Role] ?? host.role} icon={Shield} color="#B06AFF" />
+              <StatCard label="Role" value={ROLE_LABEL[host.role as Role] ?? host.role} icon={Shield} color="#79A3FF" />
               <StatCard label="Status" value={ACCOUNT_STATUS_LABEL[host.account_status as AccountStatus] ?? host.account_status} icon={Ban} color="#FF8A00" />
-              <StatCard label="Events" value={String(host.totalEventsCount)} icon={CalendarDays} color="#FF2D95" />
+              <StatCard label="Events" value={String(host.totalEventsCount)} icon={CalendarDays} color="#2B68FF" />
               <StatCard label="Revenue" value={formatNaira(host.totalRevenue)} icon={Wallet} color="#00F5D4" />
             </div>
 
@@ -230,7 +230,7 @@ export default function AdminHostDetailPage() {
                     <ActionBtn label={verificationBusy ? '...' : 'Verify'} icon={<Check size={13} />} color="#00F5D4" onClick={() => setVerification('verify')} />
                   )}
                   {(v === 'pending' || v === 'rejected') && (
-                    <ActionBtn label={verificationBusy ? '...' : 'Reject'} icon={<X size={13} />} color="#FF2D95" onClick={() => setVerification('reject')} />
+                    <ActionBtn label={verificationBusy ? '...' : 'Reject'} icon={<X size={13} />} color="#F87171" onClick={() => setVerification('reject')} />
                   )}
                   {v === 'verified' && (
                     <ActionBtn label={verificationBusy ? '...' : 'Suspend'} icon={<Ban size={13} />} color="#FF8A00" onClick={() => setVerification('suspend')} />
@@ -256,7 +256,7 @@ export default function AdminHostDetailPage() {
                         <Cell>{ev.capacity.toLocaleString()}</Cell>
                         <Cell>{ev.spots_left}</Cell>
                         <Cell align="right">
-                          <Link href={`/admin/events/${ev.id}`} className="text-[11.5px] font-semibold hover:underline" style={{ color: '#FF2D95' }}>View</Link>
+                          <Link href={`/admin/events/${ev.id}`} className="text-[11.5px] font-semibold hover:underline" style={{ color: '#2B68FF' }}>View</Link>
                         </Cell>
                       </tr>
                     );
@@ -285,7 +285,7 @@ export default function AdminHostDetailPage() {
                         <div className="text-[12.5px]" style={{ color: '#D5D6E0' }}>{n.body}</div>
                         <div className="mt-1 text-[10.5px]" style={{ color: '#6B6C80' }}>{new Date(n.created_at).toLocaleString()}</div>
                       </div>
-                      <button onClick={() => removeNote(n.id)} className="shrink-0 text-[10px]" style={{ color: '#FF2D95' }}>
+                      <button onClick={() => removeNote(n.id)} className="shrink-0 text-[10px]" style={{ color: '#F87171' }}>
                         <Trash2 size={12} />
                       </button>
                     </div>
@@ -305,7 +305,7 @@ export default function AdminHostDetailPage() {
                   onClick={addNote}
                   disabled={noteBusy || !noteBody.trim()}
                   className="self-end rounded-[10px] px-4 py-2 text-[12.5px] font-semibold disabled:opacity-50"
-                  style={{ background: 'rgba(255,45,149,0.14)', border: '1px solid rgba(255,45,149,0.35)', color: '#FF2D95' }}
+                  style={{ background: 'rgba(43,104,255,0.14)', border: '1px solid rgba(43,104,255,0.35)', color: '#2B68FF' }}
                 >
                   {noteBusy ? '...' : 'Add'}
                 </button>

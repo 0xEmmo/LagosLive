@@ -92,7 +92,7 @@ export default function TermsPage() {
       <InfoSection title="Refunds and cancellations">
         <p>
           Refunds and event cancellations are handled in line with our{' '}
-          <a href="/refund-policy" className="font-semibold underline" style={{ color: '#00BFFF' }}>
+          <a href="/refund-policy" className="font-semibold underline" style={{ color: '#75A1FF' }}>
             Refund &amp; Cancellation Policy
           </a>
           . In summary, when an event is cancelled by its organizer, confirmed paid orders are refunded

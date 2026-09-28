@@ -70,7 +70,7 @@ export function filterAdminNav(user: User | null): AdminNavItem[] {
   });
 }
 
-const GROUPS: { label: string; hrefs: string[] }[] = [
+export const ADMIN_NAV_GROUPS: { label: string; hrefs: string[] }[] = [
   { label: 'Overview', hrefs: ['/admin'] },
   { label: 'Operations', hrefs: ['/admin/events', '/admin/trending', '/admin/hosts', '/admin/host-verification', '/admin/users', '/admin/orders'] },
   { label: 'Finance', hrefs: ['/admin/revenue'] },
@@ -95,7 +95,7 @@ export default function AdminDashboardNav() {
   const items = useMemo(() => filterAdminNav(user), [user]);
   const byHref = new Map(items.map((i) => [i.href, i]));
 
-  const groups = GROUPS.map((g) => ({
+  const groups = ADMIN_NAV_GROUPS.map((g) => ({
     label: g.label,
     items: g.hrefs.map((href) => byHref.get(href)).filter((x): x is AdminNavItem => !!x),
   })).filter((g) => g.items.length > 0);
@@ -124,7 +124,7 @@ export default function AdminDashboardNav() {
           <Home size={17} strokeWidth={2} />
         </Link>
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: 'linear-gradient(135deg,#FF2D95,#8A2BE2)' }}>
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: 'linear-gradient(135deg,#1F5FFF,#6E8DFF)' }}>
             <ShieldCheck size={14} strokeWidth={2.2} color="#FFFFFF" />
           </div>
           <span className="font-heading text-[12px] font-bold uppercase tracking-[1px]" style={{ color: '#FFFFFF' }}>
@@ -168,13 +168,13 @@ export default function AdminDashboardNav() {
                         className="flex min-h-[48px] items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 active:scale-[0.98]"
                         style={
                           active
-                            ? { background: 'rgba(255,45,149,0.1)', color: '#FF2D95' }
+                            ? { background: 'rgba(43,104,255,0.14)', color: '#6EA1FF' }
                             : { color: '#A7A8B5' }
                         }
                       >
                         <Icon size={17} strokeWidth={2.1} />
                         <span className="flex-1">{item.label}</span>
-                        {active && <span className="h-[16px] w-[3px] rounded-full" style={{ background: '#FF2D95' }} />}
+                        {active && <span className="h-[16px] w-[3px] rounded-full" style={{ background: '#6EA1FF' }} />}
                       </Link>
                     );
                   })}
@@ -196,7 +196,7 @@ export default function AdminDashboardNav() {
             <button
               onClick={signOut}
               className="flex min-h-[48px] items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 active:scale-[0.98]"
-              style={{ color: '#FF2D95' }}
+              style={{ color: '#F87171' }}
             >
               <LogOut size={17} strokeWidth={2.1} />
               Sign Out

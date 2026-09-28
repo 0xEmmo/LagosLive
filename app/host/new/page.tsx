@@ -32,7 +32,7 @@ export default function NewEventPage() {
   if (authLoading || !user) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 size={26} strokeWidth={2} color="#FF2D95" className="animate-spin" />
+        <Loader2 size={26} strokeWidth={2} color="#2B68FF" className="animate-spin" />
       </div>
     );
   }
@@ -89,9 +89,9 @@ export default function NewEventPage() {
           {wasPromoted && (
             <div
               className="mb-5 w-full max-w-[340px] rounded-2xl p-4 text-left"
-              style={{ background: 'rgba(255,45,149,0.08)', border: '1px solid rgba(255,45,149,0.2)' }}
+              style={{ background: 'rgba(43,104,255,0.08)', border: '1px solid rgba(43,104,255,0.2)' }}
             >
-              <div className="mb-1.5 text-[13px] font-bold" style={{ color: '#FF2D95' }}>Welcome to Lagos Live Hosts!</div>
+              <div className="mb-1.5 text-[13px] font-bold" style={{ color: '#2B68FF' }}>Welcome to Lagos Live Hosts!</div>
               <div className="text-[12px] leading-[1.6]" style={{ color: '#A7A8B5' }}>
                 Your account has been upgraded. You can now create, manage, and track all your events from the host dashboard.
               </div>

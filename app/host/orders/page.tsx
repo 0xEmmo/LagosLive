@@ -13,7 +13,7 @@ const PAYMENT_STYLE: Record<string, { label: string; bg: string; color: string }
   confirmed: { label: 'Confirmed', bg: 'rgba(0,245,212,0.1)', color: '#00F5D4' },
   pending: { label: 'Pending', bg: 'rgba(255,214,0,0.12)', color: '#FFD600' },
   failed: { label: 'Failed', bg: 'rgba(255,138,0,0.1)', color: '#FF8A00' },
-  cancelled: { label: 'Cancelled', bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
+  cancelled: { label: 'Cancelled', bg: 'rgba(255,255,255,0.07)', color: '#8B94A2' },
 };
 
 export default function HostOrdersPage() {
@@ -111,7 +111,7 @@ export default function HostOrdersPage() {
                 className="rounded-full px-3 py-1.5 text-[11px] font-semibold capitalize transition-colors"
                 style={
                   active
-                    ? { background: 'rgba(255,45,149,0.16)', border: '1px solid rgba(255,45,149,0.4)', color: '#FF2D95' }
+                    ? { background: 'rgba(43,104,255,0.16)', border: '1px solid rgba(43,104,255,0.4)', color: '#2B68FF' }
                     : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#A7A8B5' }
                 }
               >

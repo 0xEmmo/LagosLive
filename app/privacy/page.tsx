@@ -68,7 +68,7 @@ export default function PrivacyPage() {
           We use a session cookie to keep you signed in, and browser storage on your device to remember
           preferences such as your theme, saved events and reminders. We do not currently use advertising or
           third-party analytics cookies. See our{' '}
-          <a href="/cookies" className="font-semibold underline" style={{ color: '#00BFFF' }}>
+          <a href="/cookies" className="font-semibold underline" style={{ color: '#75A1FF' }}>
             Cookie Notice
           </a>{' '}
           for details.

@@ -14,7 +14,7 @@ const PAYMENT_BADGE: Record<string, { label: string; bg: string; color: string }
   confirmed: { label: 'Paid', bg: 'rgba(0,245,212,0.08)', color: '#00F5D4' },
   pending: { label: 'Pending', bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
   failed: { label: 'Failed', bg: 'rgba(255,138,0,0.08)', color: '#FF8A00' },
-  cancelled: { label: 'Cancelled', bg: 'rgba(255,45,149,0.1)', color: '#FF2D95' },
+  cancelled: { label: 'Cancelled', bg: 'rgba(255,255,255,0.07)', color: '#8B94A2' },
 };
 
 export default function HostCheckInPage({ params }: { params: { id: string } }) {
@@ -97,7 +97,7 @@ export default function HostCheckInPage({ params }: { params: { id: string } }) 
 
         <div className="grid grid-cols-2 gap-2.5">
           <MiniStat label="Confirmed" value={String(confirmed.length)} color="#00F5D4" icon={<Ticket size={14} color="#00F5D4" />} />
-          <MiniStat label="Checked In" value={`${checkedIn} / ${confirmed.length}`} color="#B06AFF" icon={<CheckCircle2 size={14} color="#B06AFF" />} />
+          <MiniStat label="Checked In" value={`${checkedIn} / ${confirmed.length}`} color="#79A3FF" icon={<CheckCircle2 size={14} color="#79A3FF" />} />
         </div>
 
         <div className="relative">
@@ -137,8 +137,8 @@ export default function HostCheckInPage({ params }: { params: { id: string } }) 
               const isIn = o.check_in_status === 'checked_in';
               return (
                 <div key={o.id} className="flex items-center gap-3 rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.03)', border: isIn ? '1px solid rgba(0,245,212,0.35)' : '1px solid rgba(255,255,255,0.08)' }}>
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px]" style={{ background: isIn ? 'rgba(0,245,212,0.12)' : 'rgba(255,45,149,0.1)' }}>
-                    {isIn ? <CheckCircle2 size={18} color="#00F5D4" /> : <Users size={18} color="#FF2D95" />}
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px]" style={{ background: isIn ? 'rgba(0,245,212,0.12)' : 'rgba(43,104,255,0.1)' }}>
+                    {isIn ? <CheckCircle2 size={18} color="#00F5D4" /> : <Users size={18} color="#2B68FF" />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -187,7 +187,7 @@ function MiniStat({ label, value, color, icon }: { label: string; value: string;
 function CenteredLoader() {
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
-      <Loader2 size={26} strokeWidth={2} color="#FF2D95" className="animate-spin" />
+      <Loader2 size={26} strokeWidth={2} color="#2B68FF" className="animate-spin" />
     </div>
   );
 }

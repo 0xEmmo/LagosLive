@@ -161,7 +161,7 @@ export default function ReportIssueForm() {
       {error && (
         <div
           className="flex items-start gap-2 rounded-xl px-4 py-2.5 text-[12px]"
-          style={{ background: 'rgba(255,45,149,0.1)', border: '1px solid rgba(255,45,149,0.25)', color: '#FF2D95' }}
+          style={{ background: 'rgba(43,104,255,0.1)', border: '1px solid rgba(43,104,255,0.25)', color: '#2B68FF' }}
         >
           <AlertTriangle size={14} className="mt-[1px] flex-shrink-0" />
           <span>{error}</span>
@@ -172,7 +172,7 @@ export default function ReportIssueForm() {
         type="submit"
         disabled={submitting}
         className="flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-[14px] font-bold transition-all disabled:opacity-50"
-        style={{ background: 'linear-gradient(135deg, #FF2D95, #8A2BE2)', color: '#FFFFFF' }}
+        style={{ background: 'linear-gradient(135deg, #2B68FF, #6E8DFF)', color: '#FFFFFF' }}
       >
         <Send size={15} strokeWidth={2.2} />
         {submitting ? 'Submitting...' : 'Submit report'}

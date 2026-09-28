@@ -11,12 +11,12 @@ const PRIORITY_STYLE: Record<string, { bg: string; color: string }> = {
   low: { bg: 'rgba(0,245,212,0.1)', color: '#00F5D4' },
   normal: { bg: 'rgba(167,168,181,0.12)', color: '#A7A8B5' },
   high: { bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
-  urgent: { bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
+  urgent: { bg: 'rgba(43,104,255,0.12)', color: '#2B68FF' },
 };
 
 const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
   open: { bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
-  in_progress: { bg: 'rgba(176,106,255,0.12)', color: '#B06AFF' },
+  in_progress: { bg: 'rgba(121,163,255,0.12)', color: '#79A3FF' },
   resolved: { bg: 'rgba(0,245,212,0.1)', color: '#00F5D4' },
   closed: { bg: 'rgba(107,108,128,0.15)', color: '#6B6C80' },
 };
@@ -101,7 +101,7 @@ export default function SupportPage() {
                 className="whitespace-nowrap rounded-lg px-3 py-2 text-[10.5px] font-bold transition-all"
                 style={
                   statusFilter === s
-                    ? { background: 'rgba(255,45,149,0.12)', color: '#FF2D95' }
+                    ? { background: 'rgba(43,104,255,0.12)', color: '#2B68FF' }
                     : { background: 'rgba(255,255,255,0.04)', color: '#6B6C80' }
                 }
               >
@@ -127,8 +127,8 @@ export default function SupportPage() {
                 <Cell>
                   <Badge
                     label={t.category}
-                    bg="rgba(176,106,255,0.1)"
-                    color="#B06AFF"
+                    bg="rgba(121,163,255,0.1)"
+                    color="#79A3FF"
                   />
                 </Cell>
                 <Cell>
@@ -150,7 +150,7 @@ export default function SupportPage() {
                   <Link
                     href={`/admin/support/tickets/${t.id}`}
                     className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition-colors hover:bg-white/5"
-                    style={{ color: '#FF2D95' }}
+                    style={{ color: '#2B68FF' }}
                   >
                     View <ExternalLink size={11} />
                   </Link>

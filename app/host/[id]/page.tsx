@@ -152,7 +152,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
     if (authLoading) {
       return (
         <div className="flex min-h-[60vh] items-center justify-center">
-          <Loader2 size={26} strokeWidth={2} color="#FF2D95" className="animate-spin" />
+          <Loader2 size={26} strokeWidth={2} color="#2B68FF" className="animate-spin" />
         </div>
       );
     }
@@ -162,7 +162,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
   if (authLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 size={26} strokeWidth={2} color="#FF2D95" className="animate-spin" />
+        <Loader2 size={26} strokeWidth={2} color="#2B68FF" className="animate-spin" />
       </div>
     );
   }
@@ -171,7 +171,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
     if (loading) {
       return (
         <div className="flex min-h-[60vh] items-center justify-center">
-          <Loader2 size={26} strokeWidth={2} color="#FF2D95" className="animate-spin" />
+          <Loader2 size={26} strokeWidth={2} color="#2B68FF" className="animate-spin" />
         </div>
       );
     }
@@ -279,7 +279,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
               <Link
                 href={`/host/${party.id}/cancel`}
                 className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-bold"
-                style={{ background: 'rgba(255,45,149,0.12)', border: '1px solid rgba(255,45,149,0.35)', color: '#FF2D95' }}
+                style={{ background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.35)', color: '#F87171' }}
               >
                 <XCircle size={13} strokeWidth={2} />
                 Cancel
@@ -299,14 +299,14 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
 
       <div className="flex flex-col gap-4 p-5">
         {party.cancelledAt && (
-          <div className="rounded-2xl p-4" style={{ background: 'rgba(255,45,149,0.08)', border: '1px solid rgba(255,45,149,0.28)' }}>
+          <div className="rounded-2xl p-4" style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.28)' }}>
             <div className="flex items-center gap-2.5">
-              <XCircle size={16} strokeWidth={2} color="#FF2D95" className="flex-shrink-0" />
+              <XCircle size={16} strokeWidth={2} color="#F87171" className="flex-shrink-0" />
               <div>
-                <div className="text-[13px] font-bold uppercase tracking-[0.5px]" style={{ color: '#FF2D95' }}>
+                <div className="text-[13px] font-bold uppercase tracking-[0.5px]" style={{ color: '#F87171' }}>
                   Event Cancelled
                 </div>
-                <div className="mt-0.5 text-[12px]" style={{ color: '#F2A5C9' }}>
+                <div className="mt-0.5 text-[12px]" style={{ color: '#FDA4AF' }}>
                   All guests were refunded. {party.cancellationReason ? `Reason: ${party.cancellationReason}` : ''}
                 </div>
               </div>
@@ -405,9 +405,9 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
 
         {/* Availability — host-controlled sold out / close */}
         {party.status === 'approved' && !party.cancelledAt && (
-          <div className="rounded-2xl p-4" style={{ background: 'rgba(0,191,255,0.06)', border: '1px solid rgba(0,191,255,0.25)' }}>
+          <div className="rounded-2xl p-4" style={{ background: 'rgba(117,161,255,0.06)', border: '1px solid rgba(117,161,255,0.25)' }}>
             <div className="mb-2 flex items-center justify-between gap-2">
-              <div className="text-[12px] font-bold uppercase tracking-[0.5px]" style={{ color: '#00BFFF' }}>
+              <div className="text-[12px] font-bold uppercase tracking-[0.5px]" style={{ color: '#75A1FF' }}>
                 Ticket Availability
               </div>
               {availabilityPill ? (
@@ -455,7 +455,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
                     onClick={() => runAvailabilityAction('sold_out')}
                     disabled={availabilityBusy !== null || party.spotsLeft <= 0}
                     className="flex flex-1 items-center justify-center gap-2 rounded-[10px] py-2.5 text-[13px] font-bold transition-all disabled:opacity-50"
-                    style={{ background: 'rgba(255,45,149,0.1)', border: '1px solid rgba(255,45,149,0.35)', color: '#FF2D95' }}
+                    style={{ background: 'rgba(43,104,255,0.1)', border: '1px solid rgba(43,104,255,0.35)', color: '#2B68FF' }}
                   >
                     {availabilityBusy === 'sold_out' ? 'Marking…' : 'Mark as Sold Out'}
                   </button>
@@ -474,16 +474,16 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
         )}
 
         {/* Share card */}
-        <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,45,149,0.16)' }}>
+        <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(43,104,255,0.16)' }}>
           <div className="mb-1.5 flex items-center justify-between gap-2">
             <div className="text-[12px] font-bold" style={{ color: '#FFFFFF' }}>Promote Your Event</div>
-            <Share2 size={14} strokeWidth={2} color="#FF2D95" />
+            <Share2 size={14} strokeWidth={2} color="#2B68FF" />
           </div>
           <div className="mb-3 truncate text-[11px]" style={{ color: '#A7A8B5' }}>{partyShareUrl(party)}</div>
           <Link
             href={`/host/${party.id}/share`}
             className="flex w-full items-center justify-center gap-1.5 rounded-[9px] py-2.5 text-[12px] font-bold transition-all duration-200"
-            style={{ background: 'rgba(255,45,149,0.14)', border: '1px solid rgba(255,45,149,0.4)', color: '#FF2D95' }}
+            style={{ background: 'rgba(43,104,255,0.14)', border: '1px solid rgba(43,104,255,0.4)', color: '#2B68FF' }}
           >
             <QrCode size={13} strokeWidth={2.5} /> Get QR Code & Links
           </Link>
@@ -527,11 +527,11 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
                 <div className="font-heading text-[18px] font-bold leading-tight" style={{ color: '#FFFFFF' }}>{party.title}</div>
                 <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]" style={{ color: '#A7A8B5' }}>
                   <span className="flex items-center gap-1.5">
-                    <Clock size={12} strokeWidth={2} color="#FF2D95" />
+                    <Clock size={12} strokeWidth={2} color="#2B68FF" />
                     {party.date} · {party.time}
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <MapPin size={12} strokeWidth={2} color="#00BFFF" />
+                    <MapPin size={12} strokeWidth={2} color="#75A1FF" />
                     {party.location}
                   </span>
                 </div>
@@ -542,8 +542,8 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
             <div className="grid grid-cols-2 gap-2.5">
               <StatCard label="Tickets Sold" value={String(ticketsSold)} icon={Ticket} color="#00F5D4" />
               <StatCard label="Tickets Remaining" value={String(ticketsRemaining)} icon={Users} color="#FFFFFF" />
-              <StatCard label="Total Capacity" value={String(totalCapacity)} icon={Clock} color="#00BFFF" />
-              <StatCard label="Confirmed Revenue" value={formatNaira(analytics.revenue)} icon={Wallet} color="#B06AFF" />
+              <StatCard label="Total Capacity" value={String(totalCapacity)} icon={Clock} color="#75A1FF" />
+              <StatCard label="Confirmed Revenue" value={formatNaira(analytics.revenue)} icon={Wallet} color="#79A3FF" />
               <StatCard label="Pending Orders" value={String(analytics.pendingOrders)} icon={Hourglass} color="#FFD600" />
               <StatCard label="Cancelled / Failed" value={String(cancelledFailed)} icon={XCircle} color="#FF8A00" />
             </div>
@@ -551,7 +551,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
             {/* Sales over time */}
             <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <div className="mb-1 flex items-center gap-2">
-                <TrendingUp size={14} strokeWidth={2} color="#FF2D95" />
+                <TrendingUp size={14} strokeWidth={2} color="#2B68FF" />
                 <span className="text-[11px] font-bold uppercase tracking-[1px]" style={{ color: '#A7A8B5' }}>
                   Tickets Sold · Last 14 Days
                 </span>
@@ -573,7 +573,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
               </div>
 
               <div className="mb-4">
-                <ProgressBar sold={ticketsSold} total={totalCapacity} from="#8A2BE2" to="#FF2D95" />
+                <ProgressBar sold={ticketsSold} total={totalCapacity} from="#6E8DFF" to="#2B68FF" />
               </div>
 
               {analytics.ticketTypes.length === 0 ? (
@@ -617,7 +617,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
                           {tt.price === 0 ? 'Free' : formatNaira(tt.price)}
                         </span>
                         <span className="w-[70px] text-right text-[12px]" style={{ color: '#A7A8B5' }}>{tt.remaining}</span>
-                        <span className="w-[54px] text-right text-[12px] font-bold" style={{ color: '#FF2D95' }}>{tt.sold}</span>
+                        <span className="w-[54px] text-right text-[12px] font-bold" style={{ color: '#2B68FF' }}>{tt.sold}</span>
                       </div>
                     );
                   })}

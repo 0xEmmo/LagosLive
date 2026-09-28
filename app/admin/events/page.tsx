@@ -178,7 +178,7 @@ export default function AdminEventsPage() {
                   className="rounded-full px-3.5 py-1.5 text-[12px] font-semibold capitalize transition-colors"
                   style={
                     active
-                      ? { background: 'rgba(255,45,149,0.16)', border: '1px solid rgba(255,45,149,0.4)', color: '#FF2D95' }
+                      ? { background: 'rgba(43,104,255,0.16)', border: '1px solid rgba(43,104,255,0.4)', color: '#2B68FF' }
                       : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#A7A8B5' }
                   }
                 >
@@ -234,7 +234,7 @@ export default function AdminEventsPage() {
                           {canReject && <ActionBtn label="Reject" icon={<X size={12} />} color="#FF8A00" onClick={() => setRejectEvent({ id: ev.id, title: ev.title })} />}
                         </>
                       )}
-                      {canDelete && <ActionBtn label="Delete" icon={<Trash2 size={12} />} color="#FF2D95" onClick={() => remove(ev)} />}
+                      {canDelete && <ActionBtn label="Delete" icon={<Trash2 size={12} />} color="#F87171" onClick={() => remove(ev)} />}
                     </div>
                   </div>
                 );
@@ -281,7 +281,7 @@ export default function AdminEventsPage() {
                               {canApprove && <button onClick={() => setStatusOf(ev.id, 'approved', ev.title)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#00F5D4' }}>Approve</button>}
                               {canReject && ev.status === 'pending' && <button onClick={() => setRejectEvent({ id: ev.id, title: ev.title })} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#FF8A00' }}>Reject</button>}
                             </>}
-                            {canDelete && <button onClick={() => remove(ev)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#FF2D95' }}>Delete</button>}
+                            {canDelete && <button onClick={() => remove(ev)} className="rounded-lg px-2 py-1 text-[11px] font-semibold hover:bg-white/[0.04]" style={{ color: '#F87171' }}>Delete</button>}
                           </div>
                         </td>
                       </tr>

@@ -11,11 +11,11 @@ import { formatNaira } from '@/lib/filters';
 
 const STATUS_BADGE: Record<string, { label: string; bg: string; color: string }> = {
   pending: { label: 'Pending', bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
-  processing: { label: 'Processing', bg: 'rgba(176,106,255,0.1)', color: '#B06AFF' },
-  approved: { label: 'Approved', bg: 'rgba(0,191,255,0.1)', color: '#00BFFF' },
-  transfer_pending: { label: 'On its way', bg: 'rgba(0,191,255,0.16)', color: '#00BFFF' },
+  processing: { label: 'Processing', bg: 'rgba(121,163,255,0.1)', color: '#79A3FF' },
+  approved: { label: 'Approved', bg: 'rgba(117,161,255,0.1)', color: '#75A1FF' },
+  transfer_pending: { label: 'On its way', bg: 'rgba(117,161,255,0.16)', color: '#75A1FF' },
   paid: { label: 'Paid', bg: 'rgba(0,245,212,0.08)', color: '#00F5D4' },
-  rejected: { label: 'Rejected', bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
+  rejected: { label: 'Rejected', bg: 'rgba(248,113,113,0.12)', color: '#F87171' },
   reconciliation_required: {
     label: 'Under review',
     bg: 'rgba(255,138,0,0.12)',
@@ -191,7 +191,7 @@ export default function HostPayoutsPage() {
         <div className="grid grid-cols-3 gap-2.5">
           <Stat label="Paid Out" value={formatNaira(paid)} color="#00F5D4" icon={<Landmark size={14} strokeWidth={2} color="#00F5D4" />} />
           <Stat label="Pending" value={formatNaira(pending)} color="#FFD600" icon={<Wallet size={14} strokeWidth={2} color="#FFD600" />} />
-          <Stat label="Available" value={formatNaira(available)} color="#B06AFF" icon={<Wallet size={14} strokeWidth={2} color="#B06AFF" />} />
+          <Stat label="Available" value={formatNaira(available)} color="#79A3FF" icon={<Wallet size={14} strokeWidth={2} color="#79A3FF" />} />
         </div>
 
         <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -376,7 +376,7 @@ export default function HostPayoutsPage() {
         </div>
 
         {/* Request payout */}
-        <div className="rounded-2xl p-4" style={{ background: 'rgba(255,45,149,0.04)', border: '1px solid rgba(255,45,149,0.15)' }}>
+        <div className="rounded-2xl p-4" style={{ background: 'rgba(43,104,255,0.04)', border: '1px solid rgba(43,104,255,0.15)' }}>
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-[13px] font-semibold" style={{ color: '#FFFFFF' }}>Request Payout</div>
@@ -434,9 +434,9 @@ export default function HostPayoutsPage() {
           <div
             className="rounded-xl px-4 py-3 text-[12px]"
             style={{
-              background: requestMsg.includes('Failed') ? 'rgba(255,45,149,0.1)' : 'rgba(0,245,212,0.08)',
-              border: `1px solid ${requestMsg.includes('Failed') ? 'rgba(255,45,149,0.25)' : 'rgba(0,245,212,0.2)'}`,
-              color: requestMsg.includes('Failed') ? '#FF2D95' : '#00F5D4',
+              background: requestMsg.includes('Failed') ? 'rgba(248,113,113,0.1)' : 'rgba(0,245,212,0.08)',
+              border: `1px solid ${requestMsg.includes('Failed') ? 'rgba(248,113,113,0.25)' : 'rgba(0,245,212,0.2)'}`,
+              color: requestMsg.includes('Failed') ? '#F87171' : '#00F5D4',
             }}
           >
             {requestMsg}

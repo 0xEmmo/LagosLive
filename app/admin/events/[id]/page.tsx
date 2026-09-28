@@ -18,7 +18,7 @@ const PAYMENT_BADGE: Record<string, { label: string; bg: string; color: string }
   confirmed: { label: 'Paid', bg: 'rgba(0,245,212,0.08)', color: '#00F5D4' },
   pending: { label: 'Pending', bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
   failed: { label: 'Failed', bg: 'rgba(255,138,0,0.08)', color: '#FF8A00' },
-  cancelled: { label: 'Cancelled', bg: 'rgba(255,45,149,0.1)', color: '#FF2D95' },
+  cancelled: { label: 'Cancelled', bg: 'rgba(255,255,255,0.07)', color: '#8B94A2' },
 };
 
 export default function AdminEventDetailPage() {
@@ -229,7 +229,7 @@ export default function AdminEventDetailPage() {
               <MiniStat label="Status" value={event.status.toUpperCase()} color={event.status === 'approved' ? '#00F5D4' : '#FFD600'} />
               <MiniStat label="Revenue" value={formatNaira(revenue)} color="#00F5D4" />
               <MiniStat label="Tickets Sold" value={`${confirmed.length}`} color="#FFFFFF" />
-              <MiniStat label="Checked In" value={`${checkedIn}/${confirmed.length}`} color="#B06AFF" />
+              <MiniStat label="Checked In" value={`${checkedIn}/${confirmed.length}`} color="#79A3FF" />
               <MiniStat label="Refunds" value={String(refunds)} color="#FF8A00" />
             </div>
 
@@ -277,7 +277,7 @@ export default function AdminEventDetailPage() {
                     onClick={exportAttendees}
                     disabled={confirmed.length === 0}
                     className="flex items-center gap-1.5 rounded-[9px] border px-3 py-2 text-[12px] font-semibold disabled:opacity-50"
-                    style={{ background: 'rgba(0,191,255,0.08)', borderColor: 'rgba(0,191,255,0.25)', color: '#00BFFF' }}
+                    style={{ background: 'rgba(117,161,255,0.08)', borderColor: 'rgba(117,161,255,0.25)', color: '#75A1FF' }}
                   >
                     <Download size={13} /> Export CSV ({confirmed.length} attendees)
                   </button>
@@ -330,7 +330,7 @@ export default function AdminEventDetailPage() {
                         <div className="mt-1 text-[10.5px]" style={{ color: '#6B6C80' }}>{new Date(n.created_at).toLocaleString()}</div>
                       </div>
                       {canDeleteNotes && (
-                        <button onClick={() => removeNote(n.id)} className="shrink-0" style={{ color: '#FF2D95' }}>
+                        <button onClick={() => removeNote(n.id)} className="shrink-0" style={{ color: '#F87171' }}>
                           <Trash2 size={12} />
                         </button>
                       )}
@@ -351,7 +351,7 @@ export default function AdminEventDetailPage() {
                   onClick={addNote}
                   disabled={noteBusy || !noteBody.trim()}
                   className="self-end rounded-[10px] px-4 py-2 text-[12.5px] font-semibold disabled:opacity-50"
-                  style={{ background: 'rgba(255,45,149,0.14)', border: '1px solid rgba(255,45,149,0.35)', color: '#FF2D95' }}
+                  style={{ background: 'rgba(43,104,255,0.14)', border: '1px solid rgba(43,104,255,0.35)', color: '#2B68FF' }}
                 >
                   {noteBusy ? '...' : 'Add'}
                 </button>

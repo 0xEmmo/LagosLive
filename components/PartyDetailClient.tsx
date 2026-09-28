@@ -242,9 +242,9 @@ export default function PartyDetailClient({
           <button
             onClick={handleSave}
             className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] transition-all duration-200 active:scale-90 glass glass-hover"
-            style={{ color: saved ? '#FF2D95' : '#A7A8B5' }}
+            style={{ color: saved ? '#2B68FF' : '#A7A8B5' }}
           >
-            <Heart size={18} fill={saved ? '#FF2D95' : 'none'} strokeWidth={2} />
+            <Heart size={18} fill={saved ? '#2B68FF' : 'none'} strokeWidth={2} />
           </button>
         </div>
       </div>
@@ -277,8 +277,8 @@ export default function PartyDetailClient({
           <div
             className="flex-shrink-0 rounded-xl px-3.5 py-2.5 text-center"
             style={{
-              background: 'linear-gradient(135deg, rgba(255,45,149,0.12), rgba(138,43,226,0.10))',
-              border: '1px solid rgba(255,45,149,0.2)',
+              background: 'linear-gradient(135deg, rgba(43,104,255,0.12), rgba(110,141,255,0.10))',
+              border: '1px solid rgba(43,104,255,0.2)',
             }}
           >
             <div className="font-heading text-base font-bold gradient-text">{isFree ? 'Free' : party.fee}</div>
@@ -381,8 +381,8 @@ export default function PartyDetailClient({
         {/* Info section with glass cards */}
         <div className="mb-6 flex flex-col gap-3">
           <div className="glass rounded-xl p-3.5 flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.03)' }}>
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(255,45,149,0.1)' }}>
-              <Calendar size={15} color="#FF2D95" strokeWidth={2} />
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(43,104,255,0.1)' }}>
+              <Calendar size={15} color="#2B68FF" strokeWidth={2} />
             </div>
             <div>
               <div className="text-[13px] font-semibold" style={{ color: '#FFFFFF' }}>{party.date}</div>
@@ -390,8 +390,8 @@ export default function PartyDetailClient({
             </div>
           </div>
           <div className="glass rounded-xl p-3.5 flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.03)' }}>
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(0,191,255,0.1)' }}>
-              <MapPin size={15} color="#00BFFF" strokeWidth={2} />
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(117,161,255,0.1)' }}>
+              <MapPin size={15} color="#75A1FF" strokeWidth={2} />
             </div>
             <div>
               <div className="text-[13px] font-semibold" style={{ color: '#FFFFFF' }}>{party.location}</div>
@@ -438,8 +438,8 @@ export default function PartyDetailClient({
                 className="h-full rounded-full transition-[width] duration-500 ease-out"
                 style={{
                   width: `${capPct}%`,
-                  background: `linear-gradient(90deg,${capPct > 80 ? '#FF8A00' : '#FF2D95'},${capPct > 80 ? '#FFD600' : '#8A2BE2'})`,
-                  boxShadow: `0 0 10px ${capPct > 80 ? 'rgba(255,138,0,0.4)' : 'rgba(255,45,149,0.4)'}`,
+                  background: `linear-gradient(90deg,${capPct > 80 ? '#FF8A00' : '#2B68FF'},${capPct > 80 ? '#FFD600' : '#6E8DFF'})`,
+                  boxShadow: `0 0 10px ${capPct > 80 ? 'rgba(255,138,0,0.4)' : 'rgba(43,104,255,0.4)'}`,
                 }}
               />
             </div>
@@ -521,7 +521,7 @@ export default function PartyDetailClient({
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-1.5 rounded-[10px] px-3.5 py-2.5 text-[13px] font-medium transition-all duration-200"
-                style={{ background: 'rgba(255,45,149,0.08)', border: '1px solid rgba(255,45,149,0.2)', color: '#FF2D95' }}
+                style={{ background: 'rgba(43,104,255,0.08)', border: '1px solid rgba(43,104,255,0.2)', color: '#2B68FF' }}
               >
                 <Instagram size={14} strokeWidth={2} />
                 {party.instagram}
@@ -541,7 +541,7 @@ export default function PartyDetailClient({
               <a
                 href={`mailto:${party.organizerEmail}`}
                 className="flex items-center gap-1.5 rounded-[10px] px-3.5 py-2.5 text-[13px] font-medium transition-all duration-200"
-                style={{ background: 'rgba(176,106,255,0.08)', border: '1px solid rgba(176,106,255,0.2)', color: '#B06AFF' }}
+                style={{ background: 'rgba(121,163,255,0.08)', border: '1px solid rgba(121,163,255,0.2)', color: '#79A3FF' }}
               >
                 <Mail size={14} strokeWidth={2} />
                 {party.organizerEmail}

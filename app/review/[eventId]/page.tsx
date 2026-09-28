@@ -63,8 +63,8 @@ export default function ReviewPage({ params }: { params: { eventId: string } }) 
             Rate &amp; Review
           </span>
         </div>
-        <div className="rounded-2xl p-5 text-center" style={{ background: 'rgba(255,45,149,0.06)', border: '1px solid rgba(255,45,149,0.2)' }}>
-          <Lock size={20} strokeWidth={2} style={{ color: '#FF2D95' }} className="mx-auto mb-3" />
+        <div className="rounded-2xl p-5 text-center" style={{ background: 'rgba(43,104,255,0.06)', border: '1px solid rgba(43,104,255,0.2)' }}>
+          <Lock size={20} strokeWidth={2} style={{ color: '#2B68FF' }} className="mx-auto mb-3" />
           <p className="text-sm font-semibold" style={{ color: '#FFFFFF' }}>Reviews are closed for this event</p>
           <p className="mx-auto mt-1.5 max-w-[340px] text-xs leading-[1.6]" style={{ color: '#A7A8B5' }}>
             {party.title} was cancelled, so there&apos;s nothing to rate. If you had a ticket, your refund should already have been issued — reach out to support if it hasn&apos;t.
@@ -153,7 +153,7 @@ export default function ReviewPage({ params }: { params: { eventId: string } }) 
           onClick={handleSubmit}
           disabled={isLoading || !rating}
           className="flex w-full items-center justify-center gap-2 rounded-[14px] py-4 text-[13px] font-bold uppercase tracking-[0.5px] transition-all duration-200 disabled:opacity-40"
-          style={{ background: 'linear-gradient(135deg,#FF2D95,#8A2BE2)', color: '#FFFFFF', boxShadow: '0 10px 30px rgba(255,45,149,0.3)' }}
+          style={{ background: 'linear-gradient(135deg,#2B68FF,#6E8DFF)', color: '#FFFFFF', boxShadow: '0 10px 30px rgba(43,104,255,0.3)' }}
         >
           {isLoading ? (
             <>

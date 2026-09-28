@@ -81,7 +81,7 @@ export default function SupportPage() {
               href="/support"
               onClick={() => { setSubmitted(false); setSubject(''); setBody(''); }}
               className="rounded-xl px-5 py-2.5 text-[13px] font-semibold"
-              style={{ background: 'rgba(255,45,149,0.12)', border: '1px solid rgba(255,45,149,0.3)', color: '#FF2D95' }}
+              style={{ background: 'rgba(43,104,255,0.12)', border: '1px solid rgba(43,104,255,0.3)', color: '#2B68FF' }}
             >
               New Ticket
             </Link>
@@ -167,7 +167,7 @@ export default function SupportPage() {
           </Field>
 
           {error && (
-            <div className="rounded-xl px-4 py-2.5 text-[12px]" style={{ background: 'rgba(255,45,149,0.1)', border: '1px solid rgba(255,45,149,0.25)', color: '#FF2D95' }}>
+            <div className="rounded-xl px-4 py-2.5 text-[12px]" style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.25)', color: '#F87171' }}>
               {error}
             </div>
           )}
@@ -176,7 +176,7 @@ export default function SupportPage() {
             type="submit"
             disabled={submitting}
             className="flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-[14px] font-bold transition-all disabled:opacity-50"
-            style={{ background: 'linear-gradient(135deg, #FF2D95, #8A2BE2)', color: '#FFFFFF' }}
+            style={{ background: 'linear-gradient(135deg, #2B68FF, #6E8DFF)', color: '#FFFFFF' }}
           >
             <Send size={15} strokeWidth={2.2} />
             {submitting ? 'Submitting...' : 'Submit Ticket'}

@@ -344,7 +344,7 @@ export default function HostVerificationPage() {
           )}
 
           {status === 'rejected' && (
-            <div className="mt-4 rounded-xl p-3.5 text-[12.5px] leading-[1.6]" style={{ background: 'rgba(255,45,149,0.06)', border: '1px solid rgba(255,45,149,0.18)', color: '#A7A8B5' }}>
+            <div className="mt-4 rounded-xl p-3.5 text-[12.5px] leading-[1.6]" style={{ background: 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.2)', color: '#A7A8B5' }}>
               Update the details below and resubmit. Your previous submission has been kept so you can edit in place.
             </div>
           )}
@@ -385,7 +385,7 @@ export default function HostVerificationPage() {
               </div>
             )}
             {submitError && (
-              <div className="rounded-xl px-4 py-3 text-[12px]" style={{ background: 'rgba(255,45,149,0.1)', border: '1px solid rgba(255,45,149,0.25)', color: '#FF2D95' }}>
+              <div className="rounded-xl px-4 py-3 text-[12px]" style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.25)', color: '#F87171' }}>
                 {submitError}
               </div>
             )}
@@ -414,7 +414,7 @@ export default function HostVerificationPage() {
                   onClick={() => void handleSubmit()}
                   disabled={submitting}
                   className="flex flex-1 items-center justify-center gap-1.5 rounded-xl py-3 text-[13px] font-bold transition-all active:scale-[0.99] disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg, #FF2D95, #8A2BE2)', color: '#FFFFFF', boxShadow: '0 6px 24px rgba(255,45,149,0.3)' }}
+                  style={{ background: 'linear-gradient(135deg, #2B68FF, #6E8DFF)', color: '#FFFFFF', boxShadow: '0 6px 24px rgba(43,104,255,0.3)' }}
                 >
                   {submitting ? (
                     <>
@@ -497,8 +497,8 @@ function VerifiedPanel({ row, onPayouts }: { row: HostVerificationRow | null; on
 
 function PendingPanel({ row }: { row: HostVerificationRow | null }) {
   return (
-    <div className="rounded-2xl p-5" style={{ background: 'rgba(176,106,255,0.06)', border: '1px solid rgba(176,106,255,0.18)' }}>
-      <div className="flex items-center gap-2 text-[15px] font-bold" style={{ color: '#B06AFF' }}>
+    <div className="rounded-2xl p-5" style={{ background: 'rgba(121,163,255,0.06)', border: '1px solid rgba(121,163,255,0.18)' }}>
+      <div className="flex items-center gap-2 text-[15px] font-bold" style={{ color: '#79A3FF' }}>
         <Clock size={18} strokeWidth={2.2} /> Verification Under Review
       </div>
       <div className="mt-2 text-[12.5px] leading-[1.7]" style={{ color: '#A7A8B5' }}>

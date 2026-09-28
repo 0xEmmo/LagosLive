@@ -83,7 +83,7 @@ export default function HostAnalyticsPage() {
   const statusColors: Record<string, string> = {
     confirmed: '#00F5D4',
     pending: '#FFD600',
-    failed: '#FF2D95',
+    failed: '#F87171',
     cancelled: '#6B6C80',
   };
 
@@ -113,8 +113,8 @@ export default function HostAnalyticsPage() {
             {/* Metric cards */}
             <div className="grid grid-cols-2 gap-2.5">
               <MetricCard label="Total Revenue" value={formatNaira(summary?.totalRevenue ?? 0)} icon={<DollarSign size={14} color="#00F5D4" />} color="#00F5D4" />
-              <MetricCard label="Tickets Sold" value={String(summary?.totalTicketsSold ?? 0)} icon={<Ticket size={14} color="#FF2D95" />} color="#FF2D95" />
-              <MetricCard label="Avg Order" value={formatNaira(summary?.avgOrderValue ?? 0)} icon={<TrendingUp size={14} color="#B06AFF" />} color="#B06AFF" />
+              <MetricCard label="Tickets Sold" value={String(summary?.totalTicketsSold ?? 0)} icon={<Ticket size={14} color="#2B68FF" />} color="#2B68FF" />
+              <MetricCard label="Avg Order" value={formatNaira(summary?.avgOrderValue ?? 0)} icon={<TrendingUp size={14} color="#79A3FF" />} color="#79A3FF" />
               <MetricCard label="My Events" value={String(summary?.eventsCount ?? 0)} icon={<CalendarDays size={14} color="#FFD600" />} color="#FFD600" />
             </div>
 

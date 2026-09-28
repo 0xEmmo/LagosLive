@@ -1,33 +1,5 @@
-'use client';
-
-import { useTrendingEvents } from '@/lib/hooks/useTrendingEvents';
-import Hero from '@/components/home/Hero';
-import TrendingEvents from '@/components/home/TrendingEvents';
-import LagosLiveSound from '@/components/home/LagosLiveSound';
-import OrganizerFeatures from '@/components/home/OrganizerFeatures';
-import HowItWorks from '@/components/home/HowItWorks';
-import HostCta from '@/components/home/HostCta';
-import Pricing from '@/components/home/Pricing';
-import Faq from '@/components/home/Faq';
-import FinalCta from '@/components/home/FinalCta';
+import HomeLandingPage from '@/components/home/HomeLandingPage';
 
 export default function HomePage() {
-  const { entries, loading } = useTrendingEvents();
-  const parties = entries.map((e) => e.party);
-
-  return (
-    <div className="animate-fade-in">
-      <main>
-        <Hero parties={parties} loading={loading} />
-        <TrendingEvents entries={entries} loading={loading} />
-        <LagosLiveSound />
-        <OrganizerFeatures />
-        <HowItWorks />
-        <HostCta />
-        <Pricing />
-        <Faq />
-        <FinalCta />
-      </main>
-    </div>
-  );
+  return <HomeLandingPage />;
 }

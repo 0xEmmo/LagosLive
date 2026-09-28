@@ -1,14 +1,12 @@
 import type { Metadata, Viewport } from 'next';
-import { Bebas_Neue, Montserrat, Inter } from 'next/font/google';
+import { Bebas_Neue, Inter } from 'next/font/google';
 import './globals.css';
 import HashScroll from '@/components/HashScroll';
 import AuthListener from '@/components/AuthListener';
 import ReminderScheduler from '@/components/ReminderScheduler';
 import NewsletterModal from '@/components/NewsletterModal';
 import Toast from '@/components/Toast';
-import BottomNav from '@/components/BottomNav';
-import AppHeader from '@/components/home/HomeNavbar';
-import Footer from '@/components/Footer';
+import GlobalChrome from '@/components/GlobalChrome';
 import EntryShutter from '@/components/EntryShutter';
 import { appUrl, DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGE_HEIGHT, DEFAULT_OG_IMAGE_WIDTH } from '@/lib/seo';
 
@@ -16,13 +14,6 @@ const bebasNeue = Bebas_Neue({
   weight: '400',
   subsets: ['latin'],
   variable: '--font-bebas',
-  display: 'swap',
-});
-
-const montserrat = Montserrat({
-  weight: ['500', '600', '700', '800'],
-  subsets: ['latin'],
-  variable: '--font-montserrat',
   display: 'swap',
 });
 
@@ -89,10 +80,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="dark" className={`${bebasNeue.variable} ${montserrat.variable} ${inter.variable}`}>
+    <html lang="en" data-theme="dark" className={`${bebasNeue.variable} ${inter.variable}`}>
       <body className="font-heading bg-bg" style={{ paddingBottom: '84px' }}>
         <EntryShutter />
-        <div className="fixed inset-0 z-[-1] bg-noise">
+        <div className="ll-global-background fixed inset-0 z-[-1] bg-noise">
           <div className="absolute inset-0 bg-glow-top" />
           <div className="absolute inset-0 bg-glow-right" />
           <div className="absolute inset-0 bg-glow-bottom" />
@@ -102,10 +93,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ReminderScheduler />
         <Toast />
         <NewsletterModal />
-        <AppHeader />
+        <GlobalChrome placement="header" />
         {children}
-        <Footer />
-        <BottomNav />
+        <GlobalChrome placement="footer" />
+        <GlobalChrome placement="bottom" />
       </body>
     </html>
   );

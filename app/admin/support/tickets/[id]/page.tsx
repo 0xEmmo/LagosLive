@@ -11,7 +11,7 @@ import { fetchSupportMessages, createSupportMessage, updateSupportTicket, type S
 
 const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
   open: { bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
-  in_progress: { bg: 'rgba(176,106,255,0.12)', color: '#B06AFF' },
+  in_progress: { bg: 'rgba(121,163,255,0.12)', color: '#79A3FF' },
   resolved: { bg: 'rgba(0,245,212,0.1)', color: '#00F5D4' },
   closed: { bg: 'rgba(107,108,128,0.15)', color: '#6B6C80' },
 };
@@ -20,7 +20,7 @@ const PRIORITY_STYLE: Record<string, { bg: string; color: string }> = {
   low: { bg: 'rgba(0,245,212,0.1)', color: '#00F5D4' },
   normal: { bg: 'rgba(167,168,181,0.12)', color: '#A7A8B5' },
   high: { bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
-  urgent: { bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
+  urgent: { bg: 'rgba(43,104,255,0.12)', color: '#2B68FF' },
 };
 
 const CANNED_RESPONSES = [
@@ -153,8 +153,8 @@ export default function AdminTicketDetailPage() {
             {/* Original message */}
             <div className="mb-3 rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <div className="mb-2 flex items-center gap-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full" style={{ background: 'rgba(255,45,149,0.15)' }}>
-                  <span className="text-[10px] font-bold" style={{ color: '#FF2D95' }}>U</span>
+                <div className="flex h-6 w-6 items-center justify-center rounded-full" style={{ background: 'rgba(43,104,255,0.15)' }}>
+                  <span className="text-[10px] font-bold" style={{ color: '#2B68FF' }}>U</span>
                 </div>
                 <span className="text-[11px] font-semibold" style={{ color: '#A7A8B5' }}>User</span>
                 <span className="text-[10px]" style={{ color: '#6B6C80' }}>{new Date(ticket.created_at).toLocaleString()}</span>
@@ -171,17 +171,17 @@ export default function AdminTicketDetailPage() {
                     key={msg.id}
                     className="rounded-2xl p-4"
                     style={{
-                      background: isStaffMsg ? 'rgba(0,245,212,0.04)' : 'rgba(255,45,149,0.06)',
-                      border: `1px solid ${isStaffMsg ? 'rgba(0,245,212,0.12)' : 'rgba(255,45,149,0.15)'}`,
+                      background: isStaffMsg ? 'rgba(0,245,212,0.04)' : 'rgba(43,104,255,0.06)',
+                      border: `1px solid ${isStaffMsg ? 'rgba(0,245,212,0.12)' : 'rgba(43,104,255,0.15)'}`,
                       opacity: msg.is_internal ? 0.7 : 1,
                     }}
                   >
                     <div className="mb-2 flex items-center gap-2">
                       <div
                         className="flex h-6 w-6 items-center justify-center rounded-full"
-                        style={{ background: isStaffMsg ? 'rgba(0,245,212,0.12)' : 'rgba(255,45,149,0.15)' }}
+                        style={{ background: isStaffMsg ? 'rgba(0,245,212,0.12)' : 'rgba(43,104,255,0.15)' }}
                       >
-                        {isStaffMsg ? <ShieldCheck size={12} color="#00F5D4" /> : <span className="text-[10px] font-bold" style={{ color: '#FF2D95' }}>U</span>}
+                        {isStaffMsg ? <ShieldCheck size={12} color="#00F5D4" /> : <span className="text-[10px] font-bold" style={{ color: '#2B68FF' }}>U</span>}
                       </div>
                       <span className="text-[11px] font-semibold" style={{ color: '#A7A8B5' }}>
                         {isStaffMsg ? 'Staff' : 'User'}
@@ -246,7 +246,7 @@ export default function AdminTicketDetailPage() {
                   type="submit"
                   disabled={sending || !newMessage.trim()}
                   className="flex items-center justify-center self-end rounded-xl px-4 py-3 transition-all disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg, #FF2D95, #8A2BE2)', color: '#FFFFFF' }}
+                  style={{ background: 'linear-gradient(135deg, #2B68FF, #6E8DFF)', color: '#FFFFFF' }}
                 >
                   <Send size={16} strokeWidth={2.2} />
                 </button>

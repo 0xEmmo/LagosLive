@@ -12,7 +12,7 @@ import { useLagosLiveStore } from '@/lib/store';
 const ACCOUNT_BADGE: Record<string, { label: string; bg: string; color: string }> = {
   active: { label: 'Active', bg: 'rgba(0,245,212,0.08)', color: '#00F5D4' },
   suspended: { label: 'Suspended', bg: 'rgba(255,138,0,0.08)', color: '#FF8A00' },
-  banned: { label: 'Banned', bg: 'rgba(255,45,149,0.1)', color: '#FF2D95' },
+  banned: { label: 'Banned', bg: 'rgba(248,113,113,0.12)', color: '#F87171' },
 };
 
 export default function AdminSettingsPage() {
@@ -85,7 +85,7 @@ export default function AdminSettingsPage() {
           <div className="flex flex-col gap-6">
             <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <div className="mb-4 flex items-center gap-2">
-                <ShieldCheck size={16} color="#FF2D95" />
+                <ShieldCheck size={16} color="#2B68FF" />
                 <div className="text-[13px] font-bold" style={{ color: '#FFFFFF' }}>Team Roles</div>
               </div>
               <p className="mb-4 text-[12.5px]" style={{ color: '#A7A8B5' }}>

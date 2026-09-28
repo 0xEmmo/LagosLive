@@ -207,7 +207,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 {cancelled ? (
-                  <span className="flex-shrink-0 rounded-full px-2 py-[3px] text-[10px] font-bold uppercase tracking-[0.5px]" style={{ background: 'rgba(255,45,149,0.12)', border: '1px solid rgba(255,45,149,0.3)', color: '#FF2D95' }}>
+                  <span className="flex-shrink-0 rounded-full px-2 py-[3px] text-[10px] font-bold uppercase tracking-[0.5px]" style={{ background: 'rgba(43,104,255,0.12)', border: '1px solid rgba(43,104,255,0.3)', color: '#2B68FF' }}>
                     Refunded
                   </span>
                 ) : (

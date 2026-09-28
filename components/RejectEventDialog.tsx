@@ -116,7 +116,7 @@ export default function RejectEventDialog({ open, eventName, onClose, onConfirm 
             onClick={submit}
             disabled={!valid || isRejecting}
             className="flex flex-1 items-center justify-center gap-2 rounded-[11px] py-3 text-[13px] font-bold uppercase tracking-[0.5px] transition-all disabled:opacity-40"
-            style={{ background: 'linear-gradient(135deg,#FF8A00,#FF2D95)', color: '#FFFFFF', boxShadow: '0 10px 28px rgba(255,45,149,0.3)' }}
+            style={{ background: 'linear-gradient(135deg,#DC3E4B,#F87171)', color: '#FFFFFF', boxShadow: '0 10px 28px rgba(248,113,113,0.2)' }}
           >
             {isRejecting && <Loader2 size={15} strokeWidth={2.5} className="animate-spin" />}
             {isRejecting ? 'Rejecting…' : 'Reject Event'}

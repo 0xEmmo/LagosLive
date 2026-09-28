@@ -97,12 +97,13 @@ export default function HostDashboardNav({ title = 'Host Dashboard', backHref, a
                   key={href}
                   href={href}
                   className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12.5px] font-semibold transition-all duration-150"
-                  style={active ? { background: 'rgba(255,45,149,0.12)', color: '#FF2D95' } : { color: '#A7A8B5' }}
+                  aria-current={active ? 'page' : undefined}
+                  style={active ? { background: 'rgba(43,104,255,0.14)', color: '#6EA1FF' } : { color: '#A7A8B5' }}
                 >
                   <Icon size={14} strokeWidth={2.2} />
                   <span>{label}</span>
                   {active && (
-                    <span className="h-[3px] w-[14px] rounded-full" style={{ background: 'linear-gradient(90deg,#FF2D95,#8A2BE2)' }} />
+                    <span className="h-[3px] w-[14px] rounded-full" style={{ background: 'linear-gradient(90deg,#2B68FF,#6E8DFF)' }} />
                   )}
                 </Link>
               );
@@ -115,7 +116,7 @@ export default function HostDashboardNav({ title = 'Host Dashboard', backHref, a
             <Link
               href="/host/new"
               className="flex h-[38px] items-center gap-1.5 rounded-full px-3.5 text-[12.5px] font-bold text-white transition-all duration-200 hover:shadow-glow-pink active:scale-95"
-              style={{ background: 'linear-gradient(135deg,#FF2D95,#8A2BE2)', boxShadow: '0 6px 20px rgba(255,45,149,0.25)' }}
+              style={{ background: 'linear-gradient(135deg,#1F5FFF,#6E8DFF)', boxShadow: '0 6px 20px rgba(43,104,255,0.25)' }}
             >
               <Plus size={14} strokeWidth={2.5} />
               <span className="hidden sm:inline">New Event</span>
@@ -154,13 +155,13 @@ export default function HostDashboardNav({ title = 'Host Dashboard', backHref, a
                       className="flex min-h-[48px] items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 active:scale-[0.98]"
                       style={
                         active
-                          ? { background: 'rgba(255,45,149,0.1)', color: '#FF2D95' }
+                          ? { background: 'rgba(43,104,255,0.14)', color: '#6EA1FF' }
                           : { color: '#A7A8B5' }
                       }
                     >
                       <Icon size={17} strokeWidth={2.1} />
                       <span className="flex-1">{label}</span>
-                      {active && <span className="h-[16px] w-[3px] rounded-full" style={{ background: '#FF2D95' }} />}
+                      {active && <span className="h-[16px] w-[3px] rounded-full" style={{ background: '#6EA1FF' }} />}
                     </Link>
                   );
                 })}
@@ -189,7 +190,7 @@ export default function HostDashboardNav({ title = 'Host Dashboard', backHref, a
               <button
                 onClick={signOut}
                 className="flex min-h-[48px] items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 active:scale-[0.98]"
-                style={{ color: '#FF2D95' }}
+                style={{ color: '#F87171' }}
               >
                 <LogOut size={17} strokeWidth={2.1} />
                 Sign Out

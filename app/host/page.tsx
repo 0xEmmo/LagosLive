@@ -133,7 +133,7 @@ export default function HostDashboardPage() {
     confirmed: { label: 'Confirmed', bg: 'rgba(0,245,212,0.1)', color: '#00F5D4' },
     pending: { label: 'Pending', bg: 'rgba(255,214,0,0.12)', color: '#FFD600' },
     failed: { label: 'Failed', bg: 'rgba(255,138,0,0.1)', color: '#FF8A00' },
-    cancelled: { label: 'Cancelled', bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
+    cancelled: { label: 'Cancelled', bg: 'rgba(255,255,255,0.07)', color: '#8B94A2' },
   };
 
   return (
@@ -191,9 +191,9 @@ export default function HostDashboardPage() {
           <div className="flex flex-col items-center gap-4 px-6 py-[64px] text-center">
             <div
               className="flex h-[72px] w-[72px] items-center justify-center rounded-full"
-              style={{ background: 'rgba(255,45,149,0.08)', border: '1px solid rgba(255,45,149,0.15)' }}
+              style={{ background: 'rgba(43,104,255,0.08)', border: '1px solid rgba(43,104,255,0.15)' }}
             >
-              <CalendarPlus size={32} strokeWidth={1.5} color="#FF2D95" />
+              <CalendarPlus size={32} strokeWidth={1.5} color="#2B68FF" />
             </div>
             <div className="font-display text-[28px] tracking-[0.5px]" style={{ color: '#FFFFFF' }}>
               Your next big night starts here.
@@ -209,10 +209,10 @@ export default function HostDashboardPage() {
           <>
             {/* Stats */}
             <div className="grid grid-cols-2 gap-2.5">
-              <StatCard label="Total Events" value={String(parties.length)} icon={CalendarDays} color="#FF2D95" />
+              <StatCard label="Total Events" value={String(parties.length)} icon={CalendarDays} color="#2B68FF" />
               <StatCard label="Active Events" value={String(activeCount)} icon={Clock} color="#00F5D4" />
-              <StatCard label="Tickets Sold" value={String(totalTicketsSold)} icon={Ticket} color="#00BFFF" sub="confirmed sales" />
-              <StatCard label="Revenue" value={formatNaira(totalRevenue)} icon={Wallet} color="#B06AFF" sub="confirmed only" />
+              <StatCard label="Tickets Sold" value={String(totalTicketsSold)} icon={Ticket} color="#75A1FF" sub="confirmed sales" />
+              <StatCard label="Revenue" value={formatNaira(totalRevenue)} icon={Wallet} color="#79A3FF" sub="confirmed only" />
               <StatCard label="Upcoming" value={String(upcomingCount)} icon={CalendarDays} color="#FFD600" sub={upcomingCount > 0 ? 'still ahead' : 'none scheduled'} />
             </div>
 
@@ -234,7 +234,7 @@ export default function HostDashboardPage() {
               <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <div className="mb-3 flex items-center justify-between">
                   <span className="text-[11px] font-bold uppercase tracking-[1px]" style={{ color: '#A7A8B5' }}>Recent Orders</span>
-                  <Link href="/host/orders" className="text-[11px] font-semibold" style={{ color: '#FF2D95' }}>View all →</Link>
+                  <Link href="/host/orders" className="text-[11px] font-semibold" style={{ color: '#2B68FF' }}>View all →</Link>
                 </div>
                 <div className="flex flex-col gap-2">
                   {recentOrders.map((o) => {
@@ -262,7 +262,7 @@ export default function HostDashboardPage() {
             <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between">
                 <span className="text-[12px] font-bold" style={{ color: '#FFFFFF' }}>Your Events</span>
-                <Link href="/host/new" className="text-[11px] font-semibold" style={{ color: '#FF2D95' }}>+ Create New</Link>
+                <Link href="/host/new" className="text-[11px] font-semibold" style={{ color: '#2B68FF' }}>+ Create New</Link>
               </div>
               {parties.map((p) => {
                 const s = stats[p.id];
@@ -274,7 +274,7 @@ export default function HostDashboardPage() {
                 const closed = evState === 'CLOSED';
                 const soldOut = evState === 'SOLD_OUT';
                 const statusBadge = cancelled
-                  ? { label: 'Cancelled', bg: 'rgba(255,45,149,0.14)', color: '#FF2D95' }
+                  ? { label: 'Cancelled', bg: 'rgba(255,255,255,0.07)', color: '#8B94A2' }
                   : closed
                   ? { label: 'Closed', bg: 'rgba(255,255,255,0.06)', color: '#A7A8B5' }
                   : soldOut

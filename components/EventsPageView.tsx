@@ -34,11 +34,11 @@ function Pill<T extends string>({
       onClick={onClick}
       className="whitespace-nowrap rounded-full px-3.5 py-[7px] text-[13px] font-medium outline-none transition-all duration-300 active:scale-95"
       style={{
-        background: active ? (accent ? `${accent}20` : 'rgba(255,45,149,0.12)') : 'rgba(255,255,255,0.04)',
+        background: active ? (accent ? `${accent}20` : 'rgba(43,104,255,0.12)') : 'rgba(255,255,255,0.04)',
         border: '1px solid',
-        borderColor: active ? (accent ? `${accent}40` : 'rgba(255,45,149,0.3)') : 'rgba(255,255,255,0.08)',
-        color: active ? accent || '#FF2D95' : '#A7A8B5',
-        boxShadow: active ? `0 0 20px ${accent || '#FF2D95'}22` : 'none',
+        borderColor: active ? (accent ? `${accent}40` : 'rgba(43,104,255,0.3)') : 'rgba(255,255,255,0.08)',
+        color: active ? accent || '#2B68FF' : '#A7A8B5',
+        boxShadow: active ? `0 0 20px ${accent || '#2B68FF'}22` : 'none',
       }}
     >
       {label}
@@ -130,16 +130,16 @@ function EventsPageContent() {
                 onClick={() => setDrawerOpen((o) => !o)}
                 className="flex flex-shrink-0 items-center gap-1.5 rounded-[10px] px-3 py-2 text-[13px] font-medium outline-none transition-all duration-200"
                 style={{
-                  background: activeFilterCount > 0 ? 'rgba(255,45,149,0.1)' : 'rgba(255,255,255,0.04)',
+                  background: activeFilterCount > 0 ? 'rgba(43,104,255,0.1)' : 'rgba(255,255,255,0.04)',
                   border: '1px solid',
-                  borderColor: activeFilterCount > 0 ? 'rgba(255,45,149,0.3)' : 'rgba(255,255,255,0.08)',
-                  color: activeFilterCount > 0 ? '#FF2D95' : '#A7A8B5',
+                  borderColor: activeFilterCount > 0 ? 'rgba(43,104,255,0.3)' : 'rgba(255,255,255,0.08)',
+                  color: activeFilterCount > 0 ? '#2B68FF' : '#A7A8B5',
                 }}
               >
                 <SlidersHorizontal size={14} strokeWidth={2} />
                 Filters
                 {activeFilterCount > 0 && (
-                  <span className="flex h-[17px] w-[17px] flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: '#FF2D95' }}>
+                  <span className="flex h-[17px] w-[17px] flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: '#2B68FF' }}>
                     {activeFilterCount}
                   </span>
                 )}
@@ -161,8 +161,8 @@ function EventsPageContent() {
                 color: '#FFFFFF',
               }}
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255,45,149,0.3)';
-                e.currentTarget.style.boxShadow = '0 0 20px rgba(255,45,149,0.08)';
+                e.currentTarget.style.borderColor = 'rgba(43,104,255,0.3)';
+                e.currentTarget.style.boxShadow = '0 0 20px rgba(43,104,255,0.08)';
               }}
               onBlur={(e) => {
                 e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
@@ -216,9 +216,9 @@ function EventsPageContent() {
                     onClick={clearFilters}
                     className="rounded-lg px-4 py-[7px] text-[13px] font-medium transition-all duration-200 active:scale-95"
                     style={{
-                      background: 'rgba(255,45,149,0.1)',
-                      border: '1px solid rgba(255,45,149,0.28)',
-                      color: '#FF2D95',
+                      background: 'rgba(43,104,255,0.1)',
+                      border: '1px solid rgba(43,104,255,0.28)',
+                      color: '#2B68FF',
                     }}
                   >
                     <X size={12} className="mr-1 inline" strokeWidth={2} />
@@ -234,7 +234,7 @@ function EventsPageContent() {
       <div className="mx-auto w-full">
         <div className="flex items-center justify-between border-b px-5 py-[11px]" style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
           <span className="text-[13px]" style={{ color: '#6B6C80' }}>
-            Showing <span style={{ color: '#FF2D95', fontWeight: 600 }}>{filtered.length}</span> events
+            Showing <span style={{ color: '#2B68FF', fontWeight: 600 }}>{filtered.length}</span> events
           </span>
           <select
             value={sortBy}
@@ -259,8 +259,8 @@ function EventsPageContent() {
           </div>
         ) : error ? (
           <div className="flex flex-col items-center gap-4 px-6 py-[72px] text-center">
-            <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full" style={{ background: 'rgba(255,45,149,0.08)', border: '1px solid rgba(255,45,149,0.18)' }}>
-              <AlertTriangle size={32} strokeWidth={1.5} color="#FF2D95" />
+            <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full" style={{ background: 'rgba(43,104,255,0.08)', border: '1px solid rgba(43,104,255,0.18)' }}>
+              <AlertTriangle size={32} strokeWidth={1.5} color="#2B68FF" />
             </div>
             <div className="font-display text-[30px] tracking-[1px]" style={{ color: '#FFFFFF' }}>
               Couldn&apos;t load events
@@ -275,8 +275,8 @@ function EventsPageContent() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center gap-4 px-6 py-[72px]">
-            <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full" style={{ background: 'rgba(255,45,149,0.08)', border: '1px solid rgba(255,45,149,0.18)' }}>
-              <SearchIcon size={32} strokeWidth={1.5} color="#FF2D95" />
+            <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full" style={{ background: 'rgba(43,104,255,0.08)', border: '1px solid rgba(43,104,255,0.18)' }}>
+              <SearchIcon size={32} strokeWidth={1.5} color="#2B68FF" />
             </div>
             <div className="font-display text-[30px] tracking-[1px]" style={{ color: '#FFFFFF' }}>
               No events found

@@ -15,8 +15,8 @@ const ROLE_COLOR: Record<Role, { bg: string; color: string }> = {
   organizer: { bg: 'rgba(0,245,212,0.08)', color: '#00F5D4' },
   support: { bg: 'rgba(255,138,0,0.08)', color: '#FF8A00' },
   finance: { bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
-  admin: { bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
-  super_admin: { bg: 'rgba(138,43,226,0.14)', color: '#8A2BE2' },
+  admin: { bg: 'rgba(43,104,255,0.12)', color: '#2B68FF' },
+  super_admin: { bg: 'rgba(110,141,255,0.14)', color: '#6E8DFF' },
 };
 
 export default function AdminRolesPage() {

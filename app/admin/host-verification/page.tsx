@@ -40,7 +40,7 @@ export default async function AdminHostVerificationQueuePage() {
         <div className="mb-6 grid grid-cols-3 gap-3">
           <QueueStat label="Pending" value={String(pending.length)} icon={<Clock size={15} strokeWidth={2} color="#FFD600" />} />
           <QueueStat label="Verified" value={String(verified.length)} icon={<CheckCircle2 size={15} strokeWidth={2} color="#00F5D4" />} />
-          <QueueStat label="Rejected" value={String(rejected.length)} icon={<XCircle size={15} strokeWidth={2} color="#FF2D95" />} />
+          <QueueStat label="Rejected" value={String(rejected.length)} icon={<XCircle size={15} strokeWidth={2} color="#F87171" />} />
         </div>
 
         <div className="mb-6 flex flex-col gap-2">
@@ -71,12 +71,12 @@ export default async function AdminHostVerificationQueuePage() {
 
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.9px]" style={{ color: '#6B6C80' }}>
-            <XCircle size={14} color="#FF2D95" /> Rejected
+            <XCircle size={14} color="#F87171" /> Rejected
           </div>
           {rejected.length === 0 ? (
             <EmptyBlock title="No rejected submissions." subtitle="Rejected hosts appear here." />
           ) : (
-            <ClosedQueueList rows={rejected} accent="#FF2D95" />
+            <ClosedQueueList rows={rejected} accent="#F87171" />
           )}
         </div>
       </div>

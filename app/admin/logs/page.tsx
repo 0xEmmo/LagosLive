@@ -8,7 +8,7 @@ import { fetchAuditLogs, type AuditRow } from '@/lib/admin-queries';
 
 const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   success: { bg: 'rgba(0,245,212,0.1)', color: '#00F5D4' },
-  error: { bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
+  error: { bg: 'rgba(248,113,113,0.12)', color: '#F87171' },
   pending: { bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
 };
 
@@ -80,7 +80,7 @@ export default function LogsPage() {
                   <span className="font-mono text-[11px]" style={{ color: '#A7A8B5' }}>{log.actor_id ? log.actor_id.slice(0, 8) + '…' : '—'}</span>
                 </Cell>
                 <Cell>
-                  <Badge label={log.action} bg="rgba(176,106,255,0.12)" color="#B06AFF" />
+                  <Badge label={log.action} bg="rgba(121,163,255,0.12)" color="#79A3FF" />
                 </Cell>
                 <Cell>
                   <span className="text-[12px]" style={{ color: '#D5D6E0' }}>

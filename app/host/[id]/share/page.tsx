@@ -113,7 +113,7 @@ export default function EventSharePage() {
           <button
             onClick={download}
             className="mt-5 flex w-full items-center justify-center gap-2 rounded-[10px] py-[13px] text-[13px] font-bold transition-all duration-200 active:scale-[0.98]"
-            style={{ background: 'rgba(255,45,149,0.14)', border: '1px solid rgba(255,45,149,0.4)', color: '#FF2D95' }}
+            style={{ background: 'rgba(43,104,255,0.14)', border: '1px solid rgba(43,104,255,0.4)', color: '#2B68FF' }}
           >
             <Download size={14} strokeWidth={2.5} /> Download QR (PNG)
           </button>
@@ -135,7 +135,7 @@ export default function EventSharePage() {
             <button
               onClick={copy}
               className="flex shrink-0 items-center gap-1.5 rounded-[10px] px-4 py-[12px] text-[12px] font-bold"
-              style={{ background: copied ? 'rgba(0,245,212,0.12)' : 'rgba(176,106,255,0.14)', border: '1px solid', borderColor: copied ? 'rgba(0,245,212,0.35)' : 'rgba(176,106,255,0.4)', color: copied ? '#00F5D4' : '#B06AFF' }}
+              style={{ background: copied ? 'rgba(0,245,212,0.12)' : 'rgba(121,163,255,0.14)', border: '1px solid', borderColor: copied ? 'rgba(0,245,212,0.35)' : 'rgba(121,163,255,0.4)', color: copied ? '#00F5D4' : '#79A3FF' }}
             >
               {copied ? <Check size={13} strokeWidth={2.5} /> : <Copy size={13} strokeWidth={2.5} />}
               {copied ? 'Copied' : 'Copy'}
@@ -152,7 +152,7 @@ export default function EventSharePage() {
               target="_blank"
               rel="noreferrer"
               className="flex items-center justify-center gap-2 rounded-[10px] py-[12px] text-[13px] font-semibold transition-all duration-200"
-              style={{ background: 'rgba(0,191,255,0.08)', border: '1px solid rgba(0,191,255,0.2)', color: '#00BFFF' }}
+              style={{ background: 'rgba(117,161,255,0.08)', border: '1px solid rgba(117,161,255,0.2)', color: '#75A1FF' }}
             >
               Share on X
             </a>
@@ -178,9 +178,9 @@ export default function EventSharePage() {
         </div>
 
         {/* Note */}
-        <div className="rounded-2xl px-4 py-4" style={{ background: 'rgba(176,106,255,0.08)', border: '1px solid rgba(176,106,255,0.2)' }}>
+        <div className="rounded-2xl px-4 py-4" style={{ background: 'rgba(121,163,255,0.08)', border: '1px solid rgba(121,163,255,0.2)' }}>
           <p className="text-[12.5px]" style={{ color: '#D5D6E0' }}>
-            <span className="font-bold" style={{ color: '#B06AFF' }}>This QR code and link never expire.</span> Share them anytime — they point directly to your live event page.
+            <span className="font-bold" style={{ color: '#79A3FF' }}>This QR code and link never expire.</span> Share them anytime — they point directly to your live event page.
           </p>
         </div>
       </div>

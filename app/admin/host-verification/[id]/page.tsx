@@ -82,7 +82,7 @@ export default async function AdminHostVerificationDetailPage({ params }: { para
               label="Website / social"
               value={
                 row.websiteSocial ? (
-                  <a href={row.websiteSocial} target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: '#FF2D95' }}>
+                  <a href={row.websiteSocial} target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: '#2B68FF' }}>
                     {row.websiteSocial}
                   </a>
                 ) : (
@@ -107,7 +107,7 @@ export default async function AdminHostVerificationDetailPage({ params }: { para
           {/* Documents */}
           <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
             <div className="mb-4 flex items-center gap-2 text-[12px] font-bold" style={{ color: '#FFFFFF' }}>
-              <FileImage size={15} color="#FF2D95" /> Documents
+              <FileImage size={15} color="#2B68FF" /> Documents
             </div>
             <div className="grid gap-4 lg:grid-cols-3">
               {VERIFICATION_DOCUMENT_SPECS.map((spec) => {
@@ -123,7 +123,7 @@ export default async function AdminHostVerificationDetailPage({ params }: { para
                           className="max-h-[180px] w-full rounded-lg border object-contain transition-opacity group-hover:opacity-80"
                           style={{ borderColor: 'rgba(255,255,255,0.08)' }}
                         />
-                        <span className="mt-2 block text-[11.5px] font-semibold hover:underline" style={{ color: '#FF2D95' }}>
+                        <span className="mt-2 block text-[11.5px] font-semibold hover:underline" style={{ color: '#2B68FF' }}>
                           Open full size →
                         </span>
                       </a>
@@ -181,7 +181,7 @@ function Section({ title, icon, children }: { title: string; icon: ReactNode; ch
   return (
     <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
       <div className="mb-4 flex items-center gap-2 text-[12px] font-bold" style={{ color: '#FFFFFF' }}>
-        <span style={{ color: '#FF2D95' }}>{icon}</span> {title}
+        <span style={{ color: '#2B68FF' }}>{icon}</span> {title}
       </div>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">{children}</div>
     </div>

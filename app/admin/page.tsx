@@ -22,7 +22,7 @@ const PAYMENT_STYLE: Record<string, { label: string; bg: string; color: string }
   pending: { label: 'Pending', bg: 'rgba(255,214,0,0.12)', color: '#FFD600' },
   confirmed: { label: 'Confirmed', bg: 'rgba(0,245,212,0.1)', color: '#00F5D4' },
   failed: { label: 'Failed', bg: 'rgba(255,138,0,0.1)', color: '#FF8A00' },
-  cancelled: { label: 'Cancelled', bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
+  cancelled: { label: 'Cancelled', bg: 'rgba(255,255,255,0.07)', color: '#8B94A2' },
 };
 
 export default function AdminDashboardPage() {
@@ -87,13 +87,13 @@ export default function AdminDashboardPage() {
           <div className="flex flex-col gap-6">
             {/* Metric Cards */}
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <StatCard label="Active Events" value={String(metrics.totalEvents)} icon={CalendarDays} color="#FF2D95" sub={`${metrics.pendingEvents} pending review`} />
-              <StatCard label="Hosts" value={String(metrics.totalHosts)} icon={Users} color="#B06AFF" />
+              <StatCard label="Active Events" value={String(metrics.totalEvents)} icon={CalendarDays} color="#2B68FF" sub={`${metrics.pendingEvents} pending review`} />
+              <StatCard label="Hosts" value={String(metrics.totalHosts)} icon={Users} color="#79A3FF" />
               {canSeeRevenue && (
                 <StatCard label="Revenue" value={formatNaira(metrics.totalRevenue)} icon={Wallet} color="#00F5D4" sub="confirmed sales" />
               )}
               <StatCard label="Tickets Sold" value={String(metrics.totalTicketsSold)} icon={Ticket} color="#FFD600" />
-              <StatCard label="Upcoming Events" value={String(metrics.upcomingEvents)} icon={Clock} color="#00BFFF" />
+              <StatCard label="Upcoming Events" value={String(metrics.upcomingEvents)} icon={Clock} color="#75A1FF" />
               <StatCard label="Total Orders" value={String(metrics.recentOrders)} icon={ShoppingBag} color="#FFFFFF" />
             </div>
 
@@ -130,13 +130,13 @@ export default function AdminDashboardPage() {
                 <Link
                   href="/admin/hosts"
                   className="group flex items-center justify-between rounded-2xl p-5 transition-transform active:scale-[0.99]"
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(176,106,255,0.2)' }}
+                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(121,163,255,0.2)' }}
                 >
                   <div>
-                    <div className="text-[11px] font-bold uppercase tracking-[1px]" style={{ color: '#B06AFF' }}>Hosts</div>
+                    <div className="text-[11px] font-bold uppercase tracking-[1px]" style={{ color: '#79A3FF' }}>Hosts</div>
                     <div className="mt-1 font-display text-[20px]" style={{ color: '#FFFFFF' }}>{metrics.totalHosts} organizers</div>
                   </div>
-                  <ArrowRight size={18} className="text-[#B06AFF] transition-transform group-hover:translate-x-1" />
+                  <ArrowRight size={18} className="text-[#79A3FF] transition-transform group-hover:translate-x-1" />
                 </Link>
                 <Link
                   href="/admin/orders"
@@ -153,13 +153,13 @@ export default function AdminDashboardPage() {
                   <Link
                     href="/admin/revenue"
                     className="group flex items-center justify-between rounded-2xl p-5 transition-transform active:scale-[0.99]"
-                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,45,149,0.2)' }}
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(43,104,255,0.2)' }}
                   >
                     <div>
-                      <div className="text-[11px] font-bold uppercase tracking-[1px]" style={{ color: '#FF2D95' }}>Revenue</div>
+                      <div className="text-[11px] font-bold uppercase tracking-[1px]" style={{ color: '#2B68FF' }}>Revenue</div>
                       <div className="mt-1 font-display text-[20px]" style={{ color: '#FFFFFF' }}>{formatNaira(metrics.totalRevenue)}</div>
                     </div>
-                    <ArrowRight size={18} className="text-[#FF2D95] transition-transform group-hover:translate-x-1" />
+                    <ArrowRight size={18} className="text-[#2B68FF] transition-transform group-hover:translate-x-1" />
                   </Link>
                 )}
               </div>
@@ -169,7 +169,7 @@ export default function AdminDashboardPage() {
             <div>
               <div className="mb-3 flex items-center justify-between">
                 <span className="text-[13px] font-bold" style={{ color: '#FFFFFF' }}>Recent Orders</span>
-                <Link href="/admin/orders" className="text-[11px] font-semibold" style={{ color: '#FF2D95' }}>View all →</Link>
+                <Link href="/admin/orders" className="text-[11px] font-semibold" style={{ color: '#2B68FF' }}>View all →</Link>
               </div>
               {recentOrders.length === 0 ? (
                 <EmptyBlock title="No orders yet" />

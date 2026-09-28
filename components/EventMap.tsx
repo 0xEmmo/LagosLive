@@ -117,7 +117,7 @@ function popupHtml(party: Party) {
     </style>
     <div style="position:relative;height:88px">
       ${cover}
-      <span style="position:absolute;left:8px;bottom:8px;background:${party.vibe in VC ? VC[party.vibe] : '#FF2D95'};color:#fff;padding:2px 9px;border-radius:12px;font:700 10px/1.5 var(--font-inter),sans-serif;text-transform:uppercase;letter-spacing:0.4px">${esc(party.vibe)}</span>
+      <span style="position:absolute;left:8px;bottom:8px;background:${party.vibe in VC ? VC[party.vibe] : '#2B68FF'};color:#fff;padding:2px 9px;border-radius:12px;font:700 10px/1.5 var(--font-inter),sans-serif;text-transform:uppercase;letter-spacing:0.4px">${esc(party.vibe)}</span>
     </div>
     <div style="padding:10px 12px 12px">
       <div style="font:700 14px/1.35 var(--font-inter),sans-serif;color:#fff;margin-bottom:3px">${esc(party.title)}${statusTag(party) ?? ''}</div>
@@ -127,12 +127,12 @@ function popupHtml(party: Party) {
         <span style="color:#00F5D4;font-weight:700;font-size:14px">${esc(priceLabel)}</span>
         <span style="color:#6B6C80;font-size:10px;text-transform:uppercase;letter-spacing:0.4px">${party.feeNum === 0 ? 'Free Entry' : 'Starting price'}</span>
       </div>
-      <button type="button" data-ll-view="${party.id}" style="width:100%;background:linear-gradient(135deg,#FF2D95,#8A2BE2);border:none;border-radius:8px;padding:9px;color:#fff;font:700 12px/1 var(--font-inter),sans-serif;cursor:pointer">View Event</button>
+      <button type="button" data-ll-view="${party.id}" style="width:100%;background:linear-gradient(135deg,#2B68FF,#6E8DFF);border:none;border-radius:8px;padding:9px;color:#fff;font:700 12px/1 var(--font-inter),sans-serif;cursor:pointer">View Event</button>
     </div>`;
 }
 
 function vibeColor(vibe: string) {
-  return vibe in VC ? VC[vibe as keyof typeof VC] : '#FF2D95';
+  return vibe in VC ? VC[vibe as keyof typeof VC] : '#2B68FF';
 }
 
 export default function EventMap({ parties, userLocation, onSelectParty, showHeatmap = false, single = false }: EventMapProps) {
@@ -213,10 +213,10 @@ export default function EventMap({ parties, userLocation, onSelectParty, showHea
               'interpolate',
               ['linear'],
               ['heatmap-density'],
-              0, 'rgba(0,191,255,0)',
-              0.22, 'rgba(0,191,255,0.5)',
-              0.5, 'rgba(138,43,226,0.72)',
-              0.78, 'rgba(255,45,149,0.88)',
+              0, 'rgba(117,161,255,0)',
+              0.22, 'rgba(117,161,255,0.5)',
+              0.5, 'rgba(110,141,255,0.72)',
+              0.78, 'rgba(43,104,255,0.88)',
               1, 'rgba(255,214,0,0.95)',
             ],
           },
@@ -229,7 +229,7 @@ export default function EventMap({ parties, userLocation, onSelectParty, showHea
           source: 'events',
           filter: ['has', 'point_count'],
           paint: {
-            'circle-color': '#FF2D95',
+            'circle-color': '#2B68FF',
             'circle-radius': ['interpolate', ['linear'], ['zoom'], 1, 18, 10, 24, 25, 34],
             'circle-stroke-width': 2,
             'circle-stroke-color': '#0B0B10',
@@ -267,7 +267,7 @@ export default function EventMap({ parties, userLocation, onSelectParty, showHea
               'Concert', VC.Concert,
               'House Party', VC['House Party'],
               'Lounge', VC.Lounge,
-              '#FF2D95',
+              '#2B68FF',
             ],
             'circle-stroke-width': 1.5,
             'circle-stroke-color': 'rgba(255,255,255,0.85)',

@@ -35,7 +35,7 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
   if (authLoading || !user) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 size={26} strokeWidth={2} color="#FF2D95" className="animate-spin" />
+        <Loader2 size={26} strokeWidth={2} color="#2B68FF" className="animate-spin" />
       </div>
     );
   }
@@ -43,7 +43,7 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
     if (loading) {
       return (
         <div className="flex min-h-[60vh] items-center justify-center">
-          <Loader2 size={26} strokeWidth={2} color="#FF2D95" className="animate-spin" />
+          <Loader2 size={26} strokeWidth={2} color="#2B68FF" className="animate-spin" />
         </div>
       );
     }
@@ -122,7 +122,7 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
         )}
         {ticketTypes === null ? (
           <div className="flex min-h-[40vh] items-center justify-center">
-            <Loader2 size={26} strokeWidth={2} color="#FF2D95" className="animate-spin" />
+            <Loader2 size={26} strokeWidth={2} color="#2B68FF" className="animate-spin" />
           </div>
         ) : (
           <PartyForm initial={party} initialTicketTypes={ticketTypes} onSubmit={submit} disableSubmit={isAdminEditingOthersEvent} />

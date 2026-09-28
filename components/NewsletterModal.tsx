@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
+import { usePathname } from 'next/navigation';
 import { Loader2, Mail, X, PartyPopper } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { useLagosLiveStore } from '@/lib/store';
@@ -9,6 +10,9 @@ const STORAGE_KEY = 'll_newsletter_dismissed';
 const SHOW_DELAY_MS = 15000;
 
 export default function NewsletterModal() {
+  const pathname = usePathname() ?? '/';
+  const isHome = pathname === '/';
+  const operationalRoute = pathname.startsWith('/admin') || pathname.startsWith('/host') || pathname.includes('/check-in');
   const showToast = useLagosLiveStore((s) => s.showToast);
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
@@ -16,11 +20,15 @@ export default function NewsletterModal() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    if (operationalRoute) {
+      setOpen(false);
+      return;
+    }
     if (typeof window === 'undefined') return;
     if (localStorage.getItem(STORAGE_KEY)) return;
     const timer = setTimeout(() => setOpen(true), SHOW_DELAY_MS);
     return () => clearTimeout(timer);
-  }, []);
+  }, [operationalRoute, pathname]);
 
   const close = () => {
     setOpen(false);
@@ -50,7 +58,7 @@ export default function NewsletterModal() {
     }
   };
 
-  if (!open) return null;
+  if (operationalRoute || !open) return null;
 
   return (
     <div
@@ -60,7 +68,7 @@ export default function NewsletterModal() {
     >
       <div
         className="relative w-full max-w-[380px] animate-[modalUp_0.35s_cubic-bezier(0.16,1,0.3,1)] overflow-hidden rounded-3xl p-6"
-        style={{ background: '#12121C', border: '1px solid rgba(255,45,149,0.25)', boxShadow: '0 30px 80px rgba(0,0,0,0.6)' }}
+        style={{ background: '#101318', border: isHome ? '1px solid rgba(255,45,149,0.25)' : '1px solid rgba(86,136,255,0.3)', boxShadow: '0 30px 80px rgba(0,0,0,0.6)' }}
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -74,7 +82,7 @@ export default function NewsletterModal() {
 
         <div
           className="mb-4 flex h-[52px] w-[52px] items-center justify-center rounded-2xl"
-          style={{ background: 'linear-gradient(135deg,#FF2D95,#8A2BE2)', boxShadow: '0 10px 28px rgba(255,45,149,0.4)' }}
+          style={{ background: isHome ? 'linear-gradient(135deg,#FF2D95,#8A2BE2)' : 'linear-gradient(135deg,#1F5FFF,#6E8DFF)', boxShadow: isHome ? '0 10px 28px rgba(255,45,149,0.4)' : '0 10px 28px rgba(43,104,255,0.34)' }}
         >
           <Mail size={22} strokeWidth={2} color="#FFFFFF" />
         </div>
@@ -107,7 +115,7 @@ export default function NewsletterModal() {
             type="submit"
             disabled={isLoading}
             className="mt-1 flex w-full items-center justify-center gap-2 rounded-[11px] py-3.5 text-[13px] font-bold uppercase tracking-[0.5px] transition-all duration-200 disabled:opacity-40"
-            style={{ background: 'linear-gradient(135deg,#FF2D95,#8A2BE2)', color: '#FFFFFF', boxShadow: '0 10px 28px rgba(255,45,149,0.3)' }}
+            style={{ background: isHome ? 'linear-gradient(135deg,#FF2D95,#8A2BE2)' : 'linear-gradient(135deg,#1F5FFF,#6E8DFF)', color: '#FFFFFF', boxShadow: isHome ? '0 10px 28px rgba(255,45,149,0.3)' : '0 10px 28px rgba(43,104,255,0.28)' }}
           >
             {isLoading ? <Loader2 size={15} strokeWidth={2.5} className="animate-spin" /> : <PartyPopper size={15} strokeWidth={2} />}
             {isLoading ? 'Subscribing…' : 'Subscribe'}

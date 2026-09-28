@@ -85,7 +85,7 @@ function Section({ step, title, hint, children }: { step: number; title: string;
       <div className="mb-3.5 flex items-center gap-2.5">
         <div
           className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full font-heading text-[11px] font-bold text-white"
-          style={{ background: 'linear-gradient(135deg,#FF2D95,#8A2BE2)' }}
+          style={{ background: 'linear-gradient(135deg,#2B68FF,#6E8DFF)' }}
         >
           {step}
         </div>
@@ -650,10 +650,10 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
               onClick={() => switchFree(false)}
               className="flex-1 rounded-[10px] py-[11px] text-[13px] font-semibold transition-all duration-200 active:scale-[0.97]"
               style={{
-                background: !isFree ? 'rgba(255,45,149,0.08)' : 'rgba(255,255,255,0.04)',
+                background: !isFree ? 'rgba(43,104,255,0.08)' : 'rgba(255,255,255,0.04)',
                 border: '1px solid',
-                borderColor: !isFree ? 'rgba(255,45,149,0.3)' : 'rgba(255,255,255,0.08)',
-                color: !isFree ? '#FF2D95' : '#A7A8B5',
+                borderColor: !isFree ? 'rgba(43,104,255,0.3)' : 'rgba(255,255,255,0.08)',
+                color: !isFree ? '#2B68FF' : '#A7A8B5',
               }}
             >
               Paid Entry
@@ -811,7 +811,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
               type="button"
               onClick={addTicket}
               className="flex items-center justify-center gap-1.5 rounded-[10px] py-[11px] text-[12.5px] font-semibold transition-all duration-200 active:scale-[0.98]"
-              style={{ background: 'rgba(255,45,149,0.07)', border: '1px dashed rgba(255,45,149,0.35)', color: '#FF2D95' }}
+              style={{ background: 'rgba(43,104,255,0.07)', border: '1px dashed rgba(43,104,255,0.35)', color: '#2B68FF' }}
             >
               <Plus size={14} strokeWidth={2.5} />
               Add Ticket Type
@@ -930,7 +930,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
               type="button"
               onClick={() => imageRef.current?.click()}
               className="mt-2 w-full rounded-[10px] py-[11px] text-[12.5px] font-semibold transition-colors duration-200 active:opacity-80"
-              style={{ background: 'rgba(255,45,149,0.07)', border: '1px dashed rgba(255,45,149,0.35)', color: '#FF2D95' }}
+              style={{ background: 'rgba(43,104,255,0.07)', border: '1px dashed rgba(43,104,255,0.35)', color: '#2B68FF' }}
             >
               {previewUrl ? 'Choose a different image' : 'Change image'}
             </button>
@@ -943,12 +943,12 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
             onClick={() => imageRef.current?.click()}
             className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed py-8 transition-all duration-200"
             style={{
-              borderColor: dragOver ? 'rgba(255,45,149,0.5)' : 'rgba(255,255,255,0.1)',
-              background: dragOver ? 'rgba(255,45,149,0.04)' : 'transparent',
+              borderColor: dragOver ? 'rgba(43,104,255,0.5)' : 'rgba(255,255,255,0.1)',
+              background: dragOver ? 'rgba(43,104,255,0.04)' : 'transparent',
             }}
           >
-            <ImagePlus size={24} strokeWidth={1.5} color={dragOver ? '#FF2D95' : '#6B6C80'} />
-            <div className="text-[12px] font-semibold" style={{ color: dragOver ? '#FF2D95' : '#A7A8B5' }}>
+            <ImagePlus size={24} strokeWidth={1.5} color={dragOver ? '#2B68FF' : '#6B6C80'} />
+            <div className="text-[12px] font-semibold" style={{ color: dragOver ? '#2B68FF' : '#A7A8B5' }}>
               {dragOver ? 'Drop image here' : 'Tap to upload or drag an image'}
             </div>
             <div className="text-[10.5px]" style={{ color: '#6B6C80' }}>JPEG, PNG or WebP · Max 5 MB</div>

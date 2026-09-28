@@ -10,7 +10,7 @@ import { fetchSupportMessages, createSupportMessage, type SupportMessageRow, typ
 
 const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
   open: { bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
-  in_progress: { bg: 'rgba(176,106,255,0.12)', color: '#B06AFF' },
+  in_progress: { bg: 'rgba(121,163,255,0.12)', color: '#79A3FF' },
   resolved: { bg: 'rgba(0,245,212,0.1)', color: '#00F5D4' },
   closed: { bg: 'rgba(107,108,128,0.15)', color: '#6B6C80' },
 };
@@ -121,8 +121,8 @@ export default function SupportTicketPage() {
             {/* Original message */}
             <div className="mb-3 rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <div className="mb-2 flex items-center gap-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full" style={{ background: 'rgba(255,45,149,0.15)' }}>
-                  <span className="text-[10px] font-bold" style={{ color: '#FF2D95' }}>U</span>
+                <div className="flex h-6 w-6 items-center justify-center rounded-full" style={{ background: 'rgba(43,104,255,0.15)' }}>
+                  <span className="text-[10px] font-bold" style={{ color: '#2B68FF' }}>U</span>
                 </div>
                 <span className="text-[11px] font-semibold" style={{ color: '#A7A8B5' }}>You</span>
                 <span className="text-[10px]" style={{ color: '#6B6C80' }}>{new Date(ticket.created_at).toLocaleString()}</span>
@@ -140,16 +140,16 @@ export default function SupportTicketPage() {
                     key={msg.id}
                     className="rounded-2xl p-4"
                     style={{
-                      background: isOwn ? 'rgba(255,45,149,0.06)' : 'rgba(0,245,212,0.04)',
-                      border: `1px solid ${isOwn ? 'rgba(255,45,149,0.15)' : 'rgba(0,245,212,0.12)'}`,
+                      background: isOwn ? 'rgba(43,104,255,0.06)' : 'rgba(0,245,212,0.04)',
+                      border: `1px solid ${isOwn ? 'rgba(43,104,255,0.15)' : 'rgba(0,245,212,0.12)'}`,
                     }}
                   >
                     <div className="mb-2 flex items-center gap-2">
                       <div
                         className="flex h-6 w-6 items-center justify-center rounded-full"
-                        style={{ background: isOwn ? 'rgba(255,45,149,0.15)' : 'rgba(0,245,212,0.12)' }}
+                        style={{ background: isOwn ? 'rgba(43,104,255,0.15)' : 'rgba(0,245,212,0.12)' }}
                       >
-                        <span className="text-[10px] font-bold" style={{ color: isOwn ? '#FF2D95' : '#00F5D4' }}>
+                        <span className="text-[10px] font-bold" style={{ color: isOwn ? '#2B68FF' : '#00F5D4' }}>
                           {isOwn ? 'U' : 'S'}
                         </span>
                       </div>
@@ -183,7 +183,7 @@ export default function SupportTicketPage() {
                   type="submit"
                   disabled={sending || !newMessage.trim()}
                   className="flex items-center justify-center rounded-xl px-4 py-3 transition-all disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg, #FF2D95, #8A2BE2)', color: '#FFFFFF' }}
+                  style={{ background: 'linear-gradient(135deg, #2B68FF, #6E8DFF)', color: '#FFFFFF' }}
                 >
                   <Send size={16} strokeWidth={2.2} />
                 </button>

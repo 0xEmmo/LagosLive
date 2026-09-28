@@ -122,7 +122,7 @@ export default function AdminStaffPage() {
               className="flex-1 rounded-[10px] px-4 py-2 text-[12.5px] font-semibold capitalize transition-colors"
               style={
                 tab === t
-                  ? { background: 'rgba(255,45,149,0.14)', color: '#FF2D95' }
+                  ? { background: 'rgba(43,104,255,0.14)', color: '#2B68FF' }
                   : { color: '#A7A8B5' }
               }
             >
@@ -399,7 +399,7 @@ function RolesTab({
                             type="checkbox"
                             checked={perms.has(p)}
                             onChange={() => setEditing((e) => (e ? { ...e, perms: togglePerm(e.perms, p) } : e))}
-                            className="h-3.5 w-3.5 accent-[#FF2D95]"
+                            className="h-3.5 w-3.5 accent-[#2B68FF]"
                           />
                           <span className="font-mono text-[10.5px]">{p}</span>
                         </label>
@@ -433,9 +433,9 @@ function RolesTab({
 
       {/* Create custom role */}
       {canManage && (
-        <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,45,149,0.2)' }}>
+        <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(43,104,255,0.2)' }}>
           <div className="mb-3 flex items-center gap-2">
-            <Plus size={14} color="#FF2D95" />
+            <Plus size={14} color="#2B68FF" />
             <span className="text-[13px] font-bold" style={{ color: '#FFFFFF' }}>Create Custom Role</span>
           </div>
           <div className="mb-3 grid gap-2 sm:grid-cols-2">
@@ -465,7 +465,7 @@ function RolesTab({
                         type="checkbox"
                         checked={newRole.perms.has(p)}
                         onChange={() => setNewRole((s) => ({ ...s, perms: togglePerm(s.perms, p) }))}
-                        className="h-3.5 w-3.5 accent-[#FF2D95]"
+                        className="h-3.5 w-3.5 accent-[#2B68FF]"
                       />
                       <span className="flex items-center gap-1.5 font-mono text-[10.5px]">
                         {SENSITIVE_PERMISSIONS.has(p as never) && <ShieldCheck size={10} strokeWidth={2.5} color="#FF8A00" />}
@@ -482,7 +482,7 @@ function RolesTab({
               onClick={handleCreate}
               disabled={creating}
               className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12.5px] font-semibold disabled:opacity-50"
-              style={{ background: 'rgba(255,45,149,0.14)', border: '1px solid rgba(255,45,149,0.35)', color: '#FF2D95' }}
+              style={{ background: 'rgba(43,104,255,0.14)', border: '1px solid rgba(43,104,255,0.35)', color: '#2B68FF' }}
             >
               <Check size={13} strokeWidth={2.5} />
               {creating ? 'Creating…' : `Create role (${newRole.perms.size} permissions)`}

@@ -64,7 +64,7 @@ export default function CancelEventPage({ params }: { params: { id: string } }) 
     if (authLoading) {
       return (
         <div className="flex min-h-[60vh] items-center justify-center">
-          <Loader2 size={26} strokeWidth={2} color="#FF2D95" className="animate-spin" />
+          <Loader2 size={26} strokeWidth={2} color="#2B68FF" className="animate-spin" />
         </div>
       );
     }
@@ -75,7 +75,7 @@ export default function CancelEventPage({ params }: { params: { id: string } }) 
     if (loading) {
       return (
         <div className="flex min-h-[60vh] items-center justify-center">
-          <Loader2 size={26} strokeWidth={2} color="#FF2D95" className="animate-spin" />
+          <Loader2 size={26} strokeWidth={2} color="#2B68FF" className="animate-spin" />
         </div>
       );
     }
@@ -92,9 +92,9 @@ export default function CancelEventPage({ params }: { params: { id: string } }) 
 
       <div className="flex flex-col gap-5 p-5">
         {party.cancelledAt ? (
-          <div className="flex flex-col items-center gap-4 rounded-2xl px-6 py-14 text-center" style={{ background: 'rgba(255,45,149,0.05)', border: '1px solid rgba(255,45,149,0.2)' }}>
-            <div className="flex h-[64px] w-[64px] items-center justify-center rounded-full" style={{ background: 'rgba(255,45,149,0.1)' }}>
-              <CalendarDays size={28} strokeWidth={1.5} color="#FF2D95" />
+          <div className="flex flex-col items-center gap-4 rounded-2xl px-6 py-14 text-center" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div className="flex h-[64px] w-[64px] items-center justify-center rounded-full" style={{ background: 'rgba(255,255,255,0.07)' }}>
+              <CalendarDays size={28} strokeWidth={1.5} color="#8B94A2" />
             </div>
             <div className="font-display text-[26px] tracking-[1px]" style={{ color: '#FFFFFF' }}>
               Event already cancelled
@@ -106,12 +106,12 @@ export default function CancelEventPage({ params }: { params: { id: string } }) 
         ) : (
           <>
             {/* Event summary */}
-            <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,45,149,0.16)' }}>
+            <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(43,104,255,0.16)' }}>
               <div className="font-heading text-[18px] font-bold" style={{ color: '#FFFFFF' }}>{party.title}</div>
               <div className="mt-1 text-[12px]" style={{ color: '#A7A8B5' }}>{party.date} · {party.time}</div>
               <div className="mt-1 text-[12px]" style={{ color: '#A7A8B5' }}>{party.location}</div>
               <div className="mt-3 flex items-center gap-2 text-[12px]" style={{ color: '#A7A8B5' }}>
-                <Users size={13} strokeWidth={2} color="#FF2D95" />
+                <Users size={13} strokeWidth={2} color="#2B68FF" />
                 {confirmedCount} {confirmedCount === 1 ? 'guest' : 'guests'} to refund
                 {confirmedCount > 0 && (
                   <span style={{ color: '#6B6C80' }}>
@@ -140,11 +140,11 @@ export default function CancelEventPage({ params }: { params: { id: string } }) 
             </div>
 
             {/* Warning */}
-            <div className="rounded-xl p-4" style={{ background: 'rgba(255,45,149,0.08)', border: '1px solid rgba(255,45,149,0.25)' }}>
+            <div className="rounded-xl p-4" style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)' }}>
               <div className="flex items-start gap-2.5">
-                <AlertTriangle size={16} strokeWidth={2} color="#FF2D95" className="mt-0.5 flex-shrink-0" />
-                <p className="text-[13px] leading-[1.6]" style={{ color: '#F2A5C9' }}>
-                  <strong style={{ color: '#FF2D95' }}>This action cannot be undone.</strong>{' '}
+                <AlertTriangle size={16} strokeWidth={2} color="#F87171" className="mt-0.5 flex-shrink-0" />
+                <p className="text-[13px] leading-[1.6]" style={{ color: '#FDA4AF' }}>
+                  <strong style={{ color: '#F87171' }}>This action cannot be undone.</strong>{' '}
                   All guests will receive instant refunds and a cancellation email.
                 </p>
               </div>
@@ -156,7 +156,7 @@ export default function CancelEventPage({ params }: { params: { id: string } }) 
                 onClick={handleCancel}
                 disabled={isLoading || !reason.trim()}
                 className="flex w-full items-center justify-center gap-2 rounded-[14px] py-4 text-[13px] font-bold uppercase tracking-[0.5px] transition-all duration-200 disabled:opacity-40"
-                style={{ background: 'linear-gradient(135deg,#FF2D95,#8A2BE2)', color: '#FFFFFF', boxShadow: '0 10px 30px rgba(255,45,149,0.3)' }}
+                style={{ background: 'linear-gradient(135deg,#DC3E4B,#F87171)', color: '#FFFFFF', boxShadow: '0 10px 30px rgba(248,113,113,0.2)' }}
               >
                 {isLoading ? (
                   <>

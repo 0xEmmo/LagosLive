@@ -15,15 +15,15 @@ const PAYMENT_STYLE: Record<string, { label: string; bg: string; color: string }
   pending: { label: 'Pending', bg: 'rgba(255,214,0,0.12)', color: '#FFD600' },
   confirmed: { label: 'Confirmed', bg: 'rgba(0,245,212,0.1)', color: '#00F5D4' },
   failed: { label: 'Failed', bg: 'rgba(255,138,0,0.1)', color: '#FF8A00' },
-  cancelled: { label: 'Cancelled', bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
+  cancelled: { label: 'Cancelled', bg: 'rgba(255,255,255,0.07)', color: '#8B94A2' },
 };
 
 const REFUND_STYLE: Record<string, { label: string; bg: string; color: string }> = {
   none: { label: 'None', bg: 'rgba(255,255,255,0.06)', color: '#A7A8B5' },
   requested: { label: 'Requested', bg: 'rgba(255,214,0,0.12)', color: '#FFD600' },
-  processing: { label: 'Processing', bg: 'rgba(176,106,255,0.1)', color: '#B06AFF' },
+  processing: { label: 'Processing', bg: 'rgba(121,163,255,0.1)', color: '#79A3FF' },
   refunded: { label: 'Refunded', bg: 'rgba(0,245,212,0.1)', color: '#00F5D4' },
-  rejected: { label: 'Rejected', bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
+  rejected: { label: 'Rejected', bg: 'rgba(248,113,113,0.12)', color: '#F87171' },
   failed: { label: 'Failed', bg: 'rgba(255,138,0,0.1)', color: '#FF8A00' },
 };
 
@@ -201,10 +201,10 @@ export default function AdminOrderDetailPage() {
 
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
               <StatCard label="Guest" value={order.customer_email ?? 'Guest'} icon={Mail} color="#00F5D4" />
-              <StatCard label="Event" value={order.parties?.title ?? '—'} icon={CalendarDays} color="#B06AFF" />
+              <StatCard label="Event" value={order.parties?.title ?? '—'} icon={CalendarDays} color="#79A3FF" />
               <StatCard label="Amount" value={formatNaira(order.total)} icon={Wallet} color="#FFD600" />
-              <StatCard label="Status" value={st?.label ?? '—'} icon={Ticket} color="#FF2D95" />
-              <StatCard label="Check-in" value={order.check_in_status ?? '—'} icon={ClipboardCheck} color="#00BFFF" />
+              <StatCard label="Status" value={st?.label ?? '—'} icon={Ticket} color="#2B68FF" />
+              <StatCard label="Check-in" value={order.check_in_status ?? '—'} icon={ClipboardCheck} color="#75A1FF" />
               <StatCard label="Refund" value={rs?.label ?? '—'} icon={RotateCcw} color="#FFFFFF" />
             </div>
 
@@ -315,7 +315,7 @@ export default function AdminOrderDetailPage() {
                   onClick={addNote}
                   disabled={noteBusy || !noteBody.trim()}
                   className="self-end rounded-[10px] px-4 py-2 text-[12.5px] font-semibold disabled:opacity-50"
-                  style={{ background: 'rgba(255,45,149,0.14)', border: '1px solid rgba(255,45,149,0.35)', color: '#FF2D95' }}
+                  style={{ background: 'rgba(43,104,255,0.14)', border: '1px solid rgba(43,104,255,0.35)', color: '#2B68FF' }}
                 >
                   Add
                 </button>

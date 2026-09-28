@@ -6,9 +6,7 @@ import AuthListener from '@/components/AuthListener';
 import ReminderScheduler from '@/components/ReminderScheduler';
 import NewsletterModal from '@/components/NewsletterModal';
 import Toast from '@/components/Toast';
-import BottomNav from '@/components/BottomNav';
-import AppHeader from '@/components/home/HomeNavbar';
-import Footer from '@/components/Footer';
+import GlobalChrome from '@/components/GlobalChrome';
 import EntryShutter from '@/components/EntryShutter';
 import { appUrl, DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGE_HEIGHT, DEFAULT_OG_IMAGE_WIDTH } from '@/lib/seo';
 
@@ -85,7 +83,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" data-theme="dark" className={`${bebasNeue.variable} ${inter.variable}`}>
       <body className="font-heading bg-bg" style={{ paddingBottom: '84px' }}>
         <EntryShutter />
-        <div className="fixed inset-0 z-[-1] bg-noise">
+        <div className="ll-global-background fixed inset-0 z-[-1] bg-noise">
           <div className="absolute inset-0 bg-glow-top" />
           <div className="absolute inset-0 bg-glow-right" />
           <div className="absolute inset-0 bg-glow-bottom" />
@@ -95,10 +93,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ReminderScheduler />
         <Toast />
         <NewsletterModal />
-        <AppHeader />
+        <GlobalChrome placement="header" />
         {children}
-        <Footer />
-        <BottomNav />
+        <GlobalChrome placement="footer" />
+        <GlobalChrome placement="bottom" />
       </body>
     </html>
   );

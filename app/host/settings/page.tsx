@@ -107,7 +107,7 @@ export default function HostSettingsPage() {
             {/* Profile Section */}
             <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <div className="mb-4 flex items-center gap-2">
-                <User size={16} strokeWidth={2} color="#FF2D95" />
+                <User size={16} strokeWidth={2} color="#2B68FF" />
                 <span className="text-[13px] font-bold" style={{ color: '#FFFFFF' }}>Profile</span>
               </div>
               <div className="flex flex-col gap-3">

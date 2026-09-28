@@ -11,19 +11,19 @@ import { formatNaira } from '@/lib/filters';
 const PAYMENT_BADGE: Record<string, { bg: string; color: string }> = {
   confirmed: { bg: 'rgba(0,245,212,0.1)', color: '#00F5D4' },
   pending: { bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
-  failed: { bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
+  failed: { bg: 'rgba(248,113,113,0.12)', color: '#F87171' },
   cancelled: { bg: 'rgba(107,108,128,0.15)', color: '#6B6C80' },
 };
 
 const PAYOUT_STATUS: Record<string, { bg: string; color: string }> = {
   pending: { bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
-  processing: { bg: 'rgba(176,106,255,0.12)', color: '#B06AFF' },
+  processing: { bg: 'rgba(121,163,255,0.12)', color: '#79A3FF' },
   approved: { bg: 'rgba(0,245,212,0.1)', color: '#00F5D4' },
   // A transfer has been sent and is not confirmed. Distinct from 'approved'
   // because the next step is Paystack's, not finance's.
-  transfer_pending: { bg: 'rgba(0,191,255,0.14)', color: '#00BFFF' },
+  transfer_pending: { bg: 'rgba(117,161,255,0.14)', color: '#75A1FF' },
   paid: { bg: 'rgba(0,245,212,0.18)', color: '#00F5D4' },
-  rejected: { bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
+  rejected: { bg: 'rgba(248,113,113,0.12)', color: '#F87171' },
   reconciliation_required: { bg: 'rgba(255,138,0,0.16)', color: '#FF8A00' },
 };
 
@@ -214,8 +214,8 @@ export default function RevenuePage() {
             )}
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <StatCard label="Total Revenue" value={formatNaira(totalRevenue)} icon={Wallet} color="#00F5D4" sub="confirmed orders" />
-              <StatCard label="This Month" value={formatNaira(thisMonthRevenue)} icon={ArrowUpRight} color="#FF2D95" sub={`${thisMonth.length} orders`} />
-              <StatCard label="Pending Payouts" value={formatNaira(pendingPayouts)} icon={Clock} color="#B06AFF" sub="processing + pending" />
+              <StatCard label="This Month" value={formatNaira(thisMonthRevenue)} icon={ArrowUpRight} color="#2B68FF" sub={`${thisMonth.length} orders`} />
+              <StatCard label="Pending Payouts" value={formatNaira(pendingPayouts)} icon={Clock} color="#79A3FF" sub="processing + pending" />
               <StatCard label="Refunds" value={`${refundCount} (${formatNaira(refundAmount)})`} icon={RotateCcw} color="#FF8A00" sub="orders refunded" />
             </div>
 
@@ -313,7 +313,7 @@ export default function RevenuePage() {
                               <button
                                 onClick={() => handlePayoutAction(p)}
                                 className="rounded-lg px-3 py-1.5 text-[11px] font-bold transition-colors"
-                                style={{ background: 'rgba(255,45,149,0.12)', border: '1px solid rgba(255,45,149,0.3)', color: '#FF2D95' }}
+                                style={{ background: 'rgba(43,104,255,0.12)', border: '1px solid rgba(43,104,255,0.3)', color: '#2B68FF' }}
                               >
                                 {ACTION_LABEL[p.status]}
                               </button>
@@ -337,7 +337,7 @@ export default function RevenuePage() {
                               <button
                                 onClick={() => handlePayoutReject(p)}
                                 className="rounded-lg px-3 py-1.5 text-[11px] font-bold transition-colors"
-                                style={{ background: 'rgba(255,45,149,0.06)', border: '1px solid rgba(255,45,149,0.2)', color: '#FF8A00' }}
+                                style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.26)', color: '#F87171' }}
                               >
                                 Reject
                               </button>
@@ -437,7 +437,7 @@ function ReconciliationPanel({
               <button
                 onClick={() => onReject(p)}
                 className="rounded-lg px-3 py-1.5 text-[11px] font-bold"
-                style={{ background: 'rgba(255,45,149,0.06)', border: '1px solid rgba(255,45,149,0.2)', color: '#FF2D95' }}
+                style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.26)', color: '#F87171' }}
               >
                 Reject
               </button>

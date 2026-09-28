@@ -10,7 +10,7 @@ import { fetchAllReviews, moderateReview, type ReviewRow, type ReviewModStatus }
 const STAT_COLORS: Record<ReviewModStatus, { bg: string; color: string }> = {
   visible: { bg: 'rgba(0,245,212,0.1)', color: '#00F5D4' },
   hidden: { bg: 'rgba(255,214,0,0.1)', color: '#FFD600' },
-  removed: { bg: 'rgba(255,45,149,0.12)', color: '#FF2D95' },
+  removed: { bg: 'rgba(248,113,113,0.12)', color: '#F87171' },
 };
 
 const FILTERS: { key: ReviewModStatus | 'all'; label: string }[] = [
@@ -175,7 +175,7 @@ export default function AdminReviewsPage() {
                         onClick={() => apply(review, 'removed')}
                         disabled={busyId === review.id}
                         className="rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition-colors disabled:opacity-50"
-                        style={{ background: 'rgba(255,45,149,0.12)', border: '1px solid rgba(255,45,149,0.3)', color: '#FF2D95' }}
+                        style={{ background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.3)', color: '#F87171' }}
                         title="Permanently remove (audit logged)"
                       >
                         <Ban size={13} strokeWidth={2.2} />

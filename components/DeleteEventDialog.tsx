@@ -86,7 +86,7 @@ export default function DeleteEventDialog({ open, eventName, onClose, onDelete }
             onClick={onDelete}
             disabled={isDeleting}
             className="flex flex-1 items-center justify-center gap-2 rounded-[11px] py-3 text-[13px] font-bold uppercase tracking-[0.5px] transition-all disabled:opacity-50"
-            style={{ background: 'linear-gradient(135deg,#FF8A00,#FF2D95)', color: '#FFFFFF', boxShadow: '0 10px 28px rgba(255,45,149,0.3)' }}
+            style={{ background: 'linear-gradient(135deg,#DC3E4B,#F87171)', color: '#FFFFFF', boxShadow: '0 10px 28px rgba(248,113,113,0.2)' }}
           >
             {isDeleting ? <Loader2 size={15} strokeWidth={2.5} className="animate-spin" /> : null}
             {isDeleting ? 'Deleting…' : 'Delete Event'}

@@ -1104,3 +1104,164 @@ select option {
   .ll-home-skeleton__media,
   .ll-featured-skeleton > div { animation: none; }
 }
+
+
+/* ---------------------------------------------------------
+   Non-home application surfaces
+   These tokens are scoped to app routes so the completed homepage
+   keeps its own art direction and layout untouched.
+--------------------------------------------------------- */
+.route-scope--public,
+.route-scope--admin,
+.route-scope--host,
+.route-scope--host-checkin,
+.route-scope--checkin {
+  --c-bg: #050608;
+  --c-bg-secondary: #0b0e13;
+  --c-card: #101318;
+  --c-glass: rgba(255, 255, 255, 0.045);
+  --c-glass-hover: rgba(255, 255, 255, 0.075);
+  --c-border: rgba(255, 255, 255, 0.1);
+  --c-border-hover: rgba(255, 255, 255, 0.17);
+  --c-pink: #2b68ff;
+  --c-purple: #6e8dff;
+  --c-blue: #75a1ff;
+  --c-header: rgba(5, 7, 11, 0.94);
+  --c-nav: rgba(5, 7, 11, 0.97);
+  color-scheme: dark;
+}
+
+.route-scope--public .gradient-text,
+.route-scope--admin .gradient-text,
+.route-scope--host .gradient-text,
+.route-scope--host-checkin .gradient-text,
+.route-scope--checkin .gradient-text {
+  background-image: linear-gradient(100deg, #f4f7ff 0%, #78a4ff 100%);
+}
+
+.route-scope--public .btn-primary,
+.route-scope--admin .btn-primary,
+.route-scope--host .btn-primary,
+.route-scope--host-checkin .btn-primary,
+.route-scope--checkin .btn-primary {
+  background: #1559f7;
+  box-shadow: 0 10px 32px rgba(31, 95, 255, 0.24);
+}
+
+.route-scope--public .btn-primary:hover,
+.route-scope--admin .btn-primary:hover,
+.route-scope--host .btn-primary:hover,
+.route-scope--host-checkin .btn-primary:hover,
+.route-scope--checkin .btn-primary:hover {
+  box-shadow: 0 15px 40px rgba(31, 95, 255, 0.34);
+}
+
+.route-scope--public .bg-glow-top,
+.route-scope--admin .bg-glow-top,
+.route-scope--host .bg-glow-top,
+.route-scope--host-checkin .bg-glow-top,
+.route-scope--checkin .bg-glow-top {
+  background: radial-gradient(circle at 50% 0%, rgba(30, 86, 210, 0.09) 0%, transparent 55%);
+}
+
+.route-scope--public .bg-glow-right,
+.route-scope--admin .bg-glow-right,
+.route-scope--host .bg-glow-right,
+.route-scope--host-checkin .bg-glow-right,
+.route-scope--checkin .bg-glow-right {
+  background: radial-gradient(circle at 100% 50%, rgba(28, 80, 190, 0.055) 0%, transparent 50%);
+}
+
+.route-scope--public .bg-glow-bottom,
+.route-scope--admin .bg-glow-bottom,
+.route-scope--host .bg-glow-bottom,
+.route-scope--host-checkin .bg-glow-bottom,
+.route-scope--checkin .bg-glow-bottom {
+  background: radial-gradient(circle at 50% 100%, rgba(25, 58, 132, 0.07) 0%, transparent 50%);
+}
+
+.route-scope--public :is(input, textarea, select),
+.route-scope--admin :is(input, textarea, select),
+.route-scope--host :is(input, textarea, select),
+.route-scope--host-checkin :is(input, textarea, select),
+.route-scope--checkin :is(input, textarea, select) {
+  color-scheme: dark;
+}
+
+.route-scope--public :is(input, textarea, select):focus,
+.route-scope--admin :is(input, textarea, select):focus,
+.route-scope--host :is(input, textarea, select):focus,
+.route-scope--host-checkin :is(input, textarea, select):focus,
+.route-scope--checkin :is(input, textarea, select):focus {
+  border-color: #5b8eff !important;
+  box-shadow: 0 0 0 3px rgba(43, 104, 255, 0.17);
+  outline: none;
+}
+
+.route-scope--public input[type='checkbox'],
+.route-scope--public input[type='radio'],
+.route-scope--admin input[type='checkbox'],
+.route-scope--admin input[type='radio'],
+.route-scope--host input[type='checkbox'],
+.route-scope--host input[type='radio'] {
+  accent-color: #2b68ff;
+}
+
+.route-scope--public :is(a, button):focus-visible,
+.route-scope--admin :is(a, button):focus-visible,
+.route-scope--host :is(a, button):focus-visible,
+.route-scope--host-checkin :is(a, button):focus-visible,
+.route-scope--checkin :is(a, button):focus-visible {
+  outline-color: #75a1ff;
+}
+
+.route-scope--public .ll-card--blue,
+.route-scope--host .ll-card--blue {
+  background: #101318 !important;
+  border-color: rgba(255, 255, 255, 0.11) !important;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.3) !important;
+}
+
+.route-scope--public .ll-card--blue:hover,
+.route-scope--host .ll-card--blue:hover {
+  border-color: rgba(86, 136, 255, 0.58) !important;
+}
+
+.route-scope--public .ll-card--blue:hover .ll-card__title--blue,
+.route-scope--host .ll-card--blue:hover .ll-card__title--blue {
+  color: #75a1ff !important;
+}
+
+body:has(.route-scope--admin),
+body:has(.route-scope--host-checkin),
+body:has(.route-scope--checkin) {
+  padding-bottom: 0 !important;
+}
+
+body:has(.route-scope--host) {
+  padding-bottom: 84px !important;
+}
+
+body:has(.route-scope--public) .ll-global-background .bg-glow-top,
+body:has(.route-scope--admin) .ll-global-background .bg-glow-top,
+body:has(.route-scope--host) .ll-global-background .bg-glow-top,
+body:has(.route-scope--host-checkin) .ll-global-background .bg-glow-top,
+body:has(.route-scope--checkin) .ll-global-background .bg-glow-top {
+  background: radial-gradient(circle at 50% 0%, rgba(30, 86, 210, 0.09) 0%, transparent 55%);
+}
+
+body:has(.route-scope--public) .ll-global-background .bg-glow-right,
+body:has(.route-scope--admin) .ll-global-background .bg-glow-right,
+body:has(.route-scope--host) .ll-global-background .bg-glow-right,
+body:has(.route-scope--host-checkin) .ll-global-background .bg-glow-right,
+body:has(.route-scope--checkin) .ll-global-background .bg-glow-right {
+  background: radial-gradient(circle at 100% 50%, rgba(28, 80, 190, 0.055) 0%, transparent 50%);
+}
+
+body:has(.route-scope--public) .ll-global-background .bg-glow-bottom,
+body:has(.route-scope--admin) .ll-global-background .bg-glow-bottom,
+body:has(.route-scope--host) .ll-global-background .bg-glow-bottom,
+body:has(.route-scope--host-checkin) .ll-global-background .bg-glow-bottom,
+body:has(.route-scope--checkin) .ll-global-background .bg-glow-bottom {
+  background: radial-gradient(circle at 50% 100%, rgba(25, 58, 132, 0.07) 0%, transparent 50%);
+}

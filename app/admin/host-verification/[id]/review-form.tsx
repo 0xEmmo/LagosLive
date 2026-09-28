@@ -72,7 +72,7 @@ export default function ReviewForm({
   return (
     <div className="flex flex-col gap-3">
       {error && (
-        <div className="rounded-xl px-3.5 py-2.5 text-[12.5px]" style={{ background: 'rgba(255,45,149,0.08)', border: '1px solid rgba(255,45,149,0.25)', color: '#FF2D95' }}>
+        <div className="rounded-xl px-3.5 py-2.5 text-[12.5px]" style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.25)', color: '#F87171' }}>
           {error}
         </div>
       )}
@@ -93,7 +93,7 @@ export default function ReviewForm({
               onClick={() => submit('reject')}
               disabled={busy}
               className="flex items-center gap-1.5 rounded-[9px] border px-3 py-2 text-[12px] font-semibold disabled:opacity-50"
-              style={{ background: 'rgba(255,45,149,0.1)', borderColor: 'rgba(255,45,149,0.35)', color: '#FF2D95' }}
+              style={{ background: 'rgba(248,113,113,0.1)', borderColor: 'rgba(248,113,113,0.35)', color: '#F87171' }}
             >
               <X size={13} /> {busy ? 'Rejecting...' : 'Confirm rejection'}
             </button>
@@ -127,7 +127,7 @@ export default function ReviewForm({
             onClick={() => setRejecting(true)}
             disabled={busy}
             className="flex items-center gap-1.5 rounded-[9px] border px-3 py-2 text-[12px] font-semibold disabled:opacity-50"
-            style={{ background: 'rgba(255,45,149,0.1)', borderColor: 'rgba(255,45,149,0.35)', color: '#FF2D95' }}
+            style={{ background: 'rgba(248,113,113,0.1)', borderColor: 'rgba(248,113,113,0.35)', color: '#F87171' }}
           >
             <X size={13} /> Reject
           </button>

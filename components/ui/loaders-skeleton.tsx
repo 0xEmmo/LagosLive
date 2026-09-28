@@ -171,7 +171,7 @@ export function CheckoutSkeleton() {
           <Bar className="mb-2" height={13} />
           <Bar width="60%" height={16} color={BAR_HI} />
         </div>
-        <div className="mt-5 h-[52px] w-full rounded-[14px]" style={{ background: 'rgba(255,45,149,0.18)' }} />
+        <div className="mt-5 h-[52px] w-full rounded-[14px]" style={{ background: 'rgba(43,104,255,0.18)' }} />
       </div>
     </div>
   );

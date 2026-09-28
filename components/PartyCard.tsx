@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Heart, Bell, Calendar, MapPin } from 'lucide-react';
 import type { Party } from '@/lib/types';
 import { VCB, VCT, partyPhoto, distanceColor, distanceBg, distanceBorder } from '@/lib/data';
@@ -26,6 +27,7 @@ export default function PartyCard({
   index,
   appearance = 'default',
 }: PartyCardProps) {
+  const pathname = usePathname() ?? '/';
   const saved = useLagosLiveStore((state) => state.savedParties.includes(party.id));
   const reminded = useLagosLiveStore((state) => state.reminders.includes(party.id));
   const user = useLagosLiveStore((state) => state.user);
@@ -33,6 +35,9 @@ export default function PartyCard({
   const toggleReminder = useLagosLiveStore((state) => state.toggleReminder);
   const showToast = useLagosLiveStore((state) => state.showToast);
   const editorial = appearance === 'editorial';
+  const keepHomePalette = pathname === '/' && editorial;
+  const primaryAccent = keepHomePalette ? '#FF2D95' : '#2B68FF';
+  const secondaryAccent = keepHomePalette ? '#B06AFF' : '#75A1FF';
 
   const handleSave = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -60,7 +65,7 @@ export default function PartyCard({
 
   return (
     <article
-      className={`ll-card group block overflow-hidden rounded-[20px] border border-white/10 transition-colors duration-200 ease-out hover:border-[#FF2D95]/40${editorial ? ' ll-card--editorial' : ''}`}
+      className={`ll-card group block overflow-hidden rounded-[20px] border border-white/10 transition-colors duration-200 ease-out${keepHomePalette ? ' hover:border-[#FF2D95]/40' : ' ll-card--blue'}${editorial ? ' ll-card--editorial' : ''}`}
       style={{
         background: '#171725',
         boxShadow: '0 10px 40px rgba(0,0,0,0.4)',
@@ -120,10 +125,10 @@ export default function PartyCard({
                 background: 'rgba(0,0,0,0.5)',
                 backdropFilter: 'blur(8px)',
                 border: '1px solid rgba(255,255,255,0.1)',
-                color: saved ? (editorial ? actionBlue : '#FF2D95') : 'rgba(255,255,255,0.75)',
+                color: saved ? (editorial ? actionBlue : primaryAccent) : 'rgba(255,255,255,0.75)',
               }}
             >
-              <Heart size={13} fill={saved ? (editorial ? actionBlue : '#FF2D95') : 'none'} strokeWidth={2} />
+              <Heart size={13} fill={saved ? (editorial ? actionBlue : primaryAccent) : 'none'} strokeWidth={2} />
             </button>
           </div>
         </div>
@@ -139,7 +144,7 @@ export default function PartyCard({
 
       <Link href={`/party/${party.id}`} className="ll-card__content-link block px-4 py-4" aria-label={`Open event details: ${party.title}`}>
         <div
-          className="ll-card__title mb-2 font-heading text-base font-bold leading-tight transition-colors duration-200 group-hover:text-[#00BFFF]"
+          className={`ll-card__title mb-2 font-heading text-base font-bold leading-tight transition-colors duration-200${keepHomePalette ? ' group-hover:text-[#00BFFF]' : ' ll-card__title--blue'}`}
           style={{ color: '#FFFFFF' }}
         >
           {party.title}
@@ -157,12 +162,12 @@ export default function PartyCard({
         {(tonight || weekend || almostFull || soldOut) && (
           <div className="ll-card__statuses mb-3 flex flex-wrap gap-1.5">
             {tonight && (
-              <span className="ll-card__status rounded-full px-2 py-[3px] text-[10px] font-bold uppercase tracking-[0.4px]" style={{ background: 'rgba(255,45,149,0.14)', color: '#FF2D95', border: '1px solid rgba(255,45,149,0.28)' }}>
+              <span className="ll-card__status rounded-full px-2 py-[3px] text-[10px] font-bold uppercase tracking-[0.4px]" style={{ background: keepHomePalette ? 'rgba(255,45,149,0.14)' : 'rgba(43,104,255,0.14)', color: primaryAccent, border: `1px solid ${keepHomePalette ? 'rgba(255,45,149,0.28)' : 'rgba(43,104,255,0.28)'}` }}>
                 Tonight
               </span>
             )}
             {!tonight && weekend && (
-              <span className="ll-card__status rounded-full px-2 py-[3px] text-[10px] font-bold uppercase tracking-[0.4px]" style={{ background: 'rgba(138,43,226,0.14)', color: '#B06AFF', border: '1px solid rgba(138,43,226,0.28)' }}>
+              <span className="ll-card__status rounded-full px-2 py-[3px] text-[10px] font-bold uppercase tracking-[0.4px]" style={{ background: keepHomePalette ? 'rgba(138,43,226,0.14)' : 'rgba(117,161,255,0.14)', color: secondaryAccent, border: `1px solid ${keepHomePalette ? 'rgba(138,43,226,0.28)' : 'rgba(117,161,255,0.28)'}` }}>
                 This Weekend
               </span>
             )}
@@ -188,9 +193,9 @@ export default function PartyCard({
           <span
             className="ll-card__ticket rounded-full px-3 py-1 text-[11px] font-semibold"
             style={{
-              background: closed || soldOut ? 'rgba(255,255,255,0.06)' : 'rgba(255,45,149,0.1)',
-              border: `1px solid ${closed || soldOut ? 'rgba(255,255,255,0.12)' : 'rgba(255,45,149,0.25)'}`,
-              color: closed || soldOut ? '#A7A8B5' : '#FF2D95',
+              background: closed || soldOut ? 'rgba(255,255,255,0.06)' : keepHomePalette ? 'rgba(255,45,149,0.1)' : 'rgba(43,104,255,0.12)',
+              border: `1px solid ${closed || soldOut ? 'rgba(255,255,255,0.12)' : keepHomePalette ? 'rgba(255,45,149,0.25)' : 'rgba(43,104,255,0.28)'}`,
+              color: closed || soldOut ? '#A7A8B5' : primaryAccent,
             }}
           >
             {closed ? (status === 'CANCELLED' ? 'Cancelled' : 'Event Closed') : soldOut ? 'Sold Out' : 'Get Tickets'}

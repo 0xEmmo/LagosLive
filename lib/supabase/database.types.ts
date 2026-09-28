@@ -43,6 +43,7 @@ export type Database = {
           service_fee: number
           status: string
           ticket_access_token: string | null
+          ticket_access_expires_at: string | null
           ticket_type_id: number | null
           tier: string
           total: number
@@ -76,6 +77,7 @@ export type Database = {
           service_fee?: number
           status?: string
           ticket_access_token?: string | null
+          ticket_access_expires_at?: string | null
           ticket_type_id?: number | null
           tier: string
           total: number
@@ -110,6 +112,7 @@ export type Database = {
           service_fee?: number
           status?: string
           ticket_access_token?: string | null
+          ticket_access_expires_at?: string | null
           ticket_type_id?: number | null
           tier?: string
           total?: number

@@ -234,7 +234,7 @@ export default function HostDashboardPage() {
               <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <div className="mb-3 flex items-center justify-between">
                   <span className="text-[11px] font-bold uppercase tracking-[1px]" style={{ color: '#A7A8B5' }}>Recent Orders</span>
-                  <Link href="/host/orders" className="text-[11px] font-semibold" style={{ color: '#2B68FF' }}>View all →</Link>
+                  <Link href="/host/orders" className="inline-flex min-h-11 items-center px-2 text-[11px] font-semibold" style={{ color: '#2B68FF' }}>View all →</Link>
                 </div>
                 <div className="flex flex-col gap-2">
                   {recentOrders.map((o) => {
@@ -262,7 +262,7 @@ export default function HostDashboardPage() {
             <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between">
                 <span className="text-[12px] font-bold" style={{ color: '#FFFFFF' }}>Your Events</span>
-                <Link href="/host/new" className="text-[11px] font-semibold" style={{ color: '#2B68FF' }}>+ Create New</Link>
+                <Link href="/host/new" className="inline-flex min-h-11 items-center px-2 text-[11px] font-semibold" style={{ color: '#2B68FF' }}>+ Create New</Link>
               </div>
               {parties.map((p) => {
                 const s = stats[p.id];

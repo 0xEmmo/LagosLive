@@ -31,7 +31,7 @@ export default function HostBottomNav() {
               key={href}
               href={href}
               aria-current={active ? 'page' : undefined}
-              className="flex min-w-[56px] flex-col items-center gap-0.5 py-1.5 font-body text-[10px] transition-all duration-200 active:scale-90"
+              className="flex min-h-[52px] min-w-[56px] flex-col items-center justify-center gap-0.5 py-1.5 font-body text-[10px] transition-all duration-200 active:scale-90"
               style={{ color: active ? '#75A1FF' : '#788292' }}
             >
               <Icon size={20} strokeWidth={active ? 2.2 : 1.6} />

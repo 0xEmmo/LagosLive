@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase/server';
-import { isValidEmail } from '@/lib/ticket-access';
+import { generateTicketAccessToken, isTicketAccessExpired, isValidEmail, ticketAccessExpiryDate } from '@/lib/ticket-access';
 
 // Guest ticket recovery: email + order reference. The response is deliberately
 // identical for "no such ticket" and "wrong details" so the endpoint can't be
@@ -45,10 +45,11 @@ export async function POST(request: Request) {
     const service = createServiceSupabase();
     const { data: order } = await service
       .from('orders')
-      .select('id, ticket_access_token')
+      .select('id, ticket_access_token, ticket_access_expires_at')
       .eq('customer_email', email)
       .eq('order_ref', orderRef)
       .eq('payment_status', 'confirmed')
+      .is('user_id', null)
       .not('ticket_access_token', 'is', null)
       .maybeSingle();
 
@@ -56,7 +57,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: generic }, { status: 404 });
     }
 
-    return NextResponse.json({ ok: true, url: `/ticket/${order.id}?token=${order.ticket_access_token}` });
+    let token = order.ticket_access_token!;
+    if (isTicketAccessExpired(order.ticket_access_expires_at)) {
+      const replacement = generateTicketAccessToken();
+      const { data: refreshed, error: refreshError } = await service
+        .from('orders')
+        .update({ ticket_access_token: replacement, ticket_access_expires_at: ticketAccessExpiryDate() })
+        .eq('id', order.id)
+        .eq('ticket_access_token', token)
+        .is('user_id', null)
+        .select('id')
+        .maybeSingle();
+      if (refreshError || !refreshed) return NextResponse.json({ error: generic }, { status: 404 });
+      token = replacement;
+    }
+
+    return NextResponse.json({ ok: true, url: `/ticket/${order.id}?token=${token}` });
   } catch {
     return NextResponse.json({ error: generic }, { status: 500 });
   }

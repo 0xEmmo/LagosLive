@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/server';
 import { sendRefundProcessedEmail, sendTicketConfirmation } from '@/lib/resend';
 import { claimNotification, recordNotificationOutcome } from '@/lib/notify';
-import { buildTicketUrl } from '@/lib/ticket-access';
+import { buildTicketUrl, generateTicketAccessToken, isTicketAccessExpired, ticketAccessExpiryDate } from '@/lib/ticket-access';
 import { paystackRefundTransaction } from '@/lib/paystack-server';
 
 type Op =
@@ -274,7 +274,7 @@ export async function POST(request: Request) {
       const { data: order } = await service
         .from('orders')
         .select(
-          'id, user_id, customer_email, guest_name, guest_phone, order_ref, party_id, ticket_type_id, quantity, total, ticket_access_token, promo_code, promo_discount'
+          'id, user_id, customer_email, guest_name, guest_phone, order_ref, party_id, ticket_type_id, quantity, total, ticket_access_token, ticket_access_expires_at, promo_code, promo_discount'
         )
         .eq('id', op.orderId)
         .eq('payment_status', 'confirmed')
@@ -288,6 +288,22 @@ export async function POST(request: Request) {
 
       if (!order.customer_email) {
         return NextResponse.json({ error: 'Order has no customer email to send to.' }, { status: 400 });
+      }
+      let accessToken = order.ticket_access_token;
+      if (accessToken && isTicketAccessExpired(order.ticket_access_expires_at)) {
+        const replacement = generateTicketAccessToken();
+        const { data: refreshed, error: refreshError } = await service
+          .from('orders')
+          .update({ ticket_access_token: replacement, ticket_access_expires_at: ticketAccessExpiryDate() })
+          .eq('id', order.id)
+          .eq('ticket_access_token', accessToken)
+          .is('user_id', null)
+          .select('id')
+          .maybeSingle();
+        if (refreshError || !refreshed) {
+          return NextResponse.json({ error: 'Ticket access could not be renewed. Please try again.' }, { status: 409 });
+        }
+        accessToken = replacement;
       }
       const [{ data: party }, tt] = await Promise.all([
         service.from('parties').select('title, date, time, location').eq('id', order.party_id).single(),
@@ -317,7 +333,7 @@ export async function POST(request: Request) {
         quantity: order.quantity,
         total: order.total,
         orderRef: order.order_ref,
-        ticketUrl: buildTicketUrl(order.id, order.ticket_access_token),
+        ticketUrl: buildTicketUrl(order.id, accessToken),
         promoCode: order.promo_code ?? undefined,
         promoDiscount: order.promo_discount ?? undefined,
       });

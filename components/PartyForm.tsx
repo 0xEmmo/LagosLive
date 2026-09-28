@@ -565,7 +565,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
 
       {/* 2. When & where */}
       <Section step={2} title="When & Where" hint="Date, times and venue">
-        <div className="flex gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="flex-1">
             <Field label="Starts (date & time)">
               <input type="datetime-local" value={startsAt} onChange={(e) => { setStartsAt(e.target.value); clearError('startsAt'); }} style={inputStyle} className="font-heading" />
@@ -601,7 +601,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
           <FieldError message={errors.address} />
         </Field>
 
-        <div className="flex gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="flex-1">
             <Field label="Latitude">
               <input type="number" inputMode="decimal" value={lat} onChange={(e) => { setLat(e.target.value); clearError('lat'); }} placeholder="6.4281" style={inputStyle} className="font-heading" />
@@ -636,7 +636,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
           <div className="flex gap-2.5">
             <button
               onClick={() => switchFree(true)}
-              className="flex-1 rounded-[10px] py-[11px] text-[13px] font-semibold transition-all duration-200 active:scale-[0.97]"
+              className="min-h-11 flex-1 rounded-[10px] py-[11px] text-[13px] font-semibold transition-all duration-200 active:scale-[0.97]"
               style={{
                 background: isFree ? 'rgba(0,245,212,0.08)' : 'rgba(255,255,255,0.04)',
                 border: '1px solid',
@@ -648,7 +648,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
             </button>
             <button
               onClick={() => switchFree(false)}
-              className="flex-1 rounded-[10px] py-[11px] text-[13px] font-semibold transition-all duration-200 active:scale-[0.97]"
+              className="min-h-11 flex-1 rounded-[10px] py-[11px] text-[13px] font-semibold transition-all duration-200 active:scale-[0.97]"
               style={{
                 background: !isFree ? 'rgba(43,104,255,0.08)' : 'rgba(255,255,255,0.04)',
                 border: '1px solid',
@@ -691,13 +691,13 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
                 className="rounded-xl p-3.5"
                 style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
               >
-                <div className="mb-2.5 flex items-center gap-2">
+                <div className="mb-2.5 grid grid-cols-[minmax(0,1fr)_96px] items-center gap-2">
                   <input
                     value={t.name}
                     onChange={(e) => updateTicket(i, { name: e.target.value })}
                     placeholder={`Ticket type ${i + 1} name`}
-                    style={{ ...inputStyle, padding: '11px 12px', fontSize: 13 }}
-                    className="font-heading"
+                    style={{ ...inputStyle, padding: '11px 12px', fontSize: 13, minWidth: 0, minHeight: 44 }}
+                    className="min-w-0 font-heading"
                   />
                   <input
                     type="number"
@@ -706,7 +706,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
                     value={String(t.price)}
                     onChange={(e) => updateTicket(i, { price: Number(e.target.value) })}
                     placeholder="₦ price"
-                    style={{ ...inputStyle, padding: '11px 12px', fontSize: 13, width: 96 }}
+                    style={{ ...inputStyle, padding: '11px 8px', fontSize: 13, width: '100%', minWidth: 0, minHeight: 44 }}
                     className="font-heading"
                   />
                 </div>
@@ -715,7 +715,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
                   <button
                     type="button"
                     onClick={() => updateTicket(i, { active: !t.active })}
-                    className="rounded-lg px-2.5 py-[7px] text-[10.5px] font-bold uppercase tracking-[0.5px] transition-all duration-200 active:scale-95"
+                    className="min-h-11 rounded-lg px-2.5 py-[7px] text-[10.5px] font-bold uppercase tracking-[0.5px] transition-all duration-200 active:scale-95"
                     style={{
                       background: t.active ? 'rgba(0,245,212,0.08)' : 'rgba(255,255,255,0.04)',
                       border: `1px solid ${t.active ? 'rgba(0,245,212,0.3)' : 'rgba(255,255,255,0.1)'}`,
@@ -728,7 +728,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
                     type="button"
                     onClick={() => moveTicket(i, -1)}
                     disabled={i === 0}
-                    className="flex h-[30px] w-[30px] items-center justify-center rounded-lg glass glass-hover disabled:opacity-30"
+                    className="flex h-11 w-11 items-center justify-center rounded-lg glass glass-hover disabled:opacity-30"
                     style={{ color: '#A7A8B5' }}
                     aria-label="Move ticket type up"
                   >
@@ -738,7 +738,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
                     type="button"
                     onClick={() => moveTicket(i, 1)}
                     disabled={i === tickets.length - 1}
-                    className="flex h-[30px] w-[30px] items-center justify-center rounded-lg glass glass-hover disabled:opacity-30"
+                    className="flex h-11 w-11 items-center justify-center rounded-lg glass glass-hover disabled:opacity-30"
                     style={{ color: '#A7A8B5' }}
                     aria-label="Move ticket type down"
                   >
@@ -747,7 +747,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
                   <button
                     type="button"
                     onClick={() => removeTicket(i)}
-                    className="ml-auto flex h-[30px] w-[30px] items-center justify-center rounded-lg transition-all duration-200 active:scale-90"
+                    className="ml-auto flex h-11 w-11 items-center justify-center rounded-lg transition-all duration-200 active:scale-90"
                     style={{ background: 'rgba(255,90,46,0.08)', border: '1px solid rgba(255,90,46,0.25)', color: '#FF5A2E' }}
                     aria-label="Remove ticket type"
                   >
@@ -763,7 +763,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
                   className="font-heading"
                 />
 
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
                   <div>
                     <div className="mb-[6px] text-[9.5px] font-semibold uppercase tracking-[0.7px]" style={{ color: '#6B6C80' }}>
                       Quantity {t.sold ? `(${t.sold} sold)` : ''}
@@ -775,7 +775,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
                       value={String(t.quantity)}
                       onChange={(e) => updateTicket(i, { quantity: Number(e.target.value) })}
                       placeholder="200"
-                      style={{ ...inputStyle, padding: '10px', fontSize: 12.5, minWidth: 0 }}
+                      style={{ ...inputStyle, padding: '10px', fontSize: 12.5, minWidth: 0, minHeight: 44 }}
                       className="font-heading"
                     />
                   </div>
@@ -787,7 +787,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
                       type="datetime-local"
                       value={t.salesStartAt ?? ''}
                       onChange={(e) => updateTicket(i, { salesStartAt: e.target.value || null })}
-                      style={{ ...inputStyle, padding: '10px', fontSize: 12.5, minWidth: 0 }}
+                      style={{ ...inputStyle, padding: '10px', fontSize: 12.5, minWidth: 0, minHeight: 44 }}
                       className="font-heading"
                     />
                   </div>
@@ -799,7 +799,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
                       type="datetime-local"
                       value={t.salesEndAt ?? ''}
                       onChange={(e) => updateTicket(i, { salesEndAt: e.target.value || null })}
-                      style={{ ...inputStyle, padding: '10px', fontSize: 12.5, minWidth: 0 }}
+                      style={{ ...inputStyle, padding: '10px', fontSize: 12.5, minWidth: 0, minHeight: 44 }}
                       className="font-heading"
                     />
                   </div>
@@ -810,7 +810,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
             <button
               type="button"
               onClick={addTicket}
-              className="flex items-center justify-center gap-1.5 rounded-[10px] py-[11px] text-[12.5px] font-semibold transition-all duration-200 active:scale-[0.98]"
+              className="flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] py-[11px] text-[12.5px] font-semibold transition-all duration-200 active:scale-[0.98]"
               style={{ background: 'rgba(43,104,255,0.07)', border: '1px dashed rgba(43,104,255,0.35)', color: '#2B68FF' }}
             >
               <Plus size={14} strokeWidth={2.5} />
@@ -845,7 +845,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
           <FieldError message={errors.organizer} />
         </Field>
 
-        <div className="flex gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="flex-1">
             <Field label="Organizer Phone" optional>
               <input
@@ -874,7 +874,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
           </div>
         </div>
 
-        <div className="flex gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="flex-1">
             <Field label="Instagram" optional>
               <input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="@flytime_music" style={inputStyle} className="font-heading" />
@@ -888,7 +888,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
           </div>
         </div>
 
-        <div className="flex gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="flex-1">
             <Field label="Age Restriction" optional>
               <input value={ageRestriction} onChange={(e) => setAgeRestriction(e.target.value)} placeholder="18+" style={inputStyle} className="font-heading" />
@@ -913,7 +913,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
                   type="button"
                   onClick={handleImageRemove}
                   aria-label="Remove selected image"
-                  className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-200 active:opacity-70"
+                  className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full transition-colors duration-200 active:opacity-70"
                   style={{ background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.2)' }}
                 >
                   <X size={14} strokeWidth={2.5} color="#FFFFFF" />
@@ -929,7 +929,7 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
             <button
               type="button"
               onClick={() => imageRef.current?.click()}
-              className="mt-2 w-full rounded-[10px] py-[11px] text-[12.5px] font-semibold transition-colors duration-200 active:opacity-80"
+              className="mt-2 min-h-11 w-full rounded-[10px] py-[11px] text-[12.5px] font-semibold transition-colors duration-200 active:opacity-80"
               style={{ background: 'rgba(43,104,255,0.07)', border: '1px dashed rgba(43,104,255,0.35)', color: '#2B68FF' }}
             >
               {previewUrl ? 'Choose a different image' : 'Change image'}

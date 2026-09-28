@@ -108,9 +108,9 @@ function ticketEmailHtml(d: TicketConfirmationData): string {
 
   return `
     <div style="background-color:#F4F6FA;margin:0;padding:32px 12px;font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
-      <div style="max-width:520px;margin:0 auto;background-color:#172033;border-radius:24px;overflow:hidden;border:1px solid #DDE3EF;">
+      <div style="max-width:520px;margin:0 auto;background-color:#FFFFFF;border-radius:24px;overflow:hidden;border:1px solid #DDE3EF;">
 
-        <div style="padding:38px 30px 28px 30px;background:linear-gradient(135deg,#EAF0FF 0%,#172033 60%);border-bottom:1px solid rgba(255,45,149,0.22);">
+        <div style="padding:38px 30px 28px 30px;background:linear-gradient(135deg,#EAF0FF 0%,#FFFFFF 60%);border-bottom:1px solid rgba(255,45,149,0.22);">
           <div style="font-size:11px;font-weight:800;letter-spacing:3px;color:#FF2D95;text-transform:uppercase;">Lagos&nbsp;Live</div>
           <div style="font-size:30px;font-weight:900;color:#172033;margin-top:14px;letter-spacing:-0.4px;line-height:36px;">You're officially in. \ud83c\udf89</div>
           <div style="font-size:14px;color:#5D6678;margin-top:9px;line-height:21px;">Your ticket for <strong style="color:#172033;">${escapeHtml(d.partyTitle)}</strong> has been confirmed.</div>
@@ -126,7 +126,7 @@ function ticketEmailHtml(d: TicketConfirmationData): string {
         </div>
 
         <div style="padding:16px 30px 0 30px;">
-          <div style="background:linear-gradient(135deg,rgba(255,45,149,0.10),rgba(138,43,226,0.08));border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:18px;">
+          <div style="background:linear-gradient(135deg,rgba(255,45,149,0.10),rgba(138,43,226,0.08));border:1px solid #DDE3EF;border-radius:16px;padding:18px;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
               <tr>
                 <td width="50%" valign="top" style="padding-bottom:17px;">
@@ -150,8 +150,8 @@ function ticketEmailHtml(d: TicketConfirmationData): string {
 
         <div style="padding:28px 30px 0 30px;">
           <div style="font-size:10px;font-weight:800;letter-spacing:2px;color:#697386;text-transform:uppercase;margin-bottom:12px;">Ticket Details</div>
-          <div style="background-color:#F4F6FA;border:1px solid rgba(255,255,255,0.07);border-radius:16px;overflow:hidden;">
-            <div style="padding:18px 18px 14px 18px;border-bottom:1px dashed rgba(255,255,255,0.12);">
+          <div style="background-color:#F4F6FA;border:1px solid #DDE3EF;border-radius:16px;overflow:hidden;">
+            <div style="padding:18px 18px 14px 18px;border-bottom:1px dashed #DDE3EF;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
                 <tr>
                   <td>
@@ -174,7 +174,7 @@ function ticketEmailHtml(d: TicketConfirmationData): string {
 
         <div style="padding:26px 30px 4px 30px;">
           <div style="background:linear-gradient(135deg,#FF2D95 0%,#8A2BE2 100%);border-radius:16px;padding:1px;">
-            <div style="background:#172033;border-radius:15px;padding:22px 20px;text-align:center;">
+            <div style="background:#FFFFFF;border-radius:15px;padding:22px 20px;text-align:center;">
               <div style="font-size:16px;font-weight:900;color:#172033;margin-bottom:6px;">Your ticket is ready \ud83c\udf9f\ufe0f</div>
               <div style="font-size:12px;color:#5D6678;line-height:18px;margin-bottom:18px;">Open your digital ticket to view your QR code and full ticket details before you arrive.</div>
               <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="border-collapse:collapse;">
@@ -189,7 +189,7 @@ function ticketEmailHtml(d: TicketConfirmationData): string {
         </div>
 
         <div style="padding:24px 30px 0 30px;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-top:1px solid rgba(255,255,255,0.07);">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-top:1px solid #DDE3EF;">
             <tr>
               <td style="padding-top:17px;font-size:11px;color:#697386;">Order Reference</td>
               <td align="right" style="padding-top:17px;font-size:11px;font-weight:700;color:#5D6678;font-family:'Courier New', monospace;">${escapeHtml(d.orderRef)}</td>
@@ -211,7 +211,7 @@ function ticketEmailHtml(d: TicketConfirmationData): string {
           </div>
         </div>
 
-        <div style="padding:22px 30px 24px 30px;background:#EEF1F7;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+        <div style="padding:22px 30px 24px 30px;background:#EEF1F7;border-top:1px solid #DDE3EF;text-align:center;">
           <div style="font-size:11px;font-weight:800;letter-spacing:2.5px;color:#FF2D95;text-transform:uppercase;">Lagos Live</div>
           <div style="font-size:10px;color:#555666;margin-top:7px;">Discover. Book. Experience Lagos.</div>
         </div>

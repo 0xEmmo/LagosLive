@@ -84,7 +84,9 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
 
     if (mode === 'submit' && !isAdminEditingOthersEvent && (party.status === 'draft' || party.status === 'rejected')) {
       await submitEventForReview(party.id);
-      await notifyTelegramEvent(party.id, 'event_created');
+      void notifyTelegramEvent(party.id, 'event_created').catch((err) => {
+        console.warn('[event-review] Telegram notification failed after submission', err);
+      });
       showToast('Event submitted for review', 'Your event is with the review team.');
     }
 

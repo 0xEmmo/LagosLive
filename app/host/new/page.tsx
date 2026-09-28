@@ -53,7 +53,9 @@ export default function NewEventPage() {
     if (mode === 'submit') {
       try {
         await submitEventForReview(party.id);
-        await notifyTelegramEvent(party.id, 'event_created');
+          void notifyTelegramEvent(party.id, 'event_created').catch((err) => {
+          console.warn('[event-review] Telegram notification failed after submission', err);
+        });
       } catch (err) {
         // The event was created (as a draft) but the review push failed. Never
         // roll it back, and never let the host retype the form — a retry here

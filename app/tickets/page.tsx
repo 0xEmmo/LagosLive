@@ -127,20 +127,21 @@ function MyTickets() {
     setLoading(true);
     setError(false);
     (async () => {
-      // Link any guest purchases bought under the same email before fetching
-      // tickets so My Tickets never looks incomplete right after sign-in.
-      await linkGuestOrdersOnce();
-      if (cancelled) return;
-      fetchMyTickets(user.id)
-        .then((data) => {
-          if (!cancelled) setTickets(data);
-        })
-        .catch(() => {
-          if (!cancelled) setError(true);
-        })
-        .finally(() => {
-          if (!cancelled) setLoading(false);
-        });
+      try {
+        // Link any guest purchases bought under the same email before fetching
+        // tickets so My Tickets never looks incomplete right after sign-in.
+        await Promise.race([
+          linkGuestOrdersOnce(),
+          new Promise<void>((resolve) => window.setTimeout(resolve, 5000)),
+        ]);
+        if (cancelled) return;
+        const data = await fetchMyTickets(user.id);
+        if (!cancelled) setTickets(data);
+      } catch {
+        if (!cancelled) setError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     })();
     setLoadedUserId(user.id);
     return () => {

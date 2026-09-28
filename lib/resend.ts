@@ -36,30 +36,23 @@ export interface TicketConfirmationData {
   promoDiscount?: number;
 }
 
-// Company color palette is dark-only: the site never renders a light theme, so
-// emails must match. Declaring `color-scheme: dark` stops clients (Gmail, Apple
-// Mail, Outlook) from auto-inverting or re-skinning the design when the phone
-// is in light mode. Both the meta tags AND the CSS+inline forms are set because
-// different clients honour different flavours; the @media light guard re-asserts
-// the dark background even in clients that strip the meta tags.
-function emailDocument(innerHtml: string, bg = '#0B0B10'): string {
+// Email markup is intentionally light-first. Gmail and other clients can then
+// apply their own dark-theme transformation instead of receiving a dark email
+// that gets double-inverted or becomes unreadable.
+function emailDocument(innerHtml: string, bg = '#FFFFFF'): string {
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="color-scheme" content="dark">
-    <meta name="supported-color-schemes" content="dark">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
     <style>
-      :root { color-scheme: dark; supported-color-schemes: dark; }
-      body { margin:0; padding:0; background-color:${bg} !important; color:#FFFFFF !important; }
-      @media (prefers-color-scheme: light) {
-        :root { color-scheme: dark !important; }
-        body { background-color:${bg} !important; color:#FFFFFF !important; }
-      }
+      :root { color-scheme: light dark; supported-color-schemes: light dark; }
+      body { margin:0; padding:0; background-color:${bg} !important; color:#171923 !important; }
     </style>
   </head>
-  <body bgcolor="${bg}" text="#FFFFFF" style="color-scheme:dark;background-color:${bg};color:#FFFFFF;margin:0;padding:0;">
+  <body bgcolor="${bg}" text="#171923" style="color-scheme:light dark;background-color:${bg};color:#171923;margin:0;padding:0;">
     ${innerHtml}
   </body>
 </html>`;
@@ -102,7 +95,7 @@ function ticketEmailHtml(d: TicketConfirmationData): string {
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
             <tr>
               <td>
-                <div style="font-size:10px;color:#6B6C80;letter-spacing:1.3px;text-transform:uppercase;margin-bottom:5px;">Promo ${escapeHtml(d.promoCode)}</div>
+                <div style="font-size:10px;color:#697386;letter-spacing:1.3px;text-transform:uppercase;margin-bottom:5px;">Promo ${escapeHtml(d.promoCode)}</div>
                 <div style="font-size:11px;font-weight:700;color:#5DE0B1;">You saved ${escapeHtml(formatNaira(d.promoDiscount))}</div>
               </td>
               <td align="right" valign="bottom">
@@ -114,22 +107,22 @@ function ticketEmailHtml(d: TicketConfirmationData): string {
       : '';
 
   return `
-    <div style="background-color:#0B0B10;margin:0;padding:32px 12px;font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
-      <div style="max-width:520px;margin:0 auto;background-color:#12121C;border-radius:24px;overflow:hidden;border:1px solid #26263A;">
+    <div style="background-color:#F4F6FA;margin:0;padding:32px 12px;font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+      <div style="max-width:520px;margin:0 auto;background-color:#172033;border-radius:24px;overflow:hidden;border:1px solid #DDE3EF;">
 
-        <div style="padding:38px 30px 28px 30px;background:linear-gradient(135deg,#1A0B16 0%,#12121C 60%);border-bottom:1px solid rgba(255,45,149,0.22);">
+        <div style="padding:38px 30px 28px 30px;background:linear-gradient(135deg,#EAF0FF 0%,#172033 60%);border-bottom:1px solid rgba(255,45,149,0.22);">
           <div style="font-size:11px;font-weight:800;letter-spacing:3px;color:#FF2D95;text-transform:uppercase;">Lagos&nbsp;Live</div>
-          <div style="font-size:30px;font-weight:900;color:#FFFFFF;margin-top:14px;letter-spacing:-0.4px;line-height:36px;">You're officially in. \ud83c\udf89</div>
-          <div style="font-size:14px;color:#A7A8B5;margin-top:9px;line-height:21px;">Your ticket for <strong style="color:#FFFFFF;">${escapeHtml(d.partyTitle)}</strong> has been confirmed.</div>
+          <div style="font-size:30px;font-weight:900;color:#172033;margin-top:14px;letter-spacing:-0.4px;line-height:36px;">You're officially in. \ud83c\udf89</div>
+          <div style="font-size:14px;color:#5D6678;margin-top:9px;line-height:21px;">Your ticket for <strong style="color:#172033;">${escapeHtml(d.partyTitle)}</strong> has been confirmed.</div>
           <div style="display:inline-block;margin-top:20px;background:rgba(50,205,150,0.12);border:1px solid rgba(50,205,150,0.28);border-radius:999px;padding:7px 13px;">
             <span style="font-size:11px;font-weight:800;letter-spacing:1px;color:#5DE0B1;text-transform:uppercase;">\u2713 Payment Confirmed</span>
           </div>
-          <div style="font-size:12px;color:#6B6C80;margin-top:10px;">${escapeHtml(paymentDate)}</div>
+          <div style="font-size:12px;color:#697386;margin-top:10px;">${escapeHtml(paymentDate)}</div>
         </div>
 
         <div style="padding:26px 30px 0 30px;">
-          <div style="font-size:10px;font-weight:800;letter-spacing:2px;color:#6B6C80;text-transform:uppercase;margin-bottom:8px;">Your Event</div>
-          <div style="font-size:23px;font-weight:900;color:#FFFFFF;letter-spacing:-0.4px;line-height:29px;">${escapeHtml(d.partyTitle)}</div>
+          <div style="font-size:10px;font-weight:800;letter-spacing:2px;color:#697386;text-transform:uppercase;margin-bottom:8px;">Your Event</div>
+          <div style="font-size:23px;font-weight:900;color:#172033;letter-spacing:-0.4px;line-height:29px;">${escapeHtml(d.partyTitle)}</div>
         </div>
 
         <div style="padding:16px 30px 0 30px;">
@@ -137,18 +130,18 @@ function ticketEmailHtml(d: TicketConfirmationData): string {
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
               <tr>
                 <td width="50%" valign="top" style="padding-bottom:17px;">
-                  <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:#6B6C80;text-transform:uppercase;margin-bottom:5px;">Date</div>
-                  <div style="font-size:14px;font-weight:700;color:#FFFFFF;line-height:20px;">${escapeHtml(d.partyDate)}</div>
+                  <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:#697386;text-transform:uppercase;margin-bottom:5px;">Date</div>
+                  <div style="font-size:14px;font-weight:700;color:#172033;line-height:20px;">${escapeHtml(d.partyDate)}</div>
                 </td>
                 <td width="50%" valign="top" style="padding-bottom:17px;">
-                  <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:#6B6C80;text-transform:uppercase;margin-bottom:5px;">Time</div>
-                  <div style="font-size:14px;font-weight:700;color:#FFFFFF;line-height:20px;">${escapeHtml(d.partyTime)}</div>
+                  <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:#697386;text-transform:uppercase;margin-bottom:5px;">Time</div>
+                  <div style="font-size:14px;font-weight:700;color:#172033;line-height:20px;">${escapeHtml(d.partyTime)}</div>
                 </td>
               </tr>
               <tr>
                 <td colspan="2" valign="top">
-                  <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:#6B6C80;text-transform:uppercase;margin-bottom:5px;">Location</div>
-                  <div style="font-size:14px;font-weight:700;color:#FFFFFF;line-height:20px;">${escapeHtml(d.partyLocation)}</div>
+                  <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:#697386;text-transform:uppercase;margin-bottom:5px;">Location</div>
+                  <div style="font-size:14px;font-weight:700;color:#172033;line-height:20px;">${escapeHtml(d.partyLocation)}</div>
                 </td>
               </tr>
             </table>
@@ -156,23 +149,23 @@ function ticketEmailHtml(d: TicketConfirmationData): string {
         </div>
 
         <div style="padding:28px 30px 0 30px;">
-          <div style="font-size:10px;font-weight:800;letter-spacing:2px;color:#6B6C80;text-transform:uppercase;margin-bottom:12px;">Ticket Details</div>
-          <div style="background-color:#0B0B10;border:1px solid rgba(255,255,255,0.07);border-radius:16px;overflow:hidden;">
+          <div style="font-size:10px;font-weight:800;letter-spacing:2px;color:#697386;text-transform:uppercase;margin-bottom:12px;">Ticket Details</div>
+          <div style="background-color:#F4F6FA;border:1px solid rgba(255,255,255,0.07);border-radius:16px;overflow:hidden;">
             <div style="padding:18px 18px 14px 18px;border-bottom:1px dashed rgba(255,255,255,0.12);">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
                 <tr>
                   <td>
-                    <div style="font-size:10px;color:#6B6C80;letter-spacing:1.3px;text-transform:uppercase;margin-bottom:6px;">Ticket</div>
-                    <div style="font-size:15px;font-weight:800;color:#FFFFFF;">${typeLabel} <span style="color:#A7A8B5;">${qty}</span></div>
+                    <div style="font-size:10px;color:#697386;letter-spacing:1.3px;text-transform:uppercase;margin-bottom:6px;">Ticket</div>
+                    <div style="font-size:15px;font-weight:800;color:#172033;">${typeLabel} <span style="color:#5D6678;">${qty}</span></div>
                   </td>
                   <td align="right" valign="bottom">
-                    <div style="font-size:19px;font-weight:900;color:#FFFFFF;">${totalLabel}</div>
+                    <div style="font-size:19px;font-weight:900;color:#172033;">${totalLabel}</div>
                   </td>
                 </tr>
               </table>
             </div>
             <div style="padding:16px 18px;">
-              <div style="font-size:10px;color:#6B6C80;letter-spacing:1.3px;text-transform:uppercase;margin-bottom:7px;">Ticket Code</div>
+              <div style="font-size:10px;color:#697386;letter-spacing:1.3px;text-transform:uppercase;margin-bottom:7px;">Ticket Code</div>
               <div style="font-size:15px;font-weight:800;color:#FF2D95;letter-spacing:1px;font-family:'Courier New', monospace;word-break:break-all;">${escapeHtml(d.orderRef)}</div>
             </div>
             ${promoRow}
@@ -181,9 +174,9 @@ function ticketEmailHtml(d: TicketConfirmationData): string {
 
         <div style="padding:26px 30px 4px 30px;">
           <div style="background:linear-gradient(135deg,#FF2D95 0%,#8A2BE2 100%);border-radius:16px;padding:1px;">
-            <div style="background:#15121C;border-radius:15px;padding:22px 20px;text-align:center;">
-              <div style="font-size:16px;font-weight:900;color:#FFFFFF;margin-bottom:6px;">Your ticket is ready \ud83c\udf9f\ufe0f</div>
-              <div style="font-size:12px;color:#A7A8B5;line-height:18px;margin-bottom:18px;">Open your digital ticket to view your QR code and full ticket details before you arrive.</div>
+            <div style="background:#172033;border-radius:15px;padding:22px 20px;text-align:center;">
+              <div style="font-size:16px;font-weight:900;color:#172033;margin-bottom:6px;">Your ticket is ready \ud83c\udf9f\ufe0f</div>
+              <div style="font-size:12px;color:#5D6678;line-height:18px;margin-bottom:18px;">Open your digital ticket to view your QR code and full ticket details before you arrive.</div>
               <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="border-collapse:collapse;">
                 <tr>
                   <td align="center" style="border-radius:11px;background:linear-gradient(135deg,#FF2D95,#8A2BE2);">
@@ -198,27 +191,27 @@ function ticketEmailHtml(d: TicketConfirmationData): string {
         <div style="padding:24px 30px 0 30px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-top:1px solid rgba(255,255,255,0.07);">
             <tr>
-              <td style="padding-top:17px;font-size:11px;color:#6B6C80;">Order Reference</td>
-              <td align="right" style="padding-top:17px;font-size:11px;font-weight:700;color:#A7A8B5;font-family:'Courier New', monospace;">${escapeHtml(d.orderRef)}</td>
+              <td style="padding-top:17px;font-size:11px;color:#697386;">Order Reference</td>
+              <td align="right" style="padding-top:17px;font-size:11px;font-weight:700;color:#5D6678;font-family:'Courier New', monospace;">${escapeHtml(d.orderRef)}</td>
             </tr>
             <tr>
-              <td style="padding-top:9px;font-size:11px;color:#6B6C80;">Purchased by</td>
-              <td align="right" style="padding-top:9px;font-size:11px;font-weight:700;color:#A7A8B5;">${buyerLabel}</td>
+              <td style="padding-top:9px;font-size:11px;color:#697386;">Purchased by</td>
+              <td align="right" style="padding-top:9px;font-size:11px;font-weight:700;color:#5D6678;">${buyerLabel}</td>
             </tr>
           </table>
         </div>
 
         <div style="padding:24px 30px 28px 30px;">
           <div style="background:rgba(138,43,226,0.06);border:1px solid rgba(138,43,226,0.12);border-radius:14px;padding:17px;">
-            <div style="font-size:12px;font-weight:800;color:#FFFFFF;margin-bottom:7px;">At the entrance</div>
-            <div style="font-size:11px;line-height:18px;color:#A7A8B5;">Open your Lagos Live ticket and present the QR code to be scanned. Save your ticket to your phone before heading out so you don't need an internet connection at the venue.</div>
+            <div style="font-size:12px;font-weight:800;color:#172033;margin-bottom:7px;">At the entrance</div>
+            <div style="font-size:11px;line-height:18px;color:#5D6678;">Open your Lagos Live ticket and present the QR code to be scanned. Save your ticket to your phone before heading out so you don't need an internet connection at the venue.</div>
           </div>
           <div style="text-align:center;padding-top:22px;">
-            <div style="font-size:11px;color:#6B6C80;line-height:17px;">Didn't purchase this ticket? <a href="${RESEND_SITE_URL}/support" target="_blank" style="color:#FF2D95;text-decoration:none;font-weight:700;">Contact Lagos Live</a></div>
+            <div style="font-size:11px;color:#697386;line-height:17px;">Didn't purchase this ticket? <a href="${RESEND_SITE_URL}/support" target="_blank" style="color:#FF2D95;text-decoration:none;font-weight:700;">Contact Lagos Live</a></div>
           </div>
         </div>
 
-        <div style="padding:22px 30px 24px 30px;background:#0D0D13;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
+        <div style="padding:22px 30px 24px 30px;background:#EEF1F7;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
           <div style="font-size:11px;font-weight:800;letter-spacing:2.5px;color:#FF2D95;text-transform:uppercase;">Lagos Live</div>
           <div style="font-size:10px;color:#555666;margin-top:7px;">Discover. Book. Experience Lagos.</div>
         </div>

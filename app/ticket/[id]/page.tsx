@@ -169,6 +169,27 @@ function CancelledTicket({ ticket }: { ticket: CustomerTicket }) {
   );
 }
 
+function printTicket() {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    window.print();
+    return;
+  }
+  const ticket = document.getElementById('ticket-print-area');
+  if (!ticket) {
+    printWindow.close();
+    window.print();
+    return;
+  }
+  const styles = Array.from(document.querySelectorAll('style, link[rel=\"stylesheet\"]'))
+    .map((node) => node.outerHTML)
+    .join('');
+  printWindow.document.write(`<!doctype html><html><head><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Lagos Live ticket</title>${styles}</head><body>${ticket.outerHTML}</body></html>`);
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.setTimeout(() => printWindow.print(), 250);
+}
+
 function ConfirmedTicket({
   ticket,
   holder,
@@ -193,7 +214,7 @@ function ConfirmedTicket({
       <div className="ticket-actions mb-4 flex flex-col items-center gap-2 text-center">
         <button
           type="button"
-          onClick={() => window.print()}
+          onClick={printTicket}
           className="btn-primary inline-flex items-center gap-2 px-5 py-3 text-sm font-bold"
           aria-label="Download ticket as PDF or print"
         >

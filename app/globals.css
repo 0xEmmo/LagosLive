@@ -1239,7 +1239,7 @@ body:has(.route-scope--checkin) {
 }
 
 body:has(.route-scope--host) {
-  padding-bottom: 84px !important;
+  padding-bottom: calc(76px + max(8px, env(safe-area-inset-bottom))) !important;
 }
 
 body:has(.route-scope--public) .ll-global-background .bg-glow-top,

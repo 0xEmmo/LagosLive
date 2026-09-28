@@ -10,6 +10,13 @@ import { RevenueLineChart, VerticalBarChart, ChartCard } from '@/components/ui/c
 import { fetchEventOrders, fetchAdminEvent, toCsv, downloadCsv, type AdminOrderJoined, type AdminEventJoined } from '@/lib/admin-queries';
 import { formatNaira } from '@/lib/filters';
 
+const PAYMENT_STATUS_STYLE: Record<string, { bg: string; color: string }> = {
+  pending: { bg: 'rgba(255,214,0,0.12)', color: '#FFD600' },
+  confirmed: { bg: 'rgba(0,245,212,0.1)', color: '#00F5D4' },
+  failed: { bg: 'rgba(255,138,0,0.1)', color: '#FF8A00' },
+  cancelled: { bg: 'rgba(255,255,255,0.07)', color: '#8B94A2' },
+};
+
 export default function EventAnalyticsPage() {
   const params = useParams();
   const { user, ready } = usePermissionGuard('analytics.events');
@@ -178,8 +185,8 @@ export default function EventAnalyticsPage() {
                       <Cell>
                         <Badge
                           label={o.payment_status}
-                          bg={o.payment_status === 'confirmed' ? 'rgba(0,245,212,0.1)' : o.payment_status === 'pending' ? 'rgba(255,214,0,0.1)' : 'rgba(43,104,255,0.12)'}
-                          color={o.payment_status === 'confirmed' ? '#00F5D4' : o.payment_status === 'pending' ? '#FFD600' : '#2B68FF'}
+                          bg={PAYMENT_STATUS_STYLE[o.payment_status]?.bg ?? 'rgba(43,104,255,0.12)'}
+                          color={PAYMENT_STATUS_STYLE[o.payment_status]?.color ?? '#2B68FF'}
                         />
                       </Cell>
                       <Cell>

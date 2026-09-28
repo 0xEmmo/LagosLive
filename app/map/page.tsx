@@ -15,6 +15,7 @@ export default function MapPage() {
   const router = useRouter();
   const { parties, loading, error, retry } = useParties();
   const userLocation = useLagosLiveStore((s) => s.userLocation);
+  const locationStatus = useLagosLiveStore((s) => s.locationStatus);
   const requestLocation = useLagosLiveStore((s) => s.requestLocation);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeVibes, setActiveVibes] = useState<Set<Vibe>>(new Set(ALL_VIBES));
@@ -41,7 +42,11 @@ export default function MapPage() {
   };
 
   return (
-    <div className="relative overflow-hidden" style={{ height: 'calc(100vh - 84px)' }}>
+    <main
+      data-map-fullscreen
+      className="map-fullscreen-screen relative isolate w-full overflow-hidden"
+      style={{ height: '100dvh', minHeight: '100svh' }}
+    >
       <EventMap
         parties={filtered}
         userLocation={userLocation}
@@ -101,7 +106,10 @@ export default function MapPage() {
       )}
 
       {/* Legend / Filters */}
-      <div className="absolute bottom-[18px] left-3.5 z-[1000]">
+      <div
+        className="absolute left-3.5 z-[1000]"
+        style={{ bottom: 'max(52px, env(safe-area-inset-bottom))' }}
+      >
         <div
           className="rounded-[13px] px-[15px] py-2.5 backdrop-blur-[18px] backdrop-saturate-150"
           style={{ background: 'rgba(7,7,11,0.92)', border: '1px solid rgba(255,255,255,0.08)' }}
@@ -110,22 +118,29 @@ export default function MapPage() {
             <div className="text-[10px] font-bold uppercase tracking-[0.9px]" style={{ color: '#6B6C80' }}>
               Filter by Vibe
             </div>
-            <span onClick={resetFilters} className="cursor-pointer text-[10px] font-semibold" style={{ color: '#FF5A2E' }}>
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="min-h-9 min-w-9 cursor-pointer text-[10px] font-semibold"
+              style={{ color: '#FF5A2E' }}
+            >
               Reset
-            </span>
+            </button>
           </div>
           <div className="flex flex-col gap-[3px]">
             {ALL_VIBES.map((vibe) => {
               const active = activeVibes.has(vibe);
               return (
-                <div
+                <button
+                  type="button"
                   key={vibe}
                   onClick={() => toggleVibe(vibe)}
-                  className="flex cursor-pointer items-center gap-2 rounded-md px-1 py-[3px] text-xs transition-all"
+                  aria-pressed={active}
+                  className="flex min-h-8 w-full cursor-pointer items-center gap-2 rounded-md px-1 text-left text-xs transition-all"
                   style={{ color: active ? '#A7A8B5' : '#6B6C80', opacity: active ? 1 : 0.5 }}
                 >
-                  <span style={{ color: VC[vibe], fontSize: 16 }}>●</span> {vibe}
-                </div>
+                  <span aria-hidden="true" style={{ color: VC[vibe], fontSize: 16 }}>●</span> {vibe}
+                </button>
               );
             })}
           </div>
@@ -133,12 +148,14 @@ export default function MapPage() {
       </div>
 
       {/* Map action buttons */}
-      <div className="absolute bottom-[18px] right-3.5 z-[1000] flex flex-col gap-2.5">
+      <div className="absolute right-3.5 top-[116px] z-[1000] flex flex-col gap-2.5">
         <button
+          type="button"
           onClick={() => setShowHeatmap((v) => !v)}
           aria-pressed={showHeatmap}
-          title="Toggle party density heatmap"
-          className="flex h-12 w-12 items-center justify-center rounded-full backdrop-blur-[18px] backdrop-saturate-150 transition-all duration-200"
+          aria-label="Toggle event heatmap"
+          title="Toggle the event heatmap"
+          className="flex min-h-11 min-w-[116px] items-center justify-center gap-2 rounded-full px-3.5 text-xs font-semibold whitespace-nowrap backdrop-blur-[18px] backdrop-saturate-150 transition-all duration-200"
           style={
             showHeatmap
               ? {
@@ -155,11 +172,17 @@ export default function MapPage() {
                 }
           }
         >
-          <Flame size={19} strokeWidth={2} fill={showHeatmap ? 'rgba(255,255,255,0.25)' : 'none'} />
+          <Flame size={18} strokeWidth={2} fill={showHeatmap ? 'rgba(255,255,255,0.25)' : 'none'} />
+          <span>Heatmap</span>
         </button>
         <button
+          type="button"
           onClick={requestLocation}
-          className="flex h-12 w-12 items-center justify-center rounded-full backdrop-blur-[18px] backdrop-saturate-150 transition-all duration-200"
+          disabled={locationStatus === 'loading'}
+          aria-label="Find my current location"
+          aria-busy={locationStatus === 'loading'}
+          title="Center the map on your current location"
+          className="flex min-h-11 min-w-[116px] items-center justify-center gap-2 rounded-full px-3.5 text-xs font-semibold whitespace-nowrap backdrop-blur-[18px] backdrop-saturate-150 transition-all duration-200 disabled:cursor-wait disabled:opacity-80"
           style={{
             background: 'rgba(255,90,46,0.1)',
             border: '1px solid rgba(255,90,46,0.25)',
@@ -167,7 +190,18 @@ export default function MapPage() {
             boxShadow: '0 4px 20px rgba(255,90,46,0.15)',
           }}
         >
-          <Locate size={20} strokeWidth={2} />
+          {locationStatus === 'loading' ? (
+            <Loader2 size={18} strokeWidth={2} className="animate-spin" />
+          ) : (
+            <Locate size={18} strokeWidth={2} />
+          )}
+          <span aria-live="polite">
+            {locationStatus === 'loading'
+              ? 'Finding…'
+              : locationStatus === 'denied'
+                ? 'Try again'
+                : 'My location'}
+          </span>
         </button>
       </div>
 
@@ -192,6 +226,6 @@ export default function MapPage() {
           High turnout
         </div>
       </div>
-    </div>
+    </main>
   );
 }

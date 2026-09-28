@@ -15,7 +15,8 @@ export default function GlobalChrome({ placement }: { placement: Placement }) {
   const isCheckIn = pathname.includes('/check-in');
   const isAuthPage = pathname === '/login' || pathname === '/signup';
   const dashboardOwnsChrome = isAdmin || isHost || isCheckIn;
-  const pageOwnsChrome = dashboardOwnsChrome || isAuthPage;
+  const isFullScreenMap = pathname === '/map';
+  const pageOwnsChrome = dashboardOwnsChrome || isAuthPage || isFullScreenMap;
 
   if (placement === 'header') return pageOwnsChrome ? null : <AppHeader />;
   if (placement === 'footer') return pageOwnsChrome ? null : <Footer />;

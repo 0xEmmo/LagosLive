@@ -222,7 +222,7 @@ select option {
   background: radial-gradient(circle at 50% 50%, #0b1b36 0%, #05070b 44%, #030405 100%);
   pointer-events: none;
   opacity: 1;
-  transition: opacity 0.45s ease 0.68s;
+  transition: opacity 0.32s ease 0.12s;
 }
 
 .entry-shutter__rings {
@@ -240,8 +240,8 @@ select option {
   border-radius: 999px;
   transform: scale(0.72);
   opacity: 0;
-  animation: entry-ring-pulse 1.4s ease-out infinite;
-  animation-delay: calc(var(--ring-index) * 180ms);
+  animation: entry-ring-pulse 0.95s ease-out infinite;
+  animation-delay: calc(var(--ring-index) * 120ms);
 }
 
 @keyframes entry-ring-pulse {
@@ -265,7 +265,7 @@ select option {
   display: grid;
   justify-items: center;
   transform: translate(-50%, -50%);
-  transition: opacity 0.36s ease 0.68s, transform 0.46s cubic-bezier(0.22, 1, 0.36, 1) 0.68s;
+  transition: opacity 0.24s ease 0.1s, transform 0.32s cubic-bezier(0.22, 1, 0.36, 1) 0.1s;
 }
 
 .entry-shutter--open .entry-shutter__logo-lockup {
@@ -322,7 +322,7 @@ select option {
   width: 36%;
   border-radius: inherit;
   background: #2867ff;
-  animation: entry-progress 0.95s ease-in-out infinite;
+  animation: entry-progress 0.7s ease-in-out infinite;
 }
 
 @keyframes entry-progress {

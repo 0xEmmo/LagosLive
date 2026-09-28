@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Plus, UserRound, Menu, X } from 'lucide-react';
 import RoleNavButtons from '@/components/RoleNavButtons';
+import ThemeToggle from '@/components/ThemeToggle';
 import { useLagosLiveStore } from '@/lib/store';
 import { hostStartHref } from '@/lib/data';
 import { SiteLogo } from '@/components/Logo';
@@ -46,6 +47,7 @@ export default function AppHeader() {
 
         <div className="ll-site-header__desktop-actions">
           <RoleNavButtons variant="inline" />
+          <ThemeToggle />
           <Link href={user ? '/profile' : '/login'} className="ll-site-signin">
             <UserRound size={14} strokeWidth={2} />
             <span>{user ? (user.name || 'Profile').split(' ')[0] : 'Sign in'}</span>
@@ -84,6 +86,10 @@ export default function AppHeader() {
             <Link href={user ? '/profile' : '/login'} onClick={() => setIsOpen(false)} className="ll-site-signin">
               <UserRound size={15} /> {user ? 'Profile' : 'Sign in'}
             </Link>
+          </div>
+          <div className="ll-mobile-menu__theme">
+            <span>Appearance</span>
+            <ThemeToggle showLabel />
           </div>
         </div>
       )}

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Loader2, RefreshCw, ShieldCheck, CalendarDays, Users, QrCode, Lock } from 'lucide-react';
 import BackButton from '@/components/BackButton';
+import ThemeToggle from '@/components/ThemeToggle';
 import PartyPhoto from '@/components/PartyPhoto';
 import { useLagosLiveStore } from '@/lib/store';
 import { fetchCheckInEvents } from '@/lib/queries';
@@ -110,6 +111,10 @@ export default function CheckInHomePage() {
           </div>
         </div>
       </header>
+
+      <div className="flex justify-end px-5 pt-4">
+        <ThemeToggle showLabel />
+      </div>
 
       <div className="flex flex-col gap-4 p-5">
         <div>

@@ -3,13 +3,13 @@
 // old cyan/purple nightlife chrome: this is a door tool that must read in
 // bright sun and be unambiguous under stress.
 export const ci = {
-  surface: '#131316',
-  raised: '#1B1B20',
-  line: 'rgba(245,240,232,0.08)',
-  lineStrong: 'rgba(245,240,232,0.16)',
-  text: '#F5F0E8',
-  muted: '#B7AD9F',
-  dim: '#7C7467',
+  surface: 'var(--c-bg)',
+  raised: 'var(--c-card)',
+  line: 'var(--c-border)',
+  lineStrong: 'var(--c-border-hover)',
+  text: 'var(--c-text)',
+  muted: 'var(--c-text-muted)',
+  dim: 'var(--c-text-dim)',
   accent: '#FF7A1A',
   accentSoft: '#FF9B3E',
   gold: '#FFB347',

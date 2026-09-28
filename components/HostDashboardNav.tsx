@@ -19,6 +19,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { useLagosLiveStore } from '@/lib/store';
+import ThemeToggle from '@/components/ThemeToggle';
 
 const HOST_LINKS = [
   { href: '/host', match: '/host', exact: true, label: 'Dashboard', Icon: LayoutDashboard },
@@ -112,6 +113,7 @@ export default function HostDashboardNav({ title = 'Host Dashboard', backHref, a
 
           <div className="ml-auto flex items-center gap-2 md:ml-2">
             {action && <div className="hidden md:block">{action}</div>}
+            <div className="hidden md:block"><ThemeToggle /></div>
 
             <Link
               href="/host/new"
@@ -143,6 +145,11 @@ export default function HostDashboardNav({ title = 'Host Dashboard', backHref, a
           >
             <div className="flex max-h-[72vh] flex-col overflow-y-auto px-4 py-3">
               {action && <div className="mb-2 flex flex-wrap items-center gap-2">{action}</div>}
+
+              <div className="my-2 flex items-center justify-between rounded-xl px-4 py-2" style={{ background: 'var(--c-glass)', border: '1px solid var(--c-border)' }}>
+                <span className="text-sm font-semibold" style={{ color: 'var(--c-text)' }}>Appearance</span>
+                <ThemeToggle showLabel />
+              </div>
 
               <div className="flex flex-col gap-1">
                 {HOST_LINKS.map(({ href, match, exact, label, Icon }) => {

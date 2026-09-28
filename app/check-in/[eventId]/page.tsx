@@ -20,6 +20,7 @@ import {
   Upload as UploadIcon,
 } from 'lucide-react';
 import BackButton from '@/components/BackButton';
+import ThemeToggle from '@/components/ThemeToggle';
 import { useParty } from '@/lib/hooks/useParty';
 import { useLagosLiveStore } from '@/lib/store';
 import { fetchCheckInStats, fetchCheckInActivity, type CheckInStats, type CheckInActivityItem } from '@/lib/queries';
@@ -593,6 +594,9 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
       </header>
 
       <div className="flex flex-col gap-4 p-5 pb-24">
+        <div className="flex justify-end">
+          <ThemeToggle showLabel />
+        </div>
         {/* Gate selector */}
         <div className="flex items-center gap-2 overflow-x-auto">
           <span className="flex flex-shrink-0 items-center gap-1 text-[11px] uppercase tracking-[0.6px]" style={{ color: ci.dim }}>

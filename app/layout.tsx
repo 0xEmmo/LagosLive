@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import { Bebas_Neue, Inter } from 'next/font/google';
 import './globals.css';
 import HashScroll from '@/components/HashScroll';
@@ -79,7 +80,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="dark" className={`${bebasNeue.variable} ${inter.variable}`}>
+    <html lang="en" data-theme="dark" suppressHydrationWarning className={`${bebasNeue.variable} ${inter.variable}`}>
+      <head>
+        <Script id="lagos-live-theme-init" strategy="beforeInteractive">
+          {`try { const savedTheme = localStorage.getItem('lagos-live-theme'); if (savedTheme === 'light' || savedTheme === 'dark') { document.documentElement.dataset.theme = savedTheme; document.documentElement.style.colorScheme = savedTheme; } } catch {}`}
+        </Script>
+      </head>
       <body className="font-heading bg-bg" style={{ paddingBottom: '84px' }}>
         <EntryShutter />
         <div className="ll-global-background fixed inset-0 z-[-1] bg-noise">

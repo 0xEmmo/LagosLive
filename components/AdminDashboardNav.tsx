@@ -27,6 +27,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useLagosLiveStore, type User } from '@/lib/store';
+import ThemeToggle from '@/components/ThemeToggle';
 import { isAdmin, type Role } from '@/lib/authz';
 import { rolePermissions } from '@/lib/rbac';
 
@@ -133,6 +134,7 @@ export default function AdminDashboardNav() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          <ThemeToggle className="theme-toggle-wrap--compact" />
           <button
             onClick={() => setOpen((o) => !o)}
             aria-label="Toggle menu"
@@ -181,6 +183,11 @@ export default function AdminDashboardNav() {
                 </div>
               </div>
             ))}
+
+            <div className="my-2 flex items-center justify-between rounded-xl px-4 py-2" style={{ background: 'var(--c-glass)', border: '1px solid var(--c-border)' }}>
+              <span className="text-sm font-semibold" style={{ color: 'var(--c-text)' }}>Appearance</span>
+              <ThemeToggle showLabel />
+            </div>
 
             <div className="my-2 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
 

@@ -1671,3 +1671,169 @@ body:has(.auth-split-layout) {
     transition-duration: 0.01ms !important;
   }
 }
+
+
+@media print {
+  @page {
+    size: A5 portrait;
+    margin: 0.28in;
+  }
+
+  html,
+  body {
+    min-height: 0 !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  #ticket-print-area,
+  #ticket-print-area * {
+    visibility: visible !important;
+  }
+
+  #ticket-print-area {
+    position: absolute !important;
+    inset: 0 !important;
+    display: flex !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  #ticket-print-area .ticket-actions,
+  .ticket-app-header {
+    display: none !important;
+  }
+
+  #ticket-print-area .ticket-card {
+    width: 4.95in !important;
+    max-width: 4.95in !important;
+    margin: 0 auto !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #ticket-print-area .ticket-card * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+.boarding-pass-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 198px;
+}
+
+.boarding-pass-stub {
+  border-left: 2px dashed rgba(7, 21, 44, 0.42);
+}
+
+.boarding-pass-stub::before,
+.boarding-pass-stub::after {
+  position: absolute;
+  left: -9px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #09152d;
+  content: '';
+}
+
+.boarding-pass-stub::before {
+  top: 34px;
+}
+
+.boarding-pass-stub::after {
+  bottom: 34px;
+}
+
+.boarding-pass-route {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.boarding-pass-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.5fr;
+  gap: 12px;
+}
+
+.boarding-pass-reverse {
+  display: grid;
+  grid-template-columns: 142px minmax(0, 1fr);
+}
+
+.boarding-pass-reverse-stub {
+  position: relative;
+}
+
+.boarding-pass-reverse-stub::before,
+.boarding-pass-reverse-stub::after {
+  position: absolute;
+  right: -8px;
+  z-index: 2;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #09152d;
+  content: '';
+}
+
+.boarding-pass-reverse-stub::before {
+  top: 22px;
+}
+
+.boarding-pass-reverse-stub::after {
+  bottom: 22px;
+}
+
+.boarding-pass-vertical-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+@media (max-width: 600px) {
+  .boarding-pass-top {
+    grid-template-columns: minmax(0, 1fr) 142px;
+  }
+
+  .boarding-pass-reverse {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 390px) {
+  .boarding-pass-top {
+    grid-template-columns: minmax(0, 1fr) 116px;
+  }
+
+  .boarding-pass-meta {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .boarding-pass-holder {
+    grid-column: 1 / -1;
+  }
+}
+
+@media print {
+  #ticket-print-area .boarding-pass-top {
+    grid-template-columns: minmax(0, 1fr) 1.55in !important;
+  }
+
+  #ticket-print-area .boarding-pass-reverse {
+    grid-template-columns: 1.05in minmax(0, 1fr) !important;
+  }
+}

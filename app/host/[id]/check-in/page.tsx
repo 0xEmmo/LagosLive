@@ -106,7 +106,7 @@ export default function HostCheckInPage({ params }: { params: { id: string } }) 
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search order ref or guest email…"
-            className="w-full rounded-[12px] py-2.5 pl-10 pr-3 text-[13px] outline-none"
+            className="min-h-11 w-full rounded-[12px] py-2.5 pl-10 pr-3 text-[13px] outline-none"
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#FFFFFF' }}
           />
         </div>
@@ -136,14 +136,14 @@ export default function HostCheckInPage({ params }: { params: { id: string } }) 
               const guest = (o.customer_email && o.customer_email !== 'Guest' ? o.customer_email.split('@')[0] : 'Guest') ?? 'Guest';
               const isIn = o.check_in_status === 'checked_in';
               return (
-                <div key={o.id} className="flex items-center gap-3 rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.03)', border: isIn ? '1px solid rgba(0,245,212,0.35)' : '1px solid rgba(255,255,255,0.08)' }}>
+                <div key={o.id} className="flex flex-wrap items-center gap-3 rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.03)', border: isIn ? '1px solid rgba(0,245,212,0.35)' : '1px solid rgba(255,255,255,0.08)' }}>
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px]" style={{ background: isIn ? 'rgba(0,245,212,0.12)' : 'rgba(43,104,255,0.1)' }}>
                     {isIn ? <CheckCircle2 size={18} color="#00F5D4" /> : <Users size={18} color="#2B68FF" />}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex min-w-0 flex-wrap items-baseline gap-x-2">
                       <span className="truncate text-[13px] font-bold" style={{ color: '#FFFFFF' }}>{guest}</span>
-                      <span className="shrink-0 text-[10.5px]" style={{ color: '#6B6C80' }}>#{o.order_ref}</span>
+                      <span className="min-w-0 break-all text-[10.5px]" style={{ color: '#6B6C80' }}>#{o.order_ref}</span>
                     </div>
                     <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 text-[11px]" style={{ color: '#A7A8B5' }}>
                       <span>{o.quantity} ticket{o.quantity > 1 ? 's' : ''}</span>
@@ -152,7 +152,7 @@ export default function HostCheckInPage({ params }: { params: { id: string } }) 
                   </div>
                   <button
                     onClick={() => toggle(o)}
-                    className="flex shrink-0 items-center gap-1.5 rounded-[10px] px-3.5 py-2 text-[12px] font-semibold transition-transform active:scale-[0.98]"
+                    className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-[10px] px-3.5 py-2 text-[12px] font-semibold transition-transform active:scale-[0.98]"
                     style={
                       isIn
                         ? { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', color: '#A7A8B5' }

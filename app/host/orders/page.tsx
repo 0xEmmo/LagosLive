@@ -80,7 +80,7 @@ export default function HostOrdersPage() {
           <button
             onClick={exportCsv}
             disabled={filtered.length === 0}
-            className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-semibold disabled:opacity-50"
+            className="flex min-h-11 items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-semibold disabled:opacity-50"
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#A7A8B5' }}
           >
             <Download size={12} /> Export
@@ -89,7 +89,7 @@ export default function HostOrdersPage() {
       />
 
       <div className="flex flex-col gap-4 p-5">
-        <div className="flex items-center gap-2 rounded-xl px-3.5 py-2.5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="flex min-h-11 items-center gap-2 rounded-xl px-3.5 py-2.5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
           <Search size={14} strokeWidth={2} color="#6B6C80" />
           <input
             value={search}
@@ -108,7 +108,7 @@ export default function HostOrdersPage() {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className="rounded-full px-3 py-1.5 text-[11px] font-semibold capitalize transition-colors"
+                className="min-h-11 rounded-full px-3 py-1.5 text-[11px] font-semibold capitalize transition-colors"
                 style={
                   active
                     ? { background: 'rgba(43,104,255,0.16)', border: '1px solid rgba(43,104,255,0.4)', color: '#2B68FF' }
@@ -171,7 +171,7 @@ export default function HostOrdersPage() {
                       </span>
                       <button
                         onClick={() => toggleCheckIn(order)}
-                        className="flex items-center gap-1.5 rounded-[9px] border px-2.5 py-1.5 text-[11px] font-semibold"
+                        className="flex min-h-11 items-center gap-1.5 rounded-[9px] border px-2.5 py-1.5 text-[11px] font-semibold"
                         style={{
                           background: isCheckedIn ? 'rgba(0,245,212,0.08)' : 'rgba(255,255,255,0.03)',
                           borderColor: isCheckedIn ? 'rgba(0,245,212,0.3)' : 'rgba(255,255,255,0.1)',

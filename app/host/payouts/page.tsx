@@ -188,7 +188,7 @@ export default function HostPayoutsPage() {
       <HostDashboardNav title="Payouts" />
 
       <div className="flex flex-col gap-4 p-5">
-        <div className="grid grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
           <Stat label="Paid Out" value={formatNaira(paid)} color="#00F5D4" icon={<Landmark size={14} strokeWidth={2} color="#00F5D4" />} />
           <Stat label="Pending" value={formatNaira(pending)} color="#FFD600" icon={<Wallet size={14} strokeWidth={2} color="#FFD600" />} />
           <Stat label="Available" value={formatNaira(available)} color="#79A3FF" icon={<Wallet size={14} strokeWidth={2} color="#79A3FF" />} />
@@ -205,9 +205,9 @@ export default function HostPayoutsPage() {
             className="rounded-2xl p-4"
             style={{ background: 'rgba(255,138,0,0.07)', border: '1px solid rgba(255,138,0,0.3)' }}
           >
-            <div className="flex items-start gap-3">
+            <div className="flex flex-wrap items-start gap-3">
               <AlertTriangle size={18} strokeWidth={1.5} color="#FF8A00" className="mt-0.5 shrink-0" />
-              <div className="flex-1 text-[12px]" style={{ color: '#D5D6E0' }}>
+              <div className="min-w-0 flex-1 text-[12px]" style={{ color: '#D5D6E0' }}>
                 <span className="font-bold" style={{ color: '#FFFFFF' }}>
                   {underReview.length === 1
                     ? 'A payout of yours was returned by the bank'
@@ -242,7 +242,7 @@ export default function HostPayoutsPage() {
         {user.hostVerificationStatus !== 'verified' && (
           <div className="flex items-center gap-3 rounded-2xl p-4" style={{ background: 'rgba(255,138,0,0.06)', border: '1px solid rgba(255,138,0,0.25)' }}>
             <ShieldCheck size={18} strokeWidth={1.5} color="#FF8A00" />
-            <div className="flex-1 text-[12px]" style={{ color: '#D5D6E0' }}>
+            <div className="min-w-0 flex-1 text-[12px]" style={{ color: '#D5D6E0' }}>
               <span className="font-bold" style={{ color: '#FFFFFF' }}>
                 {user.hostVerificationStatus === 'pending'
                   ? 'Your host verification is under review.'
@@ -254,7 +254,7 @@ export default function HostPayoutsPage() {
             </div>
             <Link
               href="/host/verification"
-              className="shrink-0 rounded-[10px] px-3.5 py-2 text-[11.5px] font-bold"
+              className="min-h-11 max-w-[45%] shrink-0 whitespace-normal rounded-[10px] px-2.5 py-2 text-center text-[11.5px] font-bold"
               style={{ background: 'rgba(255,138,0,0.14)', border: '1px solid rgba(255,138,0,0.4)', color: '#FF8A00' }}
             >
               {user.hostVerificationStatus === 'pending'
@@ -295,7 +295,7 @@ export default function HostPayoutsPage() {
               <span>Verified {fmtDate(activeAccount.verified_at)}</span>
               <button
                 onClick={handleRemoveBankAccount}
-                className="ml-auto underline underline-offset-2"
+                className="ml-auto min-h-11 px-2 underline underline-offset-2"
                 style={{ color: '#FF8A00' }}
               >
                 Remove
@@ -310,7 +310,7 @@ export default function HostPayoutsPage() {
                 <select
                   value={bankCode}
                   onChange={(e) => setBankCode(e.target.value)}
-                  className="rounded-lg px-3 py-2 text-[12px]"
+                  className="min-h-11 rounded-lg px-3 py-2 text-[12px]"
                   style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#FFFFFF' }}
                 >
                   <option value="">Select your bank</option>
@@ -330,7 +330,7 @@ export default function HostPayoutsPage() {
                   inputMode="numeric"
                   placeholder="10-digit number"
                   autoComplete="off"
-                  className="rounded-lg px-3 py-2 text-[12px]"
+                  className="min-h-11 rounded-lg px-3 py-2 text-[12px]"
                   style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#FFFFFF' }}
                 />
               </label>
@@ -341,7 +341,7 @@ export default function HostPayoutsPage() {
                   value={accountName}
                   onChange={(e) => setAccountName(e.target.value)}
                   placeholder="Exactly as it appears on the account"
-                  className="rounded-lg px-3 py-2 text-[12px]"
+                  className="min-h-11 rounded-lg px-3 py-2 text-[12px]"
                   style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#FFFFFF' }}
                 />
               </label>
@@ -354,7 +354,7 @@ export default function HostPayoutsPage() {
               <button
                 onClick={handleSaveBankAccount}
                 disabled={savingBank || !bankCode || accountNumber.length !== 10 || accountName.trim().length < 2}
-                className="rounded-xl py-2.5 text-[12px] font-bold transition-all disabled:opacity-40 sm:col-span-2"
+                className="min-h-11 rounded-xl py-2.5 text-[12px] font-bold transition-all disabled:opacity-40 sm:col-span-2"
                 style={{ background: 'linear-gradient(135deg, #00F5D4, #00B894)', color: '#04121A' }}
               >
                 {savingBank ? 'Verifying with the bank...' : 'Verify and save'}
@@ -500,12 +500,12 @@ export default function HostPayoutsPage() {
 
 function Stat({ label, value, color, icon }: { label: string; value: string; color: string; icon: React.ReactNode }) {
   return (
-    <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+    <div className="rounded-2xl p-3 sm:p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
       <div className="mb-1 flex items-center justify-between">
         <span className="text-[10px] font-bold uppercase tracking-[0.9px]" style={{ color: '#6B6C80' }}>{label}</span>
         {icon}
       </div>
-      <div className="font-display truncate text-[19px] leading-tight" style={{ color }}>{value}</div>
+      <div className="font-display break-words text-[15px] leading-tight sm:text-[19px]" style={{ color }}>{value}</div>
     </div>
   );
 }

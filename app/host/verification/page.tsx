@@ -307,7 +307,7 @@ export default function HostVerificationPage() {
     <div className="mx-auto min-h-screen max-w-[520px] animate-fade-in pb-24 md:max-w-[900px]">
       <HostDashboardNav title="Host Verification" />
 
-      <div className="flex flex-col gap-4 p-5">
+      <div className="flex flex-col gap-4 p-4 sm:p-5">
         {/* Status hero */}
         <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
           <div className="flex items-center gap-3">
@@ -395,7 +395,7 @@ export default function HostVerificationPage() {
                 <button
                   onClick={goBack}
                   disabled={submitting}
-                  className="flex items-center gap-1.5 rounded-xl px-4 py-3 text-[13px] font-bold transition-all disabled:opacity-50"
+                  className="flex min-h-11 items-center gap-1.5 rounded-xl px-4 py-3 text-[13px] font-bold transition-all disabled:opacity-50"
                   style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#A7A8B5' }}
                 >
                   <ChevronLeft size={15} strokeWidth={2.5} /> Back
@@ -404,7 +404,7 @@ export default function HostVerificationPage() {
               {step < 2 ? (
                 <button
                   onClick={goNext}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl py-3 text-[13px] font-bold transition-all active:scale-[0.99]"
+                  className="flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl py-3 text-[13px] font-bold transition-all active:scale-[0.99]"
                   style={{ background: 'linear-gradient(135deg, #FF9B3E, #FF6A00)', color: '#FFFFFF', boxShadow: '0 6px 24px rgba(255,106,0,0.25)' }}
                 >
                   Continue <ChevronRight size={15} strokeWidth={2.5} />
@@ -413,7 +413,7 @@ export default function HostVerificationPage() {
                 <button
                   onClick={() => void handleSubmit()}
                   disabled={submitting}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl py-3 text-[13px] font-bold transition-all active:scale-[0.99] disabled:opacity-50"
+                  className="flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl py-3 text-[13px] font-bold transition-all active:scale-[0.99] disabled:opacity-50"
                   style={{ background: 'linear-gradient(135deg, #2B68FF, #6E8DFF)', color: '#FFFFFF', boxShadow: '0 6px 24px rgba(43,104,255,0.3)' }}
                 >
                   {submitting ? (
@@ -565,7 +565,7 @@ function Field({
       <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.9px]" style={{ color: '#6B6C80' }}>
         {label} {optional && <span className="ml-1 uppercase" style={{ color: '#4A4B5C' }}>(optional)</span>}
       </label>
-      <div className="flex items-center gap-2 rounded-xl px-3.5 py-2.5" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
+      <div className="flex min-h-11 items-center gap-2 rounded-xl px-3.5 py-2.5" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
         <input
           type={type}
           inputMode={inputMode}
@@ -600,7 +600,7 @@ function ChipGroup<T extends string>({
             key={opt}
             type="button"
             onClick={() => onChange(opt)}
-            className="rounded-[10px] px-3.5 py-2 text-[12px] font-semibold transition-all"
+            className="min-h-11 rounded-[10px] px-3.5 py-2 text-[12px] font-semibold transition-all"
             style={
               active
                 ? { background: 'rgba(255,154,62,0.12)', border: '1px solid rgba(255,154,62,0.45)', color: '#FFFFFF' }
@@ -617,7 +617,7 @@ function ChipGroup<T extends string>({
 
 function StepCard({ icon, title, hint, children }: { icon?: React.ReactNode; title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+    <div className="rounded-2xl p-4 sm:p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
       <div className="mb-4 flex items-center gap-2.5">
         {icon && <span className="flex h-8 w-8 items-center justify-center rounded-xl" style={{ background: 'rgba(255,154,62,0.1)' }}>{icon}</span>}
         <div>

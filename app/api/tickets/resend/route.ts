@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabase, createServiceSupabase } from '@/lib/supabase/server';
 import { sendTicketConfirmation } from '@/lib/resend';
-import { buildTicketUrl, isValidEmail } from '@/lib/ticket-access';
+import { buildTicketUrl, generateTicketAccessToken, isTicketAccessExpired, isValidEmail, ticketAccessExpiryDate } from '@/lib/ticket-access';
 
 // Re-send the ticket confirmation email to a lost guest. Matches the same
 // email + order reference as /api/tickets/find, is rate-limited per IP and
@@ -69,6 +69,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true });
     }
 
+    let accessToken = order.ticket_access_token;
+    if (accessToken && isTicketAccessExpired(order.ticket_access_expires_at)) {
+      const replacement = generateTicketAccessToken();
+      const { data: refreshed, error: refreshError } = await service
+        .from('orders')
+        .update({ ticket_access_token: replacement, ticket_access_expires_at: ticketAccessExpiryDate() })
+        .eq('id', order.id)
+        .eq('ticket_access_token', accessToken)
+        .is('user_id', null)
+        .select('id')
+        .maybeSingle();
+      if (refreshError || !refreshed) return NextResponse.json({ ok: true });
+      accessToken = replacement;
+    }
+
     const party = order.parties as { title: string; date: string; time: string; location: string };
     const sent = await sendTicketConfirmation({
       to: order.customer_email ?? '',
@@ -80,7 +95,7 @@ export async function POST(request: Request) {
       quantity: order.quantity,
       total: order.total,
       orderRef: order.order_ref,
-      ticketUrl: buildTicketUrl(order.id, order.ticket_access_token),
+      ticketUrl: buildTicketUrl(order.id, accessToken),
     });
 
     if (!sent) {

@@ -156,7 +156,7 @@ export default function CheckInHomePage() {
                   : 'No approved events are live in the 12-hour door window right now.'}
               </div>
             </div>
-            <Link href="/host/new" className="mt-1 rounded-[12px] px-6 py-3 text-[13px] font-bold" style={{ background: ci.gradient, color: '#FFFFFF', boxShadow: ci.buttonShadow }}>
+            <Link href="/host/new" className="mt-1 inline-flex min-h-11 items-center rounded-[12px] px-6 py-3 text-[13px] font-bold" style={{ background: ci.gradient, color: '#FFFFFF', boxShadow: ci.buttonShadow }}>
               List Your Event
             </Link>
           </div>
@@ -166,7 +166,7 @@ export default function CheckInHomePage() {
               <Link
                 key={p.id}
                 href={`/check-in/${p.id}`}
-                className="flex items-center gap-3 rounded-2xl p-3 transition-transform active:scale-[0.98]"
+                className="flex min-h-11 items-center gap-3 rounded-2xl p-3 transition-transform active:scale-[0.98]"
                 style={{ background: ci.raised, border: `1px solid ${ci.line}`, cursor: 'pointer' }}
               >
                 <div className="relative h-[64px] w-[64px] flex-shrink-0 overflow-hidden rounded-[12px]" style={{ background: p.gradient }}>
@@ -179,9 +179,9 @@ export default function CheckInHomePage() {
                   <div className="mt-0.5 text-[12px]" style={{ color: ci.muted }}>
                     {p.date} · {p.time}
                   </div>
-                  <div className="mt-0.5 flex items-center gap-1.5 text-[11px]" style={{ color: ci.dim }}>
+                  <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[11px]" style={{ color: ci.dim }}>
                     <Users size={11} strokeWidth={2} />
-                    {p.location}
+                    <span className="truncate">{p.location}</span>
                   </div>
                 </div>
                 <div

@@ -127,23 +127,25 @@ export const PieChartDisplay = memo(function PieChartDisplay({ data }: { data: D
   if (data.length === 0) return <EmptyChart />;
   const total = data.reduce((s, d) => s + d.value, 0);
   return (
-    <div className="flex items-center gap-4">
-      <ResponsiveContainer width={160} height={160}>
-        <PieChart>
-          <Pie data={data} cx="50%" cy="50%" innerRadius={40} outerRadius={70} dataKey="value" stroke="none">
-            {data.map((_, i) => (
-              <Cell key={i} fill={COLORS[i % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={LABEL_STYLE} />
-        </PieChart>
-      </ResponsiveContainer>
-      <div className="flex flex-col gap-2">
+    <div className="flex min-w-0 flex-col items-center gap-4 sm:flex-row sm:items-center">
+      <div className="h-[144px] w-full max-w-[144px] shrink-0 sm:h-[160px] sm:max-w-[160px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie data={data} cx="50%" cy="50%" innerRadius={40} outerRadius={70} dataKey="value" stroke="none">
+              {data.map((_, i) => (
+                <Cell key={i} fill={COLORS[i % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={LABEL_STYLE} />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="flex w-full min-w-0 flex-col gap-2">
         {data.map((d, i) => (
-          <div key={i} className="flex items-center gap-2 text-[11px]">
+          <div key={i} className="flex min-w-0 items-center gap-2 text-[11px]">
             <div className="h-2.5 w-2.5 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
-            <span style={{ color: '#A7A8B5' }}>{d.label}</span>
-            <span className="font-semibold" style={{ color: '#FFFFFF' }}>{d.value}</span>
+            <span className="min-w-0 flex-1 break-words" style={{ color: '#A7A8B5' }}>{d.label}</span>
+            <span className="shrink-0 font-semibold" style={{ color: '#FFFFFF' }}>{d.value}</span>
           </div>
         ))}
       </div>

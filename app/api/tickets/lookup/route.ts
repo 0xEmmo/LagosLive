@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase/server';
 import type { Database } from '@/lib/supabase/database.types';
+import { isGuestTicketAccessValid } from '@/lib/ticket-access-policy';
 
 // Token-gated ticket lookup for guests. A guest has no Supabase session, so
 // they cannot read their order through RLS; instead they open a link containing
@@ -47,6 +48,7 @@ function toParty(row: NonNullable<OrderRow['parties']>) {
     status: row.status,
     cancelledAt: row.cancelled_at,
     cancellationReason: row.cancellation_reason,
+    coverUrl: row.cover_url ?? null,
   };
 }
 
@@ -68,7 +70,11 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     // One error for "not found" and "bad token" — we never confirm which.
-    if (error || !row || !row.parties) {
+    if (error || !row || !row.parties || !isGuestTicketAccessValid({
+      requestedOrderId: orderId,
+      token,
+      order: row,
+    })) {
       return NextResponse.json({ error: 'Ticket not found.' }, { status: 404 });
     }
 

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
 const RINGS = Array.from({ length: 3 });
-const DURATION_MS = 1250;
+const DURATION_MS = 650;
 
 export default function EntryShutter() {
   const pathname = usePathname();
@@ -37,7 +37,7 @@ export default function EntryShutter() {
       </div>
       <div className="entry-shutter__logo-lockup">
         <div className="entry-shutter__halo" />
-        <Image className="entry-shutter__logo" src="/Lagoslivelogo.png" alt="" width={220} height={80} priority />
+        <Image className="entry-shutter__logo" src="/LagosLiveLogo.webp" alt="" width={384} height={256} priority />
         <span className="entry-shutter__caption">Good nights start here</span>
         <span className="entry-shutter__progress"><span /></span>
       </div>

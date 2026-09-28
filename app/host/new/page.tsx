@@ -170,7 +170,7 @@ export default function NewEventPage() {
   return (
     <div className="mx-auto max-w-[520px] animate-fade-in md:max-w-[900px]">
       <HostDashboardNav title="List a New Event" />
-      <div className="flex flex-col gap-4 p-5">
+      <div className="flex flex-col gap-4 p-4 sm:p-5">
         <div
           className="rounded-2xl px-4 py-3.5 text-[13px] leading-[1.6]"
           style={{ background: 'rgba(255,214,0,0.06)', border: '1px solid rgba(255,214,0,0.15)', color: '#A7A8B5' }}

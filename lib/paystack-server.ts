@@ -444,7 +444,9 @@ export interface PaystackBank {
  * shown, with the static map kept only as an offline fallback.
  */
 export async function paystackListBanks(): Promise<PaystackBank[]> {
-  const res = await fetch(`${PAYSTACK_API}/bank?country=NGN`, {
+  // Paystack expects a country name here, not the NGN currency code. If the
+  // wrong value is supplied, it can return a successful response with no banks.
+  const res = await fetch(`${PAYSTACK_API}/bank?country=nigeria&perPage=100`, {
     method: 'GET',
     headers: paystackHeaders(),
   });
@@ -459,8 +461,17 @@ export async function paystackListBanks(): Promise<PaystackBank[]> {
     throw new Error(json.message ?? 'Paystack could not list banks');
   }
 
-  return json.data
+  const banks = json.data
     .map((b) => ({ name: b.name ?? '', code: b.code ?? '' }))
     .filter((b) => b.name !== '' && b.code !== '')
     .sort((a, b) => a.name.localeCompare(b.name));
+
+  // The route falls back to the local bank-code map when this helper throws.
+  // Treat an empty successful payload as unavailable rather than showing a
+  // dropdown with no selectable banks.
+  if (banks.length === 0) {
+    throw new Error('Paystack returned no supported Nigerian banks');
+  }
+
+  return banks;
 }

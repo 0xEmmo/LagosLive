@@ -13,6 +13,8 @@ export default function NewsletterModal() {
   const pathname = usePathname() ?? '/';
   const isHome = pathname === '/';
   const operationalRoute = pathname.startsWith('/admin') || pathname.startsWith('/host') || pathname.includes('/check-in');
+  const isAuthRoute = pathname === '/login' || pathname === '/signup';
+  const suppressModal = operationalRoute || isAuthRoute;
   const showToast = useLagosLiveStore((s) => s.showToast);
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
@@ -20,7 +22,7 @@ export default function NewsletterModal() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (operationalRoute) {
+    if (suppressModal) {
       setOpen(false);
       return;
     }
@@ -28,7 +30,7 @@ export default function NewsletterModal() {
     if (localStorage.getItem(STORAGE_KEY)) return;
     const timer = setTimeout(() => setOpen(true), SHOW_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [operationalRoute, pathname]);
+  }, [suppressModal, pathname]);
 
   const close = () => {
     setOpen(false);
@@ -58,7 +60,7 @@ export default function NewsletterModal() {
     }
   };
 
-  if (operationalRoute || !open) return null;
+  if (suppressModal || !open) return null;
 
   return (
     <div

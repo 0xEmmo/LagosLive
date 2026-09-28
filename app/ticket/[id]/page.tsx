@@ -262,7 +262,7 @@ function ConfirmedTicket({
 
             {/* Footer */}
             <div className="mt-5 flex items-center justify-between">
-              <Wordmark size={14} />
+              <Wordmark size={20} />
               <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.8px]" style={{ color: '#6B6C80' }}>
                 <ShieldCheck size={11} strokeWidth={2.5} />
                 Verified entry

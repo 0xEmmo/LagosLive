@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import BackButton from '@/components/BackButton';
-import { SiteLogo } from '@/components/Logo';
+import { SiteLogo, Wordmark } from '@/components/Logo';
 
 type AuthMode = 'login' | 'signup';
 
@@ -33,14 +33,16 @@ export default function AuthSplitLayout({ mode, children }: { mode: AuthMode; ch
       <section className="auth-split-layout__form" aria-label={mode === 'signup' ? 'Create a Lagos Live account' : 'Sign in to Lagos Live'}>
         <header className="auth-split-layout__topbar">
           <BackButton href="/" label="Home" />
-          <SiteLogo className="auth-split-layout__wordmark" />
+          <SiteLogo priority className="auth-split-layout__wordmark" />
         </header>
 
         <div className="auth-split-layout__content">{children}</div>
 
         <div className="auth-split-layout__footnote">
           <span className="auth-split-layout__status-dot" aria-hidden="true" />
-          LAGOS LIVE <span aria-hidden="true">/</span> YOUR CITY, YOUR NIGHT
+          <Wordmark size={16} />
+          <span aria-hidden="true">/</span>
+          <span>YOUR CITY, YOUR NIGHT</span>
         </div>
       </section>
 
@@ -54,7 +56,11 @@ export default function AuthSplitLayout({ mode, children }: { mode: AuthMode; ch
           className="auth-split-layout__image"
         />
         <div className="auth-split-layout__wash" aria-hidden="true" />
-        <div className="auth-split-layout__visual-kicker">LAGOS LIVE <span>/</span> AFTER DARK</div>
+        <div className="auth-split-layout__visual-kicker">
+          <Wordmark size={13} />
+          <span>/</span>
+          AFTER DARK
+        </div>
         <div className="auth-split-layout__visual-copy">
           <p className="auth-split-layout__eyebrow">{copy.kicker}</p>
           <h2 className="font-display">

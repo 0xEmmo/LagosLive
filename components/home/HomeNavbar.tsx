@@ -7,6 +7,7 @@ import { Plus, UserRound, Menu, X } from 'lucide-react';
 import RoleNavButtons from '@/components/RoleNavButtons';
 import { useLagosLiveStore } from '@/lib/store';
 import { hostStartHref } from '@/lib/data';
+import { SiteLogo } from '@/components/Logo';
 
 const NAV_LINKS = [
   { label: 'Home', href: '/', match: '/' },
@@ -24,7 +25,7 @@ export default function AppHeader() {
     <header className="ll-site-header sticky top-0 z-40">
       <div className="ll-site-header__inner">
         <Link href="/" className="ll-site-wordmark" aria-label="Lagos Live — home">
-          LAGOS LIVE<span aria-hidden="true">.</span>
+          <SiteLogo priority />
         </Link>
 
         <nav className="ll-site-nav" aria-label="Primary navigation">

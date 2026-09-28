@@ -224,26 +224,26 @@ function ConfirmedTicket({
         <p className="text-[11px]" style={{ color: '#A7A8B5' }}>Choose “Save as PDF” in your browser&apos;s print dialog.</p>
       </div>
       <div className="ticket-card boarding-pass-card w-full animate-fade-in">
-        <div className="overflow-hidden rounded-[26px] border border-cyan-200/25 bg-[#09152d] shadow-[0_28px_90px_rgba(0,0,0,0.52)]">
+        <div className="overflow-hidden rounded-[26px] border border-blue-200/30 bg-[#0B2F73] shadow-[0_28px_90px_rgba(0,0,0,0.52)]">
           <div className="boarding-pass-top">
             <section className="boarding-pass-main relative min-w-0 overflow-hidden px-5 py-5 text-white sm:px-7 sm:py-6">
               <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full border border-cyan-200/10" />
               <div className="pointer-events-none absolute -right-8 -top-12 h-40 w-40 rounded-full border border-cyan-200/10" />
               <div className="relative z-10 flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2.5">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cyan-100/20 bg-white/5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/25 bg-white/10">
                     <LogoMark size={28} />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[12px] font-black uppercase tracking-[0.18em] text-cyan-100">Lagos Live</div>
-                    <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-cyan-100/55">Event boarding pass</div>
+                    <div className="text-[12px] font-black uppercase tracking-[0.18em] text-white">Lagos Live</div>
+                    <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-white/70">Event boarding pass</div>
                   </div>
                 </div>
                 <TicketStatusBadge status="confirmed" />
               </div>
 
               <div className="relative z-10 mt-6">
-                <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-200/70">Admit to</div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/75">Admit to</div>
                 <h1 className="mt-1 line-clamp-2 font-heading text-[25px] font-black leading-[1.03] tracking-[0.015em] text-white sm:text-[36px]">
                   {party.title}
                 </h1>
@@ -252,28 +252,28 @@ function ConfirmedTicket({
               <div className="boarding-pass-route relative z-10 mt-5">
                 <div className="min-w-0">
                   <div className="text-[9px] font-bold uppercase tracking-[0.19em] text-cyan-100/60">From</div>
-                  <div className="mt-0.5 truncate font-heading text-[20px] font-bold uppercase tracking-[0.04em] text-cyan-200 sm:text-[25px]">Lagos</div>
-                  <div className="text-[9px] text-cyan-100/60">Lagos Live</div>
+                  <div className="mt-0.5 truncate font-heading text-[20px] font-bold uppercase tracking-[0.04em] text-white sm:text-[25px]">Lagos</div>
+                  <div className="text-[9px] text-white/65">Lagos Live</div>
                 </div>
-                <span aria-hidden="true" className="px-2 text-[27px] font-light text-cyan-300">→</span>
+                <span aria-hidden="true" className="px-2 text-[27px] font-light text-white">→</span>
                 <div className="min-w-0">
-                  <div className="text-[9px] font-bold uppercase tracking-[0.19em] text-cyan-100/60">To · venue</div>
-                  <div className="mt-0.5 truncate font-heading text-[20px] font-bold uppercase tracking-[0.04em] text-cyan-200 sm:text-[25px]">{party.location}</div>
-                  <div className="truncate text-[9px] text-cyan-100/60">{party.address}</div>
+                  <div className="text-[9px] font-bold uppercase tracking-[0.19em] text-white/65">To · venue</div>
+                  <div className="mt-0.5 truncate font-heading text-[20px] font-bold uppercase tracking-[0.04em] text-white sm:text-[25px]">{party.location}</div>
+                  <div className="truncate text-[9px] text-white/65">{party.address}</div>
                 </div>
               </div>
 
               <div className="boarding-pass-meta relative z-10 mt-5 border-t border-cyan-100/20 pt-3.5">
                 <div>
-                  <div className="text-[8px] font-bold uppercase tracking-[0.18em] text-cyan-100/55">Date</div>
+                  <div className="text-[8px] font-bold uppercase tracking-[0.18em] text-white/65">Date</div>
                   <div className="mt-1 text-[11px] font-bold text-white sm:text-[12px]">{party.date}</div>
                 </div>
                 <div>
-                  <div className="text-[8px] font-bold uppercase tracking-[0.18em] text-cyan-100/55">Time</div>
+                  <div className="text-[8px] font-bold uppercase tracking-[0.18em] text-white/65">Time</div>
                   <div className="mt-1 text-[11px] font-bold text-white sm:text-[12px]">{party.time}</div>
                 </div>
                 <div className="boarding-pass-holder">
-                  <div className="text-[8px] font-bold uppercase tracking-[0.18em] text-cyan-100/55">Passenger</div>
+                  <div className="text-[8px] font-bold uppercase tracking-[0.18em] text-white/65">Passenger</div>
                   <div className="mt-1 truncate text-[11px] font-bold text-white sm:text-[12px]">{holder}</div>
                 </div>
               </div>
@@ -314,7 +314,7 @@ function ConfirmedTicket({
           </div>
 
           <div className="boarding-pass-reverse border-t border-dashed border-cyan-100/40">
-            <aside className="boarding-pass-reverse-stub flex flex-col items-center justify-between border-r border-dashed border-cyan-100/30 bg-[#0d1e3a] px-3 py-4 text-center text-cyan-100">
+            <aside className="boarding-pass-reverse-stub flex flex-col items-center justify-between border-r border-dashed border-cyan-100/30 bg-[#09255B] px-3 py-4 text-center text-cyan-100">
               <Wordmark size={20} />
               <div className="boarding-pass-vertical-label text-[9px] font-black uppercase tracking-[0.2em]">Keep this pass</div>
               <div className="text-[8px] font-semibold uppercase tracking-[0.13em] text-cyan-100/60">Verified entry</div>
@@ -323,7 +323,7 @@ function ConfirmedTicket({
               <div className="absolute inset-0" style={{ background: party.gradient }}>
                 <PartyPhoto src={partyPhoto(party.id, party.coverUrl)} alt={party.title} gradient={party.gradient} sizes="(max-width: 600px) 75vw, 600px" tone="editorial" priority />
               </div>
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#08152d]/95 via-[#08152d]/65 to-[#08152d]/10" />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#061A45]/95 via-[#061A45]/65 to-[#061A45]/10" />
               <div className="relative z-10 max-w-[92%]">
                 <div className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-200">Your night starts here</div>
                 <h2 className="mt-1 font-heading text-[32px] font-black uppercase leading-[0.98] tracking-[0.025em] text-cyan-300 sm:text-[46px]">See you there!</h2>

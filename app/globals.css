@@ -952,18 +952,6 @@ select option {
 .ll-vibe-all { display: inline-flex; align-items: center; gap: 6px; color: #cfd6e3; font-size: 9px; white-space: nowrap; }
 .ll-vibe-all:hover { color: #85aaff; }
 
-/* Wide crowd-photo callout between the event shelves and city discovery. */
-.ll-night-section { padding-top: 14px; padding-bottom: 62px; }
-.ll-night-card { position: relative; min-height: 380px; display: flex; align-items: flex-end; overflow: hidden; isolation: isolate; background: #080a0e; border: 1px solid rgba(255,255,255,0.13); }
-.ll-night-card__image { z-index: 0; object-fit: cover; object-position: 58% 48%; filter: saturate(0.9) brightness(0.82); transition: transform 700ms cubic-bezier(0.2,0.7,0.2,1); }
-.ll-night-card:hover .ll-night-card__image { transform: scale(1.025); }
-.ll-night-card__shade { position: absolute; z-index: 1; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(3,4,6,0.88) 0%, rgba(3,4,6,0.59) 43%, rgba(3,4,6,0.08) 100%), linear-gradient(0deg, rgba(3,4,6,0.66), transparent 68%); }
-.ll-night-card__copy { position: relative; z-index: 2; width: min(100%, 680px); padding: clamp(26px,5vw,60px); }
-.ll-night-card__copy .ll-eyebrow { margin-bottom: 12px; }
-.ll-night-card__copy h2 { margin: 0; color: #fff; font: 400 clamp(58px,7vw,92px)/0.8 var(--font-bebas), sans-serif; letter-spacing: -0.015em; }
-.ll-night-card__copy h2 span { color: #a9c5ff; }
-.ll-night-card__copy > p:not(.ll-eyebrow) { max-width: 390px; margin: 15px 0 19px; color: #e0e4ec; font-size: 11px; line-height: 1.7; }
-
 /* Sound and organizer features */
 .ll-sound-section { padding-top: 62px; padding-bottom: 62px; }
 .ll-sound-card { min-height: 270px; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); overflow: hidden; background: #090b0e; border: 1px solid rgba(255,255,255,0.12); }
@@ -1077,13 +1065,6 @@ select option {
   .ll-vibe-intro h2 { font-size: 27px; }
   .ll-vibe-list { margin-right: -17px; padding-right: 17px; }
   .ll-vibe-list a { min-width: 116px; }
-  .ll-night-section { padding-top: 0; padding-bottom: 42px; }
-  .ll-night-card { min-height: 390px; }
-  .ll-night-card__image { object-position: 58% 48%; }
-  .ll-night-card__shade { background: linear-gradient(90deg, rgba(3,4,6,0.82), rgba(3,4,6,0.27)), linear-gradient(0deg, rgba(3,4,6,0.82), rgba(3,4,6,0.05) 82%); }
-  .ll-night-card__copy { padding: 23px; }
-  .ll-night-card__copy h2 { font-size: clamp(44px,12vw,56px); }
-  .ll-night-card__copy > p:not(.ll-eyebrow) { max-width: 300px; font-size: 10px; }
   .ll-sound-section { padding-top: 42px; padding-bottom: 42px; }
   .ll-sound-card { grid-template-columns: 1fr; }
   .ll-sound-card__image { min-height: 205px; }

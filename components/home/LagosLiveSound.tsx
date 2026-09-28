@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import type { CSSProperties } from 'react';
+import { Wordmark } from '@/components/Logo';
 
 const SPOTIFY_PLAYLIST_URL =
   'https://open.spotify.com/playlist/1GSP7SCHTQOeDtax41ZWho?si=MS8WKhT5S5iWvX9xqOW-Lw';
@@ -125,11 +126,8 @@ export default function LagosLiveSound() {
                   <SpotifyIcon className="h-7 w-7" style={{ color: '#8A2BE2' }} />
                 </div>
 
-                <div
-                  className="font-display mb-2 text-[28px] leading-[1] tracking-[1px]"
-                  style={{ color: '#FFFFFF' }}
-                >
-                  LAGOS LIVE
+                <div className="mb-2 flex items-center">
+                  <Wordmark size={36} />
                 </div>
                 <div
                   className="font-display text-[16px] tracking-[3px] uppercase"

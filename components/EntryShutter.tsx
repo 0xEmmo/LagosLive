@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
 const RINGS = Array.from({ length: 3 });
-const DURATION_MS = 1250;
+const DURATION_MS = 650;
 
 export default function EntryShutter() {
   const pathname = usePathname();

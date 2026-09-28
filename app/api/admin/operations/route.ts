@@ -306,7 +306,7 @@ export async function POST(request: Request) {
         accessToken = replacement;
       }
       const [{ data: party }, tt] = await Promise.all([
-        service.from('parties').select('title, date, time, location').eq('id', order.party_id).single(),
+        service.from('parties').select('title, date, time, location, address, cover_url').eq('id', order.party_id).single(),
         order.ticket_type_id
           ? service.from('ticket_types').select('name').eq('id', order.ticket_type_id).maybeSingle()
           : Promise.resolve({ data: null }),
@@ -329,6 +329,8 @@ export async function POST(request: Request) {
         partyDate: party.date,
         partyTime: party.time,
         partyLocation: party.location,
+        partyAddress: party.address ?? undefined,
+        partyImageUrl: party.cover_url ?? undefined,
         ticketTypeName: tt?.data?.name ?? 'General Entry',
         quantity: order.quantity,
         total: order.total,

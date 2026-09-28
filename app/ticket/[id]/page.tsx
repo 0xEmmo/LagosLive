@@ -25,6 +25,7 @@ import { formatNaira } from '@/lib/filters';
 import { useLagosLiveStore } from '@/lib/store';
 import type { CustomerTicket, OrderPaymentStatus } from '@/lib/types';
 import { ticketState } from '@/lib/types';
+import { getTicketSkin } from '@/lib/ticket-skin';
 
 function TicketStatusBadge({ status }: { status: OrderPaymentStatus }) {
   if (status === 'confirmed') {
@@ -54,20 +55,6 @@ function TicketStatusBadge({ status }: { status: OrderPaymentStatus }) {
       {status}
     </span>
   );
-}
-
-function ticketSkin(ticketTypeName: string, eventGradient: string) {
-  const name = ticketTypeName.toLowerCase();
-  if (/\bvvip\b|\bsilver\b/.test(name)) {
-    return { kind: 'silver', accent: '#D4D9E2', frame: 'linear-gradient(135deg,#F1F4F8,#8F9AA9 55%,#E5EAF0)' };
-  }
-  if (/\bvip\b|\bgold\b/.test(name)) {
-    return { kind: 'gold', accent: '#FFD36A', frame: 'linear-gradient(135deg,#FFE9A8,#B77A19 55%,#F6CF73)' };
-  }
-  if (/early[\s-]?bird/.test(name)) {
-    return { kind: 'early', accent: '#71E0BC', frame: 'linear-gradient(135deg,#71E0BC,#258D82 55%,#C1FFE9)' };
-  }
-  return { kind: 'regular', accent: '#FF8A68', frame: eventGradient };
 }
 
 function EarlyBirdMark() {
@@ -179,15 +166,8 @@ function ConfirmedTicket({
   used: boolean;
 }) {
   const { party } = ticket;
-  const skin = ticketSkin(ticket.ticketTypeName, party.gradient);
-  const stubBackground =
-    skin.kind === 'gold'
-      ? 'linear-gradient(145deg, #FFE9A8 0%, #F4C65E 52%, #C58A2A 100%)'
-      : skin.kind === 'silver'
-      ? 'linear-gradient(145deg, #F4F6FA 0%, #D0D7E0 55%, #AAB4C0 100%)'
-      : skin.kind === 'early'
-      ? 'linear-gradient(145deg, #A7FFE5 0%, #56E2C4 100%)'
-      : 'linear-gradient(145deg, #8AFFFF 0%, #45DCE9 100%)';
+  const skin = getTicketSkin(ticket.ticketTypeName, party.gradient);
+  const stubBackground = skin.stubBackground;
   return (
     <div id="ticket-print-area" className="ticket-print-area w-full max-w-[760px]">
       <div className="ticket-actions mb-4 flex flex-col items-center gap-2 text-center">

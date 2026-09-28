@@ -308,6 +308,8 @@ export async function POST(request: Request) {
             partyDate: party.date,
             partyTime: party.time,
             partyLocation: party.location,
+            partyAddress: party.address ?? undefined,
+            partyImageUrl: party.cover_url ?? undefined,
             ticketTypeName: plans[i].ticketTypeName,
             quantity: plans[i].quantity,
             total: plans[i].netTotal,

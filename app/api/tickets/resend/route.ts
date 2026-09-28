@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     const service = createServiceSupabase();
     const { data: order } = await service
       .from('orders')
-      .select('*, parties(title, date, time, location), ticket_types(name)')
+      .select('*, parties(title, date, time, location, address, cover_url), ticket_types(name)')
       .eq('customer_email', email)
       .eq('order_ref', orderRef)
       .eq('payment_status', 'confirmed')
@@ -84,13 +84,22 @@ export async function POST(request: Request) {
       accessToken = replacement;
     }
 
-    const party = order.parties as { title: string; date: string; time: string; location: string };
+    const party = order.parties as {
+      title: string;
+      date: string;
+      time: string;
+      location: string;
+      address?: string | null;
+      cover_url?: string | null;
+    };
     const sent = await sendTicketConfirmation({
       to: order.customer_email ?? '',
       partyTitle: party.title,
       partyDate: party.date,
       partyTime: party.time,
       partyLocation: party.location,
+      partyAddress: party.address ?? undefined,
+      partyImageUrl: party.cover_url ?? undefined,
       ticketTypeName: order.ticket_types?.name ?? 'General Entry',
       quantity: order.quantity,
       total: order.total,

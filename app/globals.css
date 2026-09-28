@@ -1837,3 +1837,11 @@ body:has(.auth-split-layout) {
     grid-template-columns: 1.05in minmax(0, 1fr) !important;
   }
 }
+
+
+/* The event map is an app-like, edge-to-edge screen with its own controls. */
+body:has([data-map-fullscreen]) {
+  min-height: 100dvh;
+  padding-bottom: 0 !important;
+  overflow: hidden;
+}

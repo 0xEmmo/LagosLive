@@ -5,9 +5,6 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import QRCode from 'react-qr-code';
 import {
-  ArrowLeft,
-  Calendar,
-  MapPin,
   ShieldCheck,
   Loader2,
   AlertTriangle,
@@ -183,8 +180,16 @@ function ConfirmedTicket({
 }) {
   const { party } = ticket;
   const skin = ticketSkin(ticket.ticketTypeName, party.gradient);
+  const stubBackground =
+    skin.kind === 'gold'
+      ? 'linear-gradient(145deg, #FFE9A8 0%, #F4C65E 52%, #C58A2A 100%)'
+      : skin.kind === 'silver'
+      ? 'linear-gradient(145deg, #F4F6FA 0%, #D0D7E0 55%, #AAB4C0 100%)'
+      : skin.kind === 'early'
+      ? 'linear-gradient(145deg, #A7FFE5 0%, #56E2C4 100%)'
+      : 'linear-gradient(145deg, #8AFFFF 0%, #45DCE9 100%)';
   return (
-    <div id="ticket-print-area" className="ticket-print-area w-full max-w-[420px]">
+    <div id="ticket-print-area" className="ticket-print-area w-full max-w-[760px]">
       <div className="ticket-actions mb-4 flex flex-col items-center gap-2 text-center">
         <button
           type="button"
@@ -197,119 +202,122 @@ function ConfirmedTicket({
         </button>
         <p className="text-[11px]" style={{ color: '#A7A8B5' }}>Choose “Save as PDF” in your browser&apos;s print dialog.</p>
       </div>
-      <div className="ticket-card w-full max-w-[380px] animate-fade-in">
-      {/* Outer glow wrapper */}
-      <div className="rounded-[28px] p-[1.5px]" style={{ background: skin.frame, boxShadow: `0 24px 80px rgba(0,0,0,0.55), 0 0 48px ${skin.accent}30` }}>
-        <div className="overflow-hidden rounded-[26.5px]" style={{ background: '#161619' }}>
-          {/* Event image header */}
-          <div className="relative" style={{ height: 170, background: party.gradient }}>
-            <PartyPhoto src={partyPhoto(party.id, party.coverUrl)} alt={party.title} gradient={party.gradient} sizes="380px" />
-            <div className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(to top, #161619 0%, transparent 55%)' }} />
-            <div className="absolute left-4 top-4 flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-[8px]" style={{ background: 'rgba(7,7,11,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.12)' }}>
-                <LogoMark size={28} />
+      <div className="ticket-card boarding-pass-card w-full animate-fade-in">
+        <div className="overflow-hidden rounded-[26px] border border-cyan-200/25 bg-[#09152d] shadow-[0_28px_90px_rgba(0,0,0,0.52)]">
+          <div className="boarding-pass-top">
+            <section className="boarding-pass-main relative min-w-0 overflow-hidden px-5 py-5 text-white sm:px-7 sm:py-6">
+              <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full border border-cyan-200/10" />
+              <div className="pointer-events-none absolute -right-8 -top-12 h-40 w-40 rounded-full border border-cyan-200/10" />
+              <div className="relative z-10 flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cyan-100/20 bg-white/5">
+                    <LogoMark size={28} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[12px] font-black uppercase tracking-[0.18em] text-cyan-100">Lagos Live</div>
+                    <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-cyan-100/55">Event boarding pass</div>
+                  </div>
+                </div>
+                <TicketStatusBadge status="confirmed" />
               </div>
-              <span className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[1.5px]" style={{ background: 'rgba(7,7,11,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.12)', color: '#FFFFFF' }}>
-                Lagos Live
-              </span>
-            </div>
-            <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between gap-3">
-              <div className="min-w-0">
-                <h1 className="font-heading truncate text-[22px] font-bold leading-tight" style={{ color: '#FFFFFF' }}>{party.title}</h1>
+
+              <div className="relative z-10 mt-6">
+                <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-200/70">Admit to</div>
+                <h1 className="mt-1 line-clamp-2 font-heading text-[25px] font-black leading-[1.03] tracking-[0.015em] text-white sm:text-[36px]">
+                  {party.title}
+                </h1>
               </div>
-              <TicketStatusBadge status="confirmed" />
-            </div>
+
+              <div className="boarding-pass-route relative z-10 mt-5">
+                <div className="min-w-0">
+                  <div className="text-[9px] font-bold uppercase tracking-[0.19em] text-cyan-100/60">From</div>
+                  <div className="mt-0.5 truncate font-heading text-[20px] font-bold uppercase tracking-[0.04em] text-cyan-200 sm:text-[25px]">Lagos</div>
+                  <div className="text-[9px] text-cyan-100/60">Lagos Live</div>
+                </div>
+                <span aria-hidden="true" className="px-2 text-[27px] font-light text-cyan-300">→</span>
+                <div className="min-w-0">
+                  <div className="text-[9px] font-bold uppercase tracking-[0.19em] text-cyan-100/60">To · venue</div>
+                  <div className="mt-0.5 truncate font-heading text-[20px] font-bold uppercase tracking-[0.04em] text-cyan-200 sm:text-[25px]">{party.location}</div>
+                  <div className="truncate text-[9px] text-cyan-100/60">{party.address}</div>
+                </div>
+              </div>
+
+              <div className="boarding-pass-meta relative z-10 mt-5 border-t border-cyan-100/20 pt-3.5">
+                <div>
+                  <div className="text-[8px] font-bold uppercase tracking-[0.18em] text-cyan-100/55">Date</div>
+                  <div className="mt-1 text-[11px] font-bold text-white sm:text-[12px]">{party.date}</div>
+                </div>
+                <div>
+                  <div className="text-[8px] font-bold uppercase tracking-[0.18em] text-cyan-100/55">Time</div>
+                  <div className="mt-1 text-[11px] font-bold text-white sm:text-[12px]">{party.time}</div>
+                </div>
+                <div className="boarding-pass-holder">
+                  <div className="text-[8px] font-bold uppercase tracking-[0.18em] text-cyan-100/55">Passenger</div>
+                  <div className="mt-1 truncate text-[11px] font-bold text-white sm:text-[12px]">{holder}</div>
+                </div>
+              </div>
+            </section>
+
+            <aside className="boarding-pass-stub relative flex min-w-0 flex-col items-center justify-between gap-3 px-3.5 py-4 text-center sm:px-4 sm:py-5" style={{ background: stubBackground, color: '#07152C' }}>
+              <div className="w-full">
+                <div className="text-[8px] font-black uppercase tracking-[0.18em] opacity-70">Boarding pass</div>
+                <div className="mt-3 inline-flex max-w-full items-center justify-center gap-1.5 rounded-md border border-black/10 bg-white/30 px-2.5 py-1.5 text-center font-heading text-[12px] font-black uppercase leading-tight tracking-[0.08em] sm:text-[14px]">
+                  <span className="line-clamp-2">{ticket.ticketTypeName}</span>
+                  {skin.kind === 'early' && <span className="shrink-0" aria-label="Early bird"><EarlyBirdMark /></span>}
+                </div>
+              </div>
+
+              <div className="relative w-full max-w-[132px] rounded-lg bg-white p-2 shadow-md">
+                <QRCode
+                  value={ticket.orderRef}
+                  size={128}
+                  fgColor="#07152C"
+                  bgColor="#FFFFFF"
+                  style={{ display: 'block', width: '100%', height: 'auto' }}
+                  aria-label={`Ticket code for ${ticket.orderRef}`}
+                />
+                {used && (
+                  <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-white/70">
+                    <span className="-rotate-12 rounded-md border-2 px-2 py-1 text-sm font-black uppercase tracking-[0.15em]" style={{ borderColor: '#C83745', color: '#C83745' }}>Used</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="w-full">
+                <div className="text-[8px] font-black uppercase tracking-[0.17em] opacity-70">Pass code</div>
+                <div className="mt-1 break-all font-mono text-[9px] font-bold tracking-[0.06em]">{ticket.orderRef}</div>
+                <div className="mt-2 text-[9px] font-black uppercase tracking-[0.18em]">Admit · {ticket.quantity}</div>
+                <div className="mt-1 text-[8px] font-semibold uppercase tracking-[0.12em] opacity-75">{used ? 'Already scanned' : 'Scan at the gate'}</div>
+              </div>
+            </aside>
           </div>
 
-          {/* Body */}
-          <div className="px-5 pb-5 pt-4">
-            <div className="mb-4 flex flex-wrap gap-1.5">
-              <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.5px]" style={{ background: `${skin.accent}20`, border: `1px solid ${skin.accent}70`, color: skin.accent }}>
-                {ticket.ticketTypeName}
-                {skin.kind === 'early' && <span className="ml-0.5 inline-flex" aria-label="Early bird"><EarlyBirdMark /></span>}
-              </span>
-              <span className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.5px]" style={{ background: 'rgba(255,179,71,0.14)', border: '1px solid rgba(255,179,71,0.3)', color: '#FFB347' }}>
-                {ticket.quantity} {ticket.quantity === 1 ? 'ticket' : 'tickets'}
-              </span>
-            </div>
-
-            <div className="mb-1 flex flex-col gap-2.5 text-[13px]">
-              <div className="flex items-start gap-2.5">
-                  <Calendar size={15} strokeWidth={2} className="mt-0.5 flex-shrink-0" style={{ color: skin.accent }} />
-                <div>
-                  <div style={{ color: '#FFFFFF' }}>{party.date}</div>
-                  <div style={{ color: '#A7A8B5' }}>{party.time}</div>
-                </div>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <MapPin size={15} strokeWidth={2} className="mt-0.5 flex-shrink-0" style={{ color: '#3ECF8E' }} />
-                <div>
-                  <div style={{ color: '#FFFFFF' }}>{party.location}</div>
-                  <div style={{ color: '#A7A8B5' }}>{party.address}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Perforation */}
-            <div className="relative my-5">
-              <div className="border-t border-dashed" style={{ borderColor: 'rgba(255,255,255,0.14)' }} />
-              <div className="absolute -left-[21px] -top-[7px] h-[14px] w-[14px] rounded-full" style={{ background: '#0C0C0E' }} />
-              <div className="absolute -right-[21px] -top-[7px] h-[14px] w-[14px] rounded-full" style={{ background: '#0C0C0E' }} />
-            </div>
-
-            {/* Holder */}
-            <div className="mb-4 rounded-2xl px-3.5 py-2.5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <div className="text-[10px] uppercase tracking-[0.8px]" style={{ color: '#6B6C80' }}>Ticket holder</div>
-              <div className="mt-0.5 truncate text-[13px] font-bold" style={{ color: '#FFFFFF' }}>{holder}</div>
-            </div>
-
-            {used && (
-              <div className="mb-4 flex items-start gap-2.5 rounded-2xl px-3.5 py-3 text-[12.5px]" style={{ background: 'rgba(0,245,212,0.06)', border: '1px solid rgba(0,245,212,0.22)', color: '#00F5D4' }}>
-                <CheckCheck size={15} strokeWidth={2.2} className="mt-0.5 flex-shrink-0" />
-                <span>
-                  {ticket.checkedInAt ? `This ticket was scanned at the gate on ${new Date(ticket.checkedInAt).toLocaleString()}.` : 'This ticket was used at the gate.'} It is no longer valid for entry.
-                </span>
-              </div>
-            )}
-
-            {/* Order + code */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <div className="mb-1 text-[10px] uppercase tracking-[0.8px]" style={{ color: '#6B6C80' }}>Ticket Code</div>
-                <div className="font-heading text-[13px] font-bold" style={{ color: '#FFFFFF', wordBreak: 'break-all' }}>{ticket.orderRef}</div>
-              </div>
-              <div>
-                <div className="mb-1 text-[10px] uppercase tracking-[0.8px]" style={{ color: '#6B6C80' }}>Order Ref</div>
-                <div className="font-heading text-[13px] font-bold" style={{ color: '#FFFFFF', wordBreak: 'break-all' }}>{ticket.orderRef}</div>
-              </div>
-            </div>
-
-            {/* QR */}
-            <div className="relative mt-5 rounded-2xl p-4 text-center" style={{ background: '#FFFFFF' }}>
-              <QRCode value={ticket.orderRef} size={168} fgColor="#0B0B10" bgColor="transparent" style={{ width: '100%', maxWidth: 168, height: 'auto' }} aria-label={`Ticket code for ${ticket.orderRef}`} />
-              {used && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="-rotate-12 rounded-xl border-4 px-3 py-1.5 text-xl font-black uppercase tracking-[3px] opacity-90" style={{ borderColor: '#FF5A2E', color: '#FF5A2E', background: 'rgba(255,255,255,0.72)' }}>
-                    Used
-                  </span>
-                </div>
-              )}
-              <div className="mt-2 text-[11px] font-semibold uppercase tracking-[1px]" style={{ color: '#0B0B10' }}>
-                {used ? 'Already scanned — not valid at the gate' : 'Show this at the entrance'}
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="mt-5 flex items-center justify-between">
+          <div className="boarding-pass-reverse border-t border-dashed border-cyan-100/40">
+            <aside className="boarding-pass-reverse-stub flex flex-col items-center justify-between border-r border-dashed border-cyan-100/30 bg-[#0d1e3a] px-3 py-4 text-center text-cyan-100">
               <Wordmark size={14} />
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.8px]" style={{ color: '#6B6C80' }}>
-                <ShieldCheck size={11} strokeWidth={2.5} />
-                Verified entry
-              </span>
-            </div>
+              <div className="boarding-pass-vertical-label text-[9px] font-black uppercase tracking-[0.2em]">Keep this pass</div>
+              <div className="text-[8px] font-semibold uppercase tracking-[0.13em] text-cyan-100/60">Verified entry</div>
+            </aside>
+            <section className="boarding-pass-banner relative flex min-h-[178px] items-end overflow-hidden px-5 py-5 sm:min-h-[210px] sm:px-8 sm:py-7">
+              <div className="absolute inset-0" style={{ background: party.gradient }}>
+                <PartyPhoto src={partyPhoto(party.id, party.coverUrl)} alt={party.title} gradient={party.gradient} sizes="(max-width: 600px) 75vw, 600px" tone="editorial" priority />
+              </div>
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#08152d]/95 via-[#08152d]/65 to-[#08152d]/10" />
+              <div className="relative z-10 max-w-[92%]">
+                <div className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-200">Your night starts here</div>
+                <h2 className="mt-1 font-heading text-[32px] font-black uppercase leading-[0.98] tracking-[0.025em] text-cyan-300 sm:text-[46px]">See you there!</h2>
+                <div className="mt-2 line-clamp-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white/90">{party.title}</div>
+              </div>
+            </section>
           </div>
+
+          {used && (
+            <div className="flex items-center gap-2 border-t border-white/10 bg-[#101f3b] px-4 py-3 text-[11px] font-semibold text-cyan-100 sm:px-6">
+              <CheckCheck size={15} strokeWidth={2.2} className="shrink-0 text-cyan-300" />
+              <span>{ticket.checkedInAt ? `Scanned at the gate on ${new Date(ticket.checkedInAt).toLocaleString()}.` : 'This ticket has already been scanned at the gate.'} It is no longer valid for entry.</span>
+            </div>
+          )}
         </div>
-      </div>
       </div>
     </div>
   );

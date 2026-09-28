@@ -177,7 +177,7 @@ function MetricCard({ label, value, icon, color }: { label: string; value: strin
         <span className="text-[10px] font-bold uppercase tracking-[0.9px]" style={{ color: '#6B6C80' }}>{label}</span>
         {icon}
       </div>
-      <div className="font-display truncate text-[19px] leading-tight" style={{ color }}>{value}</div>
+      <div className="font-display break-words text-[16px] leading-tight sm:text-[19px]" style={{ color }}>{value}</div>
     </div>
   );
 }

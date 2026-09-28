@@ -109,7 +109,7 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
   return (
     <div className="mx-auto max-w-[520px] animate-fade-in md:max-w-[900px]">
       <HostDashboardNav title="Edit Event" backHref={isAdminEditingOthersEvent ? '/admin' : '/host'} />
-      <div className="p-5">
+      <div className="p-4 sm:p-5">
         {isAdminEditingOthersEvent && (
           <div className="mb-4 rounded-[10px] px-3.5 py-2.5 text-[13px]" style={{ background: 'rgba(255,214,0,0.08)', border: '1px solid rgba(255,214,0,0.2)', color: '#FFD600' }}>
             You&apos;re editing {party.organizer}&apos;s event as an admin.

@@ -258,10 +258,10 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
         title="Event Performance"
         backHref="/host"
         action={
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
             <Link
               href={`/party/${party.id}`}
-              className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-semibold glass glass-hover"
+              className="flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-semibold glass glass-hover"
               style={{ color: '#A7A8B5' }}
             >
               <Eye size={13} strokeWidth={2} />
@@ -269,7 +269,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
             </Link>
             <Link
               href={`/host/${party.id}/edit`}
-              className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-semibold glass glass-hover"
+              className="flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-semibold glass glass-hover"
               style={{ color: '#A7A8B5' }}
             >
               <Pencil size={13} strokeWidth={2} />
@@ -278,7 +278,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
             {!party.cancelledAt && (
               <Link
                 href={`/host/${party.id}/cancel`}
-                className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-bold"
+                className="flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-bold"
                 style={{ background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.35)', color: '#F87171' }}
               >
                 <XCircle size={13} strokeWidth={2} />
@@ -287,7 +287,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
             )}
             <Link
               href={`/check-in/${party.id}`}
-              className="flex items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-bold"
+              className="flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-bold"
               style={{ background: 'linear-gradient(135deg, #FF9B3E 0%, #FF6A00 100%)', color: '#FFFFFF', boxShadow: '0 8px 24px rgba(255,106,0,0.28)' }}
             >
               <QrCode size={13} strokeWidth={2} />
@@ -563,7 +563,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
 
             {/* Ticket inventory */}
             <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <div className="mb-3 flex items-center justify-between">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <span className="text-[11px] font-bold uppercase tracking-[1px]" style={{ color: '#A7A8B5' }}>
                   Ticket Sales by Type
                 </span>
@@ -583,7 +583,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
               ) : (
                 <div className="flex flex-col gap-1.5">
                   <div
-                    className="flex items-center gap-2 px-3 text-[10px] font-bold uppercase tracking-[0.8px]"
+                    className="hidden items-center gap-2 px-3 text-[10px] font-bold uppercase tracking-[0.8px] sm:flex"
                     style={{ color: '#6B6C80' }}
                   >
                     <span className="min-w-0 flex-1">Ticket</span>
@@ -600,7 +600,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
                     return (
                       <div
                         key={tt.id}
-                        className="flex items-center gap-2 rounded-xl px-3 py-2.5"
+                        className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-xl px-3 py-2.5 sm:flex sm:gap-2"
                         style={{
                           background: 'rgba(255,255,255,0.03)',
                           border: '1px solid rgba(255,255,255,0.06)',
@@ -613,11 +613,17 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
                             {paused ? 'Paused' : soldOut ? 'Sold out' : 'On sale'}
                           </span>
                         </span>
-                        <span className="w-[62px] text-right text-[12px] font-semibold" style={{ color: '#00F5D4' }}>
+                        <span className="text-right text-[12px] font-semibold sm:w-[62px]" style={{ color: '#00F5D4' }}>
                           {tt.price === 0 ? 'Free' : formatNaira(tt.price)}
                         </span>
-                        <span className="w-[70px] text-right text-[12px]" style={{ color: '#A7A8B5' }}>{tt.remaining}</span>
-                        <span className="w-[54px] text-right text-[12px] font-bold" style={{ color: '#2B68FF' }}>{tt.sold}</span>
+                        <span className="flex items-center justify-between gap-2 text-[11px] sm:w-[70px] sm:justify-end sm:text-right sm:text-[12px]" style={{ color: '#A7A8B5' }}>
+                          <span className="sm:hidden">Available</span>
+                          <span>{tt.remaining}</span>
+                        </span>
+                        <span className="flex items-center justify-between gap-2 text-[11px] font-bold sm:w-[54px] sm:justify-end sm:text-right sm:text-[12px]" style={{ color: '#2B68FF' }}>
+                          <span className="sm:hidden">Sold</span>
+                          <span>{tt.sold}</span>
+                        </span>
                       </div>
                     );
                   })}

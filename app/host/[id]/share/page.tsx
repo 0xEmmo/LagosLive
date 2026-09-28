@@ -94,7 +94,7 @@ export default function EventSharePage() {
           </div>
           <Link
             href={`/party/${party.id}`}
-            className="flex shrink-0 items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-semibold"
+            className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-[10px] px-3 py-2 text-[12px] font-semibold"
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#A7A8B5' }}
           >
             <Share2 size={13} strokeWidth={2} /> Open event
@@ -112,7 +112,7 @@ export default function EventSharePage() {
           </div>
           <button
             onClick={download}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-[10px] py-[13px] text-[13px] font-bold transition-all duration-200 active:scale-[0.98]"
+            className="mt-5 flex min-h-11 w-full items-center justify-center gap-2 rounded-[10px] py-[13px] text-[13px] font-bold transition-all duration-200 active:scale-[0.98]"
             style={{ background: 'rgba(43,104,255,0.14)', border: '1px solid rgba(43,104,255,0.4)', color: '#2B68FF' }}
           >
             <Download size={14} strokeWidth={2.5} /> Download QR (PNG)
@@ -129,12 +129,12 @@ export default function EventSharePage() {
               value={url}
               readOnly
               onFocus={(e) => e.currentTarget.select()}
-              className="min-w-0 flex-1 rounded-[10px] px-3.5 py-[12px] text-[12px] outline-none"
+              className="min-h-11 min-w-0 flex-1 rounded-[10px] px-3.5 py-[12px] text-[12px] outline-none"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#D5D6E0' }}
             />
             <button
               onClick={copy}
-              className="flex shrink-0 items-center gap-1.5 rounded-[10px] px-4 py-[12px] text-[12px] font-bold"
+              className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-[10px] px-4 py-[12px] text-[12px] font-bold"
               style={{ background: copied ? 'rgba(0,245,212,0.12)' : 'rgba(121,163,255,0.14)', border: '1px solid', borderColor: copied ? 'rgba(0,245,212,0.35)' : 'rgba(121,163,255,0.4)', color: copied ? '#00F5D4' : '#79A3FF' }}
             >
               {copied ? <Check size={13} strokeWidth={2.5} /> : <Copy size={13} strokeWidth={2.5} />}
@@ -151,7 +151,7 @@ export default function EventSharePage() {
               href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(url)}`}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center justify-center gap-2 rounded-[10px] py-[12px] text-[13px] font-semibold transition-all duration-200"
+              className="flex min-h-11 items-center justify-center gap-2 rounded-[10px] py-[12px] text-[13px] font-semibold transition-all duration-200"
               style={{ background: 'rgba(117,161,255,0.08)', border: '1px solid rgba(117,161,255,0.2)', color: '#75A1FF' }}
             >
               Share on X
@@ -160,7 +160,7 @@ export default function EventSharePage() {
               href={`https://wa.me/?text=${encodeURIComponent(`${shareText} ${url}`)}`}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center justify-center gap-2 rounded-[10px] py-[12px] text-[13px] font-semibold transition-all duration-200"
+              className="flex min-h-11 items-center justify-center gap-2 rounded-[10px] py-[12px] text-[13px] font-semibold transition-all duration-200"
               style={{ background: 'rgba(0,245,212,0.08)', border: '1px solid rgba(0,245,212,0.2)', color: '#00F5D4' }}
             >
               Share on WhatsApp
@@ -169,7 +169,7 @@ export default function EventSharePage() {
               href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center justify-center gap-2 rounded-[10px] py-[12px] text-[13px] font-semibold transition-all duration-200"
+              className="flex min-h-11 items-center justify-center gap-2 rounded-[10px] py-[12px] text-[13px] font-semibold transition-all duration-200"
               style={{ background: 'rgba(59,89,152,0.12)', border: '1px solid rgba(59,89,152,0.3)', color: '#7C9BE8' }}
             >
               Share on Facebook

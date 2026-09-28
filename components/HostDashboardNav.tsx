@@ -64,7 +64,7 @@ export default function HostDashboardNav({ title = 'Host Dashboard', backHref, a
           <Link
             href="/"
             aria-label="Home"
-            className="flex h-[40px] w-[40px] flex-shrink-0 items-center justify-center rounded-[10px] transition-all duration-200 active:scale-90"
+            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-[10px] transition-all duration-200 active:scale-90"
             style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#A7A8B5' }}
           >
             <Home size={17} strokeWidth={2} />
@@ -74,7 +74,7 @@ export default function HostDashboardNav({ title = 'Host Dashboard', backHref, a
             <Link
               href={backHref}
               aria-label="Back"
-              className="flex h-[40px] w-[40px] flex-shrink-0 items-center justify-center rounded-[10px] transition-all duration-200 active:scale-90"
+              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-[10px] transition-all duration-200 active:scale-90"
               style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#A7A8B5' }}
             >
               <ChevronLeft size={18} strokeWidth={2} />
@@ -115,7 +115,7 @@ export default function HostDashboardNav({ title = 'Host Dashboard', backHref, a
 
             <Link
               href="/host/new"
-              className="flex h-[38px] items-center gap-1.5 rounded-full px-3.5 text-[12.5px] font-bold text-white transition-all duration-200 hover:shadow-glow-pink active:scale-95"
+              className="flex h-11 items-center gap-1.5 rounded-full px-3 text-[12.5px] font-bold text-white transition-all duration-200 hover:shadow-glow-pink active:scale-95"
               style={{ background: 'linear-gradient(135deg,#1F5FFF,#6E8DFF)', boxShadow: '0 6px 20px rgba(43,104,255,0.25)' }}
             >
               <Plus size={14} strokeWidth={2.5} />
@@ -127,7 +127,7 @@ export default function HostDashboardNav({ title = 'Host Dashboard', backHref, a
               onClick={() => setOpen((o) => !o)}
               aria-label="Toggle menu"
               aria-expanded={open}
-              className="flex h-[38px] w-[38px] items-center justify-center rounded-full transition-all duration-200 md:hidden"
+              className="flex h-11 w-11 items-center justify-center rounded-full transition-all duration-200 md:hidden"
               style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#FFFFFF' }}
             >
               {open ? <X size={18} strokeWidth={2.2} /> : <Menu size={18} strokeWidth={2.2} />}
@@ -142,7 +142,7 @@ export default function HostDashboardNav({ title = 'Host Dashboard', backHref, a
             style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.06)' }}
           >
             <div className="flex max-h-[72vh] flex-col overflow-y-auto px-4 py-3">
-              {action && <div className="mb-2 flex gap-2">{action}</div>}
+              {action && <div className="mb-2 flex flex-wrap items-center gap-2">{action}</div>}
 
               <div className="flex flex-col gap-1">
                 {HOST_LINKS.map(({ href, match, exact, label, Icon }) => {

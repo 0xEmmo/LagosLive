@@ -607,7 +607,7 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
                   localStorage.setItem(GATE_STORAGE, g);
                 } catch {}
               }}
-              className="flex-shrink-0 rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-all active:scale-95"
+              className="flex min-h-11 flex-shrink-0 items-center rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-all active:scale-95"
               style={
                 gate === g
                   ? { background: ci.gradient, color: '#FFFFFF', boxShadow: ci.buttonShadow }
@@ -663,13 +663,13 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
                     setScanner('starting');
                     setCameraAttempt((a) => a + 1);
                   }}
-                  className="mt-1 flex items-center gap-2 rounded-[12px] px-5 py-3 text-[13px] font-bold"
+                  className="mt-1 flex min-h-11 items-center gap-2 rounded-[12px] px-5 py-3 text-[13px] font-bold"
                   style={{ background: ci.gradient, color: '#FFFFFF', boxShadow: ci.buttonShadow }}
                 >
                   <RefreshCw size={14} strokeWidth={2.5} />
                   Try again
                 </button>
-                <button onClick={() => setManualOpen((o) => !o)} className="flex items-center gap-1.5 text-[12px] font-semibold" style={{ color: ci.accent }}>
+                <button onClick={() => setManualOpen((o) => !o)} className="flex min-h-11 items-center gap-1.5 px-2 text-[12px] font-semibold" style={{ color: ci.accent }}>
                   <Keyboard size={13} strokeWidth={2} />
                   {manualOpen ? 'Hide' : 'Enter ticket code instead'}
                 </button>
@@ -699,7 +699,7 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
               <button
                 onClick={() => uploadInputRef.current?.click()}
                 disabled={uploading}
-                className="mx-4 mb-4 flex w-[calc(100%-2rem)] items-center justify-center gap-2 rounded-[12px] py-3 text-[13px] font-semibold"
+                className="mx-4 mb-4 flex min-h-11 w-[calc(100%-2rem)] items-center justify-center gap-2 rounded-[12px] py-3 text-[13px] font-semibold"
                 style={{ background: ci.raised, border: `1px solid ${ci.line}`, color: ci.muted, opacity: uploading ? 0.6 : 1 }}
               >
                 {uploading ? <Loader2 size={14} strokeWidth={2} className="animate-spin" /> : <UploadIcon size={14} strokeWidth={2} />}
@@ -714,7 +714,7 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
         <div className="flex flex-col gap-2">
           <button
             onClick={() => setManualOpen((o) => !o)}
-            className="flex items-center justify-center gap-2 rounded-[12px] py-3 text-[13px] font-semibold"
+            className="flex min-h-11 items-center justify-center gap-2 rounded-[12px] py-3 text-[13px] font-semibold"
             style={{ background: ci.raised, border: `1px solid ${ci.line}`, color: ci.muted }}
           >
             <Keyboard size={14} strokeWidth={2} />
@@ -739,7 +739,7 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
               <button
                 type="submit"
                 disabled={!normalizeOrderRef(manualInput) || busy}
-                className="rounded-[11px] px-5 text-[13px] font-bold"
+                className="min-h-11 rounded-[11px] px-5 text-[13px] font-bold"
                 style={{ background: ci.gradient, color: '#FFFFFF', boxShadow: ci.buttonShadow }}
               >
                 {busy ? <Loader2 size={15} className="animate-spin" /> : 'Check'}
@@ -759,7 +759,7 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
         <div className="overflow-hidden rounded-2xl" style={{ background: ci.raised, border: `1px solid ${ci.line}` }}>
           <button
             onClick={() => setActivityOpen((o) => !o)}
-            className="flex w-full items-center justify-between px-4 py-3.5"
+            className="flex min-h-11 w-full items-center justify-between px-4 py-3.5"
           >
             <span className="text-[11px] font-bold uppercase tracking-[1px]" style={{ color: ci.muted }}>
               Check-in activity

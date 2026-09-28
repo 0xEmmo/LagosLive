@@ -155,6 +155,16 @@ export default function HostSettingsPage() {
             </div>
           </>
         )}
+        {status === 'ok' && (
+          <button
+            onClick={save}
+            disabled={saving}
+            className="flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold btn-primary disabled:opacity-50 md:hidden"
+          >
+            <Save size={15} strokeWidth={2.5} />
+            {saving ? 'Saving...' : 'Save Settings'}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -176,7 +186,7 @@ function Field({
   return (
     <div>
       <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.9px]" style={{ color: '#6B6C80' }}>{label}</label>
-      <div className="flex items-center gap-2 rounded-xl px-3.5 py-2.5" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
+      <div className="flex min-h-11 items-center gap-2 rounded-xl px-3.5 py-2.5" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
         {icon}
         <input
           value={value}

@@ -27,6 +27,7 @@ function SignupPageContent() {
   const [submitting, setSubmitting] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [confirmationSent, setConfirmationSent] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const rawNext = searchParams.get('next');
   const next = safeNextPath(rawNext);
@@ -44,6 +45,10 @@ function SignupPageContent() {
     }
     if (password.length < 6) {
       setError('Password must be at least 6 characters.');
+      return;
+    }
+    if (!acceptedTerms) {
+      setError('Please agree to the Terms & Conditions and Privacy Policy to create an account.');
       return;
     }
     setSubmitting(true);
@@ -68,6 +73,11 @@ function SignupPageContent() {
 
   const signInWithGoogle = async () => {
     if (googleLoading || submitting) return;
+
+    if (!acceptedTerms) {
+      setError('Please agree to the Terms & Conditions and Privacy Policy to continue with Google.');
+      return;
+    }
 
     setError('');
     setGoogleLoading(true);
@@ -186,6 +196,25 @@ function SignupPageContent() {
               autoComplete="new-password"
             />
           </div>
+
+          <label className="mb-5 flex items-start gap-3 text-[12px] leading-5" style={{ color: '#A7A8B5' }}>
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(event) => {
+                setAcceptedTerms(event.target.checked);
+                if (event.target.checked) setError('');
+              }}
+              className="mt-1 h-4 w-4 shrink-0 accent-[#2B68FF]"
+              required
+            />
+            <span>
+              I agree to the{' '}
+              <Link href="/terms" target="_blank" className="font-semibold auth-text-link">Terms &amp; Conditions</Link>{' '}
+              and acknowledge the{' '}
+              <Link href="/privacy" target="_blank" className="font-semibold auth-text-link">Privacy Policy</Link>.
+            </span>
+          </label>
 
           <button
             type="submit"

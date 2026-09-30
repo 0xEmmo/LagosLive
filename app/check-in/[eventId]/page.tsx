@@ -18,13 +18,19 @@ import {
   ChevronDown,
   ChevronUp,
   Upload as UploadIcon,
+  Download,
+  Wifi,
+  WifiOff,
+  CloudUpload,
 } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useParty } from '@/lib/hooks/useParty';
 import { useLagosLiveStore } from '@/lib/store';
 import { fetchCheckInStats, fetchCheckInActivity, type CheckInStats, type CheckInActivityItem } from '@/lib/queries';
-import { performCheckIn, normalizeOrderRef, type CheckInResult } from '@/lib/check-in/sync';
+import { fetchEventOrders } from '@/lib/admin-queries';
+import { performHybridCheckIn, normalizeOrderRef, syncQueuedScans, type CheckInResult } from '@/lib/check-in/sync';
+import { getConflictCount, getManifest, getQueuedScans, saveManifest, type OfflineManifest } from '@/lib/check-in/offline';
 import { ci, buzz, chime, guestNameFromEmail, formatClock } from '@/lib/check-in/ui';
 import jsQR from 'jsqr';
 
@@ -146,12 +152,15 @@ function FeedbackView({ feedback, eventTitle, onNext }: { feedback: Feedback; ev
             <InfoRow label="Ticket" value={`${feedback.result.ticketType}${feedback.result.quantity > 1 ? ` × ${feedback.result.quantity}` : ''}`} />
             <InfoRow label="Ticket ID" value={`#${feedback.result.orderRef}`} />
           </div>
-          <div className="mt-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5" style={{ background: palette.ring }}>
-            <CheckCircle2 size={13} strokeWidth={2.5} color="#FFFFFF" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.8px]" style={{ color: '#FFFFFF' }}>
-              Checked in
-            </span>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            <div className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5" style={{ background: palette.ring }}>
+              <CheckCircle2 size={13} strokeWidth={2.5} color="#FFFFFF" />
+              <span className="text-[11px] font-bold uppercase tracking-[0.8px]" style={{ color: '#FFFFFF' }}>
+                {feedback.result.offline ? 'Offline approval · sync pending' : 'Server confirmed'}
+              </span>
+            </div>
           </div>
+          <div className="mt-2 text-[11px]" style={{ color: ci.dim }}>{feedback.result.offline ? 'Saved on this device and will sync automatically.' : 'Checked in at the gate.'}</div>
         </div>
       ) : code === 'already_checked_in' ? (
         <div className="mt-4 w-full">
@@ -217,6 +226,12 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
   const [cameraAttempt, setCameraAttempt] = useState(0);
   const [cameraError, setCameraError] = useState<CameraErrorKind | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
+  const [offlineManifest, setOfflineManifest] = useState<OfflineManifest | null>(null);
+  const [pendingScans, setPendingScans] = useState(0);
+  const [offlineConflicts, setOfflineConflicts] = useState(0);
+  const [offlineBusy, setOfflineBusy] = useState(false);
+  const [offlineMessage, setOfflineMessage] = useState('');
 
   const [gate, setGate] = useState<string>('Main');
   useEffect(() => {
@@ -245,6 +260,56 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
   }, [authLoading, user, router, params.eventId]);
 
   const authorized = !!user && !!party && canOperateEvent(user.role, party.createdBy, user.id);
+
+  const refreshOfflineState = useCallback(async (partyId: number) => {
+    try {
+      const [manifest, queued, conflicts] = await Promise.all([getManifest(partyId), getQueuedScans(partyId), getConflictCount(partyId)]);
+      setOfflineManifest(manifest);
+      setPendingScans(queued.length);
+      setOfflineConflicts(conflicts);
+    } catch (error) {
+      console.warn('[check-in] offline storage unavailable', error);
+    }
+  }, []);
+
+  const downloadOfflineManifest = async () => {
+    if (!party || !authorized) return;
+    setOfflineBusy(true);
+    setOfflineMessage('Downloading confirmed tickets…');
+    try {
+      const orders = await fetchEventOrders(party.id);
+      const tickets = orders.filter((o) => o.payment_status === 'confirmed').map((o) => ({
+        orderRef: normalizeOrderRef(o.order_ref), partyId: party.id, ticketType: o.ticket_types?.name ?? o.tier ?? 'General Entry',
+        quantity: o.quantity, paymentStatus: o.payment_status, refundStatus: o.refund_status, cancellationReason: o.cancellation_reason,
+        checkInStatus: o.check_in_status, checkedInAt: o.checked_in_at, checkedInGate: o.checked_in_gate, guestEmail: o.customer_email,
+      }));
+      const manifest: OfflineManifest = { eventId: party.id, eventTitle: party.title, downloadedAt: new Date().toISOString(), expiresAt: new Date(new Date(party.endsAt).getTime() + 6 * 60 * 60 * 1000).toISOString(), tickets };
+      await saveManifest(manifest);
+      setOfflineManifest(manifest);
+      setOfflineMessage(`${tickets.length} confirmed ticket${tickets.length === 1 ? '' : 's'} saved on this device.`);
+    } catch (error) {
+      setOfflineMessage(error instanceof Error ? error.message : 'Could not download offline ticket data.');
+    } finally { setOfflineBusy(false); }
+  };
+
+  const syncOfflineScans = useCallback(async () => {
+    if (!party || !navigator.onLine) return;
+    try {
+      const summary = await syncQueuedScans(party.id);
+      await refreshOfflineState(party.id);
+      if (summary.synced || summary.conflicts) setOfflineMessage(`${summary.synced} scan${summary.synced === 1 ? '' : 's'} synced${summary.conflicts ? ` · ${summary.conflicts} conflict${summary.conflicts === 1 ? '' : 's'}` : ''}.`);
+    } catch (error) { console.warn('[check-in] offline sync failed', error); }
+  }, [party, refreshOfflineState]);
+
+  useEffect(() => {
+    setIsOnline(typeof navigator === 'undefined' ? true : navigator.onLine);
+    if (!party || !authorized) return;
+    void refreshOfflineState(party.id);
+    const onOnline = () => { setIsOnline(true); void syncOfflineScans(); };
+    const onOffline = () => setIsOnline(false);
+    window.addEventListener('online', onOnline); window.addEventListener('offline', onOffline);
+    return () => { window.removeEventListener('online', onOnline); window.removeEventListener('offline', onOffline); };
+  }, [party, authorized, refreshOfflineState, syncOfflineScans]);
 
   const loadStats = useCallback((partyId: number) => {
     fetchCheckInStats(partyId)
@@ -439,7 +504,7 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
     setBusy(true);
     feedbackShownAt.current = Date.now();
     try {
-      const result = await performCheckIn({ partyId: party.id, orderRef: raw, gate: gateRef.current || null });
+      const result = await performHybridCheckIn({ partyId: party.id, orderRef: raw, gate: gateRef.current || null });
       const fb: Feedback = { result, raw: normalizeOrderRef(raw) };
       setFeed(fb);
       if (result.code === 'ok') {
@@ -621,6 +686,25 @@ export default function CheckInScannerPage({ params }: { params: { eventId: stri
               {g}
             </button>
           ))}
+        </div>
+
+        <div className="rounded-2xl p-3" style={{ background: isOnline ? ci.raised : ci.warnSoft, border: `1px solid ${isOnline ? ci.line : 'rgba(255,179,71,0.35)'}` }}>
+          <div className="flex items-center gap-2">
+            {isOnline ? <Wifi size={15} color={ci.ok} /> : <WifiOff size={15} color={ci.gold} />}
+            <span className="text-[12px] font-bold" style={{ color: ci.text }}>{isOnline ? 'Online check-in' : 'Offline fallback active'}</span>
+            <span className="ml-auto text-[10px] font-semibold uppercase" style={{ color: isOnline ? ci.ok : ci.gold }}>{isOnline ? 'Server verified' : 'Local only'}</span>
+          </div>
+          <div className="mt-1 text-[11px]" style={{ color: ci.muted }}>
+            {offlineManifest ? `Offline list: ${offlineManifest.tickets.length} tickets · saved ${new Date(offlineManifest.downloadedAt).toLocaleTimeString()}` : 'Download the event list before doors open in case the network drops.'}
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <button onClick={() => void downloadOfflineManifest()} disabled={offlineBusy} className="inline-flex min-h-9 items-center gap-1.5 rounded-[10px] px-3 py-2 text-[11px] font-bold" style={{ background: ci.gradient, color: '#FFFFFF', opacity: offlineBusy ? 0.65 : 1 }}>
+              {offlineBusy ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />} {offlineBusy ? 'Saving…' : 'Download offline list'}
+            </button>
+            {pendingScans > 0 && <button onClick={() => void syncOfflineScans()} className="inline-flex min-h-9 items-center gap-1.5 rounded-[10px] px-3 py-2 text-[11px] font-semibold" style={{ background: ci.raised, border: `1px solid ${ci.line}`, color: ci.accent }}><CloudUpload size={13} /> {pendingScans} pending sync</button>}
+            {offlineConflicts > 0 && <span className="text-[10px] font-semibold" style={{ color: ci.danger }}>{offlineConflicts} conflict{offlineConflicts === 1 ? '' : 's'} to review</span>}
+          </div>
+          {offlineMessage && <div className="mt-2 text-[11px]" style={{ color: ci.muted }}>{offlineMessage}</div>}
         </div>
 
         {/* Scanner / feedback viewport */}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, RefreshCw, Save, Building2, User, Phone, FileText } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Save, Building2, User, Phone, FileText, ExternalLink } from 'lucide-react';
 import HostDashboardNav from '@/components/HostDashboardNav';
 import { useLagosLiveStore } from '@/lib/store';
 import { updateHostProfile } from '@/lib/admin-queries';
@@ -135,9 +135,14 @@ export default function HostSettingsPage() {
           <>
             {/* Profile Section */}
             <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <div className="mb-4 flex items-center gap-2">
-                <User size={16} strokeWidth={2} color="#2B68FF" />
-                <span className="text-[13px] font-bold" style={{ color: '#FFFFFF' }}>Profile</span>
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <User size={16} strokeWidth={2} color="#2B68FF" />
+                  <span className="text-[13px] font-bold" style={{ color: '#FFFFFF' }}>Profile</span>
+                </div>
+                <a href={`/host/profile/${user.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-[11px] font-semibold" style={{ color: '#79A3FF' }}>
+                  View public profile <ExternalLink size={12} />
+                </a>
               </div>
               <div className="mb-4"><HostAvatarUploader value={avatarUrl} onFileChange={setAvatarFile} disabled={saving} /></div>
               <div className="flex flex-col gap-3">

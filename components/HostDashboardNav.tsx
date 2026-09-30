@@ -14,7 +14,7 @@ import {
   ListOrdered,
   Wallet,
   BarChart3,
-  Settings,
+  UserRound,
   LifeBuoy,
   LogOut,
 } from 'lucide-react';
@@ -27,7 +27,7 @@ const HOST_LINKS = [
   { href: '/host/orders', match: '/host/orders', label: 'Orders', Icon: ListOrdered },
   { href: '/host/payouts', match: '/host/payouts', label: 'Payouts', Icon: Wallet },
   { href: '/host/analytics', match: '/host/analytics', label: 'Analytics', Icon: BarChart3 },
-  { href: '/host/settings', match: '/host/settings', label: 'Settings', Icon: Settings },
+  { href: '/host/settings', match: '/host/settings', label: 'Profile & Settings', Icon: UserRound },
 ];
 
 interface HostDashboardNavProps {

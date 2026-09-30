@@ -90,13 +90,13 @@ export const useLagosLiveStore = create<LagosLiveState>()(
       user: null,
       authLoading: true,
 
-      // These two only kick off the Supabase auth call and report back any
-      // error — AuthListener's onAuthStateChange subscription is what
-      // actually hydrates `user`/savedParties/reminders once the session lands,
-      // so login/signup/logout all funnel through one place.
+      // Sign-in also hydrates immediately; AuthListener remains the source of
+      // truth for refreshes, OAuth, logout, and cross-tab session changes.
       login: async (email, password) => {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        return error ? error.message : null;
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) return error.message;
+        if (data.user) await get().loadUserData(data.user.id);
+        return null;
       },
 
       signup: async (name, email, password) => {

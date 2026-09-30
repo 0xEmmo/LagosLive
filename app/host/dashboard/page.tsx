@@ -82,9 +82,11 @@ export default function HostDashboardPage() {
         const data = await fetchPartiesByOwner(user.id);
         if (cancelled) return;
         setParties(data);
-        const s = await fetchOrganizerOrderStats(data.map((p) => p.id));
+        const [s, orders] = await Promise.all([
+          fetchOrganizerOrderStats(data.map((p) => p.id)),
+          fetchHostOrders(user.id),
+        ]);
         if (!cancelled) setStats(s);
-        const orders = await fetchHostOrders(user.id);
         if (!cancelled) setRecentOrders(orders.slice(0, 10));
         // Build revenue trend from their orders
         const confirmedOrders = orders.filter((o) => o.payment_status === 'confirmed');

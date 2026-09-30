@@ -7,7 +7,7 @@ import { formatNaira } from './filters';
 import { appUrl } from './seo';
 import { getTicketSkin } from './ticket-skin';
 import { renderTicketEmailHtml } from './ticket-email-template';
-import { emailDocument, type EmailColorScheme } from './email-document';
+import { emailDocument as ticketEmailDocument } from './email-document';
 
 const RESEND_API = 'https://api.resend.com/emails';
 
@@ -41,6 +41,28 @@ export interface TicketConfirmationData {
   promoDiscount?: number;
 }
 
+// Email markup is intentionally light-first. Gmail and other clients can then
+// apply their own dark-theme transformation instead of receiving a dark email
+// that gets double-inverted or becomes unreadable.
+function emailDocument(innerHtml: string, bg = '#FFFFFF'): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <style>
+      :root { color-scheme: light dark; supported-color-schemes: light dark; }
+      body { margin:0; padding:0; background-color:${bg} !important; color:#171923 !important; }
+    </style>
+  </head>
+  <body bgcolor="${bg}" text="#171923" style="color-scheme:light dark;background-color:${bg};color:#171923;margin:0;padding:0;">
+    ${innerHtml}
+  </body>
+</html>`;
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -54,7 +76,13 @@ function formatPaymentDate(date = new Date()): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-// Ticket email markup is kept separate and pure so it can be previewed/tested without sending mail.
+
+
+// Premium Lagos Live ticket-confirmation email. All values are escaped and
+// injected at render time — nothing is hardcoded. Event info arrives on the
+// `data` object; the secure ticket URL is hidden inside the CTA's href (never
+// displayed as a raw link). Uses table-based layout and inline styles so it
+// renders reliably in Gmail, Outlook, Apple Mail, and light/dark modes.
 function ticketEmailHtml(d: TicketConfirmationData): string {
   const skin = getTicketSkin(d.ticketTypeName, '#1F5FFF');
   return renderTicketEmailHtml(d, skin, {
@@ -179,7 +207,7 @@ interface SendHtmlEmailArgs {
   to: string;
   subject: string;
   html: string;
-  colorScheme?: EmailColorScheme;
+  colorScheme?: 'light';
   scheduledAt?: string;
 }
 
@@ -207,7 +235,9 @@ body: JSON.stringify({
         from,
         to: [to],
         subject,
-        html: emailDocument(html, colorScheme === 'light' ? '#F5F7FC' : '#0B0B10', colorScheme ?? 'dark'),
+        html: colorScheme === 'light'
+          ? ticketEmailDocument(html, '#F5F7FC', 'light')
+          : emailDocument(html),
         ...(scheduledAt ? { scheduled_at: scheduledAt } : {}),
       }),
       });

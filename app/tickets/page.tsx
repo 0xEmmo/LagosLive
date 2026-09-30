@@ -117,36 +117,29 @@ function MyTickets() {
   const [tickets, setTickets] = useState<CustomerTicket[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [loadedUserId, setLoadedUserId] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!user) return;
-    if (loadedUserId === user.id) return;
     let cancelled = false;
     setLoading(true);
     setError(false);
     (async () => {
-      // Link any guest purchases bought under the same email before fetching
-      // tickets so My Tickets never looks incomplete right after sign-in.
-      await linkGuestOrdersOnce();
-      if (cancelled) return;
-      fetchMyTickets(user.id)
-        .then((data) => {
-          if (!cancelled) setTickets(data);
-        })
-        .catch(() => {
-          if (!cancelled) setError(true);
-        })
-        .finally(() => {
-          if (!cancelled) setLoading(false);
-        });
+      try {
+        // Linking guest orders is best-effort and must never block ticket reads.
+        void linkGuestOrdersOnce();
+        const data = await fetchMyTickets(user.id);
+        if (!cancelled) setTickets(data);
+      } catch {
+        if (!cancelled) setError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     })();
-    setLoadedUserId(user.id);
     return () => {
       cancelled = true;
     };
-  }, [user, loadedUserId, attempt]);
+  }, [user, attempt]);
 
   if (!user) return null;
 

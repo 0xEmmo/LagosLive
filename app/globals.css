@@ -1746,7 +1746,7 @@ body:has(.auth-split-layout) {
   width: 16px;
   height: 16px;
   border-radius: 999px;
-  background: #09152d;
+  background: #0B2F73;
   content: '';
 }
 
@@ -1787,7 +1787,7 @@ body:has(.auth-split-layout) {
   width: 14px;
   height: 14px;
   border-radius: 999px;
-  background: #09152d;
+  background: #0B2F73;
   content: '';
 }
 

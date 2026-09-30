@@ -10,13 +10,13 @@ import { isGuestTicketAccessValid } from '@/lib/ticket-access-policy';
 // a bare order id (a guessable UUID) is never enough.
 
 type OrderRow = Database['public']['Tables']['orders']['Row'] & {
-  parties?: Database['public']['Tables']['parties']['Row'] | null;
-  ticket_types?: { name: string } | null;
+  parties?: Database['public']['Tables']['parties']['Row'] | Database['public']['Tables']['parties']['Row'][] | null;
+  ticket_types?: { name: string } | { name: string }[] | null;
 };
 
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
-function toParty(row: NonNullable<OrderRow['parties']>) {
+function toParty(row: Database['public']['Tables']['parties']['Row']) {
   const startsAt = new Date(row.starts_at);
   return {
     id: row.id,
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     const service = createServiceSupabase();
     const { data: row, error } = await service
       .from('orders')
-      .select('*, parties(*), ticket_types(name)')
+      .select('*, parties!orders_party_id_fkey(*), ticket_types!orders_ticket_type_id_fkey(name)')
       .eq('id', orderId)
       .eq('ticket_access_token', token)
       .maybeSingle();
@@ -79,13 +79,15 @@ export async function POST(request: Request) {
     }
 
     const order = row as OrderRow;
-    const party = row.parties;
+    const party = Array.isArray(row.parties) ? row.parties[0] : row.parties;
+    const ticketType = Array.isArray(row.ticket_types) ? row.ticket_types[0] : row.ticket_types;
+    if (!party) return NextResponse.json({ error: 'Ticket not found.' }, { status: 404 });
     return NextResponse.json({
       ticket: {
         id: order.id,
         partyId: order.party_id,
         party: toParty(party),
-        ticketTypeName: order.ticket_types?.name ?? 'General Entry',
+        ticketTypeName: ticketType?.name ?? 'General Entry',
         quantity: order.quantity,
         unitPrice: order.unit_price,
         serviceFee: order.service_fee,

@@ -8,7 +8,10 @@ import { isAccountTicketOwner } from './ticket-account-policy';
 
 type PartyRow = Database['public']['Tables']['parties']['Row'];
 type PartyInsert = Database['public']['Tables']['parties']['Insert'];
-type OrderRow = Database['public']['Tables']['orders']['Row'] & { parties?: PartyRow | null; ticket_types?: { name: string } | null };
+type OrderRow = Database['public']['Tables']['orders']['Row'] & {
+  parties?: PartyRow | PartyRow[] | null;
+  ticket_types?: { name: string } | { name: string }[] | null;
+};
 
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 // Central Lagos (Victoria Island) — used only as a one-time fallback distance
@@ -539,12 +542,14 @@ export async function fetchTicketTypes(partyId: number): Promise<TicketType[]> {
 // see must not surface as a valid ticket. RLS already restricted the rows to
 // ones this user can read ("users and organizers read relevant orders").
 function toCustomerTicket(row: OrderRow): CustomerTicket | null {
-  if (!row.parties) return null;
+  const party = Array.isArray(row.parties) ? row.parties[0] : row.parties;
+  const ticketType = Array.isArray(row.ticket_types) ? row.ticket_types[0] : row.ticket_types;
+  if (!party) return null;
   return {
     id: row.id,
     partyId: row.party_id,
-    party: toParty(row.parties),
-    ticketTypeName: row.ticket_types?.name ?? 'General Entry',
+    party: toParty(party),
+    ticketTypeName: ticketType?.name ?? 'General Entry',
     quantity: row.quantity,
     unitPrice: row.unit_price,
     serviceFee: row.service_fee,
@@ -566,7 +571,7 @@ function toCustomerTicket(row: OrderRow): CustomerTicket | null {
 export async function fetchMyTickets(userId: string): Promise<CustomerTicket[]> {
   const { data, error } = await supabase
     .from('orders')
-    .select('*, parties(*), ticket_types(name)')
+    .select('*, parties!orders_party_id_fkey(*), ticket_types!orders_ticket_type_id_fkey(name)')
     .eq('user_id', userId)
     .eq('payment_status', 'confirmed')
     .order('created_at', { ascending: false });
@@ -582,7 +587,7 @@ export async function fetchMyTickets(userId: string): Promise<CustomerTicket[]> 
 export async function fetchTicketById(orderId: string, userId: string): Promise<CustomerTicket | null> {
   const { data, error } = await supabase
     .from('orders')
-    .select('*, parties(*), ticket_types(name)')
+    .select('*, parties!orders_party_id_fkey(*), ticket_types!orders_ticket_type_id_fkey(name)')
     .eq('id', orderId)
     .eq('user_id', userId)
     .maybeSingle();

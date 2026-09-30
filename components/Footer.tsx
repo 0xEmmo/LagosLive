@@ -62,7 +62,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/host" className="text-gray-400 hover:text-[#00D9FF] transition text-sm">
+                <Link href="/host/dashboard" className="text-gray-400 hover:text-[#00D9FF] transition text-sm">
                   Host dashboard
                 </Link>
               </li>

@@ -28,7 +28,7 @@ export default function CancelEventPage({ params }: { params: { id: string } }) 
   useEffect(() => {
     if (!party || !user) return;
     if (party.createdBy !== user.id) {
-      router.replace('/host');
+      router.replace('/host/dashboard');
       return;
     }
     fetchOrganizerOrderStats([party.id])
@@ -52,7 +52,7 @@ export default function CancelEventPage({ params }: { params: { id: string } }) 
       const json = (await response.json()) as { success?: boolean; refunded_count?: number; error?: string };
       if (!response.ok || !json.success) throw new Error(json.error ?? 'Cancellation failed');
       showToast('Event cancelled', `${json.refunded_count ?? 0} ${(json.refunded_count ?? 0) === 1 ? 'guest was' : 'guests were'} refunded.`);
-      router.push('/host');
+      router.push('/host/dashboard');
     } catch (err) {
       console.error('[cancel-event] page error', err);
       showToast('Could not cancel', err instanceof Error ? err.message : 'Please try again.');
@@ -99,7 +99,7 @@ export default function CancelEventPage({ params }: { params: { id: string } }) 
             <div className="font-display text-[26px] tracking-[1px]" style={{ color: '#FFFFFF' }}>
               Event already cancelled
             </div>
-            <Link href="/host" className="btn-primary px-7 py-3 text-sm font-semibold">
+            <Link href="/host/dashboard" className="btn-primary px-7 py-3 text-sm font-semibold">
               Back to Dashboard
             </Link>
           </div>

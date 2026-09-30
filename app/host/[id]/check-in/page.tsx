@@ -35,7 +35,7 @@ export default function HostCheckInPage({ params }: { params: { id: string } }) 
   useEffect(() => {
     if (!user || !party) return;
     if (party.createdBy !== user.id) {
-      router.replace('/host');
+      router.replace('/host/dashboard');
       return;
     }
     setStatus('loading');

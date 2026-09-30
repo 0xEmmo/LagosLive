@@ -318,7 +318,7 @@ export default function ProfilePage() {
         </span>
       </Link>
       <Link
-        href="/host"
+        href="/host/dashboard"
         className="mb-4 flex w-full items-center justify-between glass rounded-xl px-4 py-[15px] text-sm font-medium transition-all duration-200 hover:border-[rgba(255,255,255,0.15)]"
         style={{ background: 'rgba(255,255,255,0.03)', color: '#FFFFFF' }}
       >

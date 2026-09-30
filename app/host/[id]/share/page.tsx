@@ -27,7 +27,7 @@ export default function EventSharePage() {
   useEffect(() => {
     if (!user || !party) return;
     if (party.createdBy !== user.id) {
-      router.replace('/host');
+      router.replace('/host/dashboard');
     }
   }, [user, party, router]);
 

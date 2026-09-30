@@ -71,5 +71,5 @@ export function partyPhoto(id: number, coverUrl?: string | null) {
 // into the create-event flow; guests go to /host, whose existing guard routes
 // them to sign in with the destination preserved (matches the app's HomeHeader).
 export function hostStartHref(user?: { id: string } | null): string {
-  return user ? '/host/new' : '/host';
+  return user ? '/host/new' : '/host/dashboard';
 }

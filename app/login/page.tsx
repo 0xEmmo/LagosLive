@@ -28,11 +28,11 @@ function LoginPageContent() {
 
   const rawNext = searchParams.get('next');
   const requestedNext = safeNextPath(rawNext, '') || null;
-  const defaultHome = user?.isAdmin
+  const defaultHome = user?.isAdmin || ['admin', 'super_admin', 'finance', 'support'].includes(user?.role ?? '')
     ? '/admin'
     : user?.role === 'organizer'
-      ? '/host'
-      : '/profile';
+      ? '/host/dashboard'
+      : '/';
   const next = requestedNext ?? defaultHome;
   const signupHref = requestedNext ? `/signup?next=${encodeURIComponent(requestedNext)}` : '/signup';
   const callbackError = oauthErrorMessage(searchParams.get('error'));
@@ -60,7 +60,8 @@ function LoginPageContent() {
       return;
     }
     setError('');
-    router.push(next);
+    // AuthListener hydrates the profile role after sign-in. The user effect
+    // above then sends the account to the correct workspace.
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {

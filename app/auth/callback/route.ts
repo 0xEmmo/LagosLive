@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('id')
+    .select('id, role, is_admin')
     .eq('id', user.id)
     .maybeSingle();
 
@@ -80,5 +80,9 @@ export async function GET(request: NextRequest) {
     return loginRedirect(request, 'oauth_profile_missing', next);
   }
 
-  return noStoreRedirect(new URL(next, request.nextUrl.origin));
+  const isStaff = profile.is_admin || ['admin', 'super_admin', 'finance', 'support'].includes(profile.role);
+  const destination = next === '/' || next === '/profile'
+    ? (isStaff ? '/admin' : profile.role === 'organizer' ? '/host/dashboard' : '/')
+    : next;
+  return noStoreRedirect(new URL(destination, request.nextUrl.origin));
 }

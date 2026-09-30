@@ -51,7 +51,7 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
     notFound();
   }
   if (party.createdBy !== user.id && !user.isAdmin) {
-    router.replace('/host');
+    router.replace('/host/dashboard');
     return null;
   }
 
@@ -98,7 +98,7 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
     try {
       await deleteParty(party.id);
       setDeleteOpen(false);
-      router.push(isAdminEditingOthersEvent ? '/admin' : '/host');
+      router.push(isAdminEditingOthersEvent ? '/admin' : '/host/dashboard');
     } catch (err) {
       setDeleteOpen(false);
       alert(
@@ -111,7 +111,7 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="mx-auto max-w-[520px] animate-fade-in md:max-w-[900px]">
-      <HostDashboardNav title="Edit Event" backHref={isAdminEditingOthersEvent ? '/admin' : '/host'} />
+      <HostDashboardNav title="Edit Event" backHref={isAdminEditingOthersEvent ? '/admin' : '/host/dashboard'} />
       <div className="p-4 sm:p-5">
         {isAdminEditingOthersEvent && (
           <div className="mb-4 rounded-[10px] px-3.5 py-2.5 text-[13px]" style={{ background: 'rgba(255,214,0,0.08)', border: '1px solid rgba(255,214,0,0.2)', color: '#FFD600' }}>

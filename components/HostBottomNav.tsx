@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { LayoutDashboard, CalendarDays, ListOrdered, Wallet, BarChart3 } from 'lucide-react';
 
 const HOST_ITEMS = [
-  { href: '/host', match: '/host', exact: true, label: 'Home', Icon: LayoutDashboard },
+  { href: '/host/dashboard', match: '/host/dashboard', exact: true, label: 'Home', Icon: LayoutDashboard },
   { href: '/host/events', match: '/host/events', label: 'Events', Icon: CalendarDays },
   { href: '/host/orders', match: '/host/orders', label: 'Orders', Icon: ListOrdered },
   { href: '/host/payouts', match: '/host/payouts', label: 'Payouts', Icon: Wallet },

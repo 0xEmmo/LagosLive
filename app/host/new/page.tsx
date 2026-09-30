@@ -153,7 +153,7 @@ export default function NewEventPage() {
                 Continue Editing Draft
               </Link>
             )}
-            <Link href="/host" className="btn-primary w-full py-[15px] text-center text-sm font-bold">
+            <Link href="/host/dashboard" className="btn-primary w-full py-[15px] text-center text-sm font-bold">
               View My Events
             </Link>
             <Link

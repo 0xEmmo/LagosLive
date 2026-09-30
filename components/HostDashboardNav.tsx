@@ -22,7 +22,7 @@ import { useLagosLiveStore } from '@/lib/store';
 import ThemeToggle from '@/components/ThemeToggle';
 
 const HOST_LINKS = [
-  { href: '/host', match: '/host', exact: true, label: 'Dashboard', Icon: LayoutDashboard },
+  { href: '/host/dashboard', match: '/host/dashboard', exact: true, label: 'Dashboard', Icon: LayoutDashboard },
   { href: '/host/events', match: '/host/events', label: 'My Events', Icon: CalendarDays },
   { href: '/host/orders', match: '/host/orders', label: 'Orders', Icon: ListOrdered },
   { href: '/host/payouts', match: '/host/payouts', label: 'Payouts', Icon: Wallet },
@@ -64,11 +64,12 @@ export default function HostDashboardNav({ title = 'Host Dashboard', backHref, a
         <div className="mx-auto flex max-w-[1000px] items-center gap-2 px-4 py-3">
           <Link
             href="/"
-            aria-label="Home"
-            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-[10px] transition-all duration-200 active:scale-90"
+            aria-label="Back to Lagos Live"
+            className="flex h-11 flex-shrink-0 items-center justify-center gap-2 rounded-[10px] px-3 transition-all duration-200 active:scale-90"
             style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#A7A8B5' }}
           >
             <Home size={17} strokeWidth={2} />
+            <span className="hidden text-[11px] font-semibold sm:inline">Back to Lagos Live</span>
           </Link>
 
           {backHref && backHref !== '/' && (
@@ -192,7 +193,7 @@ export default function HostDashboardNav({ title = 'Host Dashboard', backHref, a
                 style={{ color: '#A7A8B5' }}
               >
                 <Home size={17} strokeWidth={2.1} />
-                Back to site
+                Back to Lagos Live
               </Link>
               <button
                 onClick={signOut}

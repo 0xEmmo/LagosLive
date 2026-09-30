@@ -12,7 +12,7 @@ const SHOW_DELAY_MS = 15000;
 export default function NewsletterModal() {
   const pathname = usePathname() ?? '/';
   const isHome = pathname === '/';
-  const operationalRoute = pathname.startsWith('/admin') || pathname.startsWith('/host') || pathname.includes('/check-in');
+  const operationalRoute = pathname.startsWith('/admin') || pathname.startsWith('/host/dashboard') || pathname.includes('/check-in');
   const isAuthRoute = pathname === '/login' || pathname === '/signup';
   const suppressModal = operationalRoute || isAuthRoute;
   const showToast = useLagosLiveStore((s) => s.showToast);

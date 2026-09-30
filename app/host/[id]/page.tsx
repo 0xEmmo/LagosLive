@@ -127,7 +127,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
   useEffect(() => {
     if (!user || !party) return;
     if (party.createdBy !== user.id) {
-      router.replace('/host');
+      router.replace('/host/dashboard');
       return;
     }
     let cancelled = false;
@@ -256,7 +256,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
     <div className="mx-auto max-w-[600px] animate-fade-in md:max-w-[1000px]">
       <HostDashboardNav
         title="Event Performance"
-        backHref="/host"
+        backHref="/host/dashboard"
         action={
           <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
             <Link

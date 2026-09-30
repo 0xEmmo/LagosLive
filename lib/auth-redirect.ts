@@ -1,4 +1,4 @@
-export const DEFAULT_AUTH_REDIRECT = '/profile';
+export const DEFAULT_AUTH_REDIRECT = '/';
 
 const INTERNAL_ORIGIN = 'https://auth-redirect.invalid';
 

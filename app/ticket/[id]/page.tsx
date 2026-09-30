@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import QRCode from 'react-qr-code';
 import {
   ShieldCheck,
   Loader2,
@@ -13,19 +12,16 @@ import {
   XCircle,
   Ban,
   Ticket,
-  CheckCheck,
-  Download,
 } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import PartyPhoto from '@/components/PartyPhoto';
-import { LogoMark, Wordmark } from '@/components/Logo';
 import { partyPhoto } from '@/lib/data';
 import { fetchTicketById } from '@/lib/queries';
 import { formatNaira } from '@/lib/filters';
 import { useLagosLiveStore } from '@/lib/store';
 import type { CustomerTicket, OrderPaymentStatus } from '@/lib/types';
 import { ticketState } from '@/lib/types';
-import { getTicketSkin } from '@/lib/ticket-skin';
+import PrintableTicket from '@/components/PrintableTicket';
 
 function TicketStatusBadge({ status }: { status: OrderPaymentStatus }) {
   if (status === 'confirmed') {
@@ -54,15 +50,6 @@ function TicketStatusBadge({ status }: { status: OrderPaymentStatus }) {
       <Icon size={12} strokeWidth={2.5} />
       {status}
     </span>
-  );
-}
-
-function EarlyBirdMark() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none">
-      <path d="M3 14.5c2.5-.2 4.6-1.5 6.1-3.5 1.4-1.8 2.5-4.5 4.1-5.1 1.2-.5 2.3.1 2.5 1.3l.2 1.2 3.6-1.1-1.9 3.2 3.3 1.1-4.4 1.1c-.5 2.4-2.3 4.3-4.8 5.1-2.7.9-5.8.2-8.7-1.1l2.5-.8L3 14.5Z" fill="currentColor" />
-      <circle cx="15.1" cy="7.7" r=".55" fill="#10151B" />
-    </svg>
   );
 }
 
@@ -156,153 +143,6 @@ function CancelledTicket({ ticket }: { ticket: CustomerTicket }) {
   );
 }
 
-function ConfirmedTicket({
-  ticket,
-  holder,
-  used,
-}: {
-  ticket: CustomerTicket;
-  holder: string;
-  used: boolean;
-}) {
-  const { party } = ticket;
-  const skin = getTicketSkin(ticket.ticketTypeName, party.gradient);
-  const stubBackground = skin.stubBackground;
-  return (
-    <div id="ticket-print-area" className="ticket-print-area w-full max-w-[760px]">
-      <div className="ticket-actions mb-4 flex flex-col items-center gap-2 text-center">
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="btn-primary inline-flex items-center gap-2 px-5 py-3 text-sm font-bold"
-          aria-label="Download ticket as PDF or print"
-        >
-          <Download size={16} strokeWidth={2.5} />
-          Download ticket
-        </button>
-        <p className="text-[11px]" style={{ color: '#A7A8B5' }}>Choose “Save as PDF” in your browser&apos;s print dialog.</p>
-      </div>
-      <div className="ticket-card boarding-pass-card w-full animate-fade-in">
-        <div className="overflow-hidden rounded-[26px] border border-cyan-200/25 bg-[#09152d] shadow-[0_28px_90px_rgba(0,0,0,0.52)]">
-          <div className="boarding-pass-top">
-            <section className="boarding-pass-main relative min-w-0 overflow-hidden px-5 py-5 text-white sm:px-7 sm:py-6">
-              <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full border border-cyan-200/10" />
-              <div className="pointer-events-none absolute -right-8 -top-12 h-40 w-40 rounded-full border border-cyan-200/10" />
-              <div className="relative z-10 flex items-start justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cyan-100/20 bg-white/5">
-                    <LogoMark size={28} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[12px] font-black uppercase tracking-[0.18em] text-cyan-100">Lagos Live</div>
-                    <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-cyan-100/55">Event boarding pass</div>
-                  </div>
-                </div>
-                <TicketStatusBadge status="confirmed" />
-              </div>
-
-              <div className="relative z-10 mt-6">
-                <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-200/70">Admit to</div>
-                <h1 className="mt-1 line-clamp-2 font-heading text-[25px] font-black leading-[1.03] tracking-[0.015em] text-white sm:text-[36px]">
-                  {party.title}
-                </h1>
-              </div>
-
-              <div className="boarding-pass-route relative z-10 mt-5">
-                <div className="min-w-0">
-                  <div className="text-[9px] font-bold uppercase tracking-[0.19em] text-cyan-100/60">From</div>
-                  <div className="mt-0.5 truncate font-heading text-[20px] font-bold uppercase tracking-[0.04em] text-cyan-200 sm:text-[25px]">Lagos</div>
-                  <div className="text-[9px] text-cyan-100/60">Lagos Live</div>
-                </div>
-                <span aria-hidden="true" className="px-2 text-[27px] font-light text-cyan-300">→</span>
-                <div className="min-w-0">
-                  <div className="text-[9px] font-bold uppercase tracking-[0.19em] text-cyan-100/60">To · venue</div>
-                  <div className="mt-0.5 truncate font-heading text-[20px] font-bold uppercase tracking-[0.04em] text-cyan-200 sm:text-[25px]">{party.location}</div>
-                  <div className="truncate text-[9px] text-cyan-100/60">{party.address}</div>
-                </div>
-              </div>
-
-              <div className="boarding-pass-meta relative z-10 mt-5 border-t border-cyan-100/20 pt-3.5">
-                <div>
-                  <div className="text-[8px] font-bold uppercase tracking-[0.18em] text-cyan-100/55">Date</div>
-                  <div className="mt-1 text-[11px] font-bold text-white sm:text-[12px]">{party.date}</div>
-                </div>
-                <div>
-                  <div className="text-[8px] font-bold uppercase tracking-[0.18em] text-cyan-100/55">Time</div>
-                  <div className="mt-1 text-[11px] font-bold text-white sm:text-[12px]">{party.time}</div>
-                </div>
-                <div className="boarding-pass-holder">
-                  <div className="text-[8px] font-bold uppercase tracking-[0.18em] text-cyan-100/55">Passenger</div>
-                  <div className="mt-1 truncate text-[11px] font-bold text-white sm:text-[12px]">{holder}</div>
-                </div>
-              </div>
-            </section>
-
-            <aside className="boarding-pass-stub relative flex min-w-0 flex-col items-center justify-between gap-3 px-3.5 py-4 text-center sm:px-4 sm:py-5" style={{ background: stubBackground, color: '#07152C' }}>
-              <div className="w-full">
-                <div className="text-[8px] font-black uppercase tracking-[0.18em] opacity-70">Boarding pass</div>
-                <div className="mt-3 inline-flex max-w-full items-center justify-center gap-1.5 rounded-md border border-black/10 bg-white/30 px-2.5 py-1.5 text-center font-heading text-[12px] font-black uppercase leading-tight tracking-[0.08em] sm:text-[14px]">
-                  <span className="line-clamp-2">{ticket.ticketTypeName}</span>
-                  {skin.kind === 'early' && <span className="shrink-0" aria-label="Early bird"><EarlyBirdMark /></span>}
-                </div>
-              </div>
-
-              <div className="relative w-full max-w-[132px] rounded-lg bg-white p-2 shadow-md">
-                <QRCode
-                  value={ticket.orderRef}
-                  size={128}
-                  fgColor="#07152C"
-                  bgColor="#FFFFFF"
-                  style={{ display: 'block', width: '100%', height: 'auto' }}
-                  aria-label={`Ticket code for ${ticket.orderRef}`}
-                />
-                {used && (
-                  <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-white/70">
-                    <span className="-rotate-12 rounded-md border-2 px-2 py-1 text-sm font-black uppercase tracking-[0.15em]" style={{ borderColor: '#C83745', color: '#C83745' }}>Used</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="w-full">
-                <div className="text-[8px] font-black uppercase tracking-[0.17em] opacity-70">Pass code</div>
-                <div className="mt-1 break-all font-mono text-[9px] font-bold tracking-[0.06em]">{ticket.orderRef}</div>
-                <div className="mt-2 text-[9px] font-black uppercase tracking-[0.18em]">Admit · {ticket.quantity}</div>
-                <div className="mt-1 text-[8px] font-semibold uppercase tracking-[0.12em] opacity-75">{used ? 'Already scanned' : 'Scan at the gate'}</div>
-              </div>
-            </aside>
-          </div>
-
-          <div className="boarding-pass-reverse border-t border-dashed border-cyan-100/40">
-            <aside className="boarding-pass-reverse-stub flex flex-col items-center justify-between border-r border-dashed border-cyan-100/30 bg-[#0d1e3a] px-3 py-4 text-center text-cyan-100">
-              <Wordmark size={20} />
-              <div className="boarding-pass-vertical-label text-[9px] font-black uppercase tracking-[0.2em]">Keep this pass</div>
-              <div className="text-[8px] font-semibold uppercase tracking-[0.13em] text-cyan-100/60">Verified entry</div>
-            </aside>
-            <section className="boarding-pass-banner relative flex min-h-[178px] items-end overflow-hidden px-5 py-5 sm:min-h-[210px] sm:px-8 sm:py-7">
-              <div className="absolute inset-0" style={{ background: party.gradient }}>
-                <PartyPhoto src={partyPhoto(party.id, party.coverUrl)} alt={party.title} gradient={party.gradient} sizes="(max-width: 600px) 75vw, 600px" tone="editorial" priority />
-              </div>
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#08152d]/95 via-[#08152d]/65 to-[#08152d]/10" />
-              <div className="relative z-10 max-w-[92%]">
-                <div className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-200">Your night starts here</div>
-                <h2 className="mt-1 font-heading text-[32px] font-black uppercase leading-[0.98] tracking-[0.025em] text-cyan-300 sm:text-[46px]">See you there!</h2>
-                <div className="mt-2 line-clamp-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white/90">{party.title}</div>
-              </div>
-            </section>
-          </div>
-
-          {used && (
-            <div className="flex items-center gap-2 border-t border-white/10 bg-[#101f3b] px-4 py-3 text-[11px] font-semibold text-cyan-100 sm:px-6">
-              <CheckCheck size={15} strokeWidth={2.2} className="shrink-0 text-cyan-300" />
-              <span>{ticket.checkedInAt ? `Scanned at the gate on ${new Date(ticket.checkedInAt).toLocaleString()}.` : 'This ticket has already been scanned at the gate.'} It is no longer valid for entry.</span>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function TicketPage({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams();
   const token = searchParams.get('token') ?? '';
@@ -357,7 +197,7 @@ export default function TicketPage({ params }: { params: { id: string } }) {
   }, [params.id, token, user, authLoading, attempt]);
 
   return (
-    <div className="relative mx-auto flex min-h-screen max-w-[520px] flex-col animate-fade-in md:max-w-[900px]">
+    <div className="relative mx-auto flex min-h-screen max-w-[520px] flex-col animate-fade-in md:max-w-[680px]">
       <div
         className="sticky top-0 z-40 flex items-center gap-3 border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150"
         style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}
@@ -434,7 +274,7 @@ export default function TicketPage({ params }: { params: { id: string } }) {
         ) : ticket.paymentStatus === 'confirmed' && (ticket.party.cancelledAt || ticket.refundStatus === 'refunded' || ticket.refundedAt) ? (
           <CancelledTicket ticket={ticket} />
         ) : ticket.paymentStatus === 'confirmed' ? (
-          <ConfirmedTicket
+          <PrintableTicket
             ticket={ticket}
             holder={user ? user.name || user.email : 'Guest entry'}
             used={ticketState(ticket) === 'USED'}

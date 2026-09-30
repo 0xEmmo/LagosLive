@@ -2105,3 +2105,71 @@ html[data-theme="light"] .auth-split-layout__form :is(input, textarea, select) {
   .theme-toggle__thumb,
   .theme-toggle__icon { transition-duration: 0.01ms !important; }
 }
+
+
+/* Flat, portrait admission pass: paper-like print surface, host artwork, detachable QR stub. */
+.ticket-pass {
+  --pass-bg: #FFFFFF;
+  --pass-surface: #F5F7FC;
+  --pass-fg: #172033;
+  --pass-muted: #68758A;
+  --pass-border: #DCE3EF;
+  --pass-accent: #1F5FFF;
+  --pass-cutout: var(--c-bg);
+  background: var(--pass-bg);
+  border-color: var(--pass-border);
+  color: var(--pass-fg);
+}
+html:not([data-theme="light"]) .ticket-pass {
+  --pass-bg: #12121C;
+  --pass-surface: #0D0D15;
+  --pass-fg: #FFFFFF;
+  --pass-muted: #A7A8B5;
+  --pass-border: rgba(255,255,255,0.12);
+  --pass-accent: #00BFFF;
+}
+html[data-theme="light"] .ticket-pass {
+  --pass-bg: #FFFFFF;
+  --pass-surface: #F5F7FC;
+  --pass-fg: #172033;
+  --pass-muted: #68758A;
+  --pass-border: #DCE3EF;
+  --pass-accent: #1F5FFF;
+}
+.ticket-pass-image-shade {
+  background: linear-gradient(180deg, rgba(8,8,16,.15) 0%, rgba(8,8,16,.12) 32%, rgba(8,8,16,.86) 100%), linear-gradient(90deg, rgba(39,13,63,.42), transparent 80%);
+}
+.ticket-pass-perforation::before,
+.ticket-pass-perforation::after {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--pass-cutout);
+  content: '';
+  transform: translateY(-50%);
+}
+.ticket-pass-perforation::before { left: -10px; }
+.ticket-pass-perforation::after { right: -10px; }
+.ticket-pass-details { background: var(--pass-bg); }
+.ticket-pass-perforation { border-color: var(--pass-border); background: var(--pass-surface); }
+.ticket-pass-note { border-color: var(--pass-border); background: var(--pass-surface); color: var(--pass-muted); }
+
+@media print {
+  #ticket-print-area .ticket-pass {
+    width: 4.95in !important;
+    max-width: 4.95in !important;
+    border-radius: 0.18in !important;
+  }
+  #ticket-print-area .ticket-pass-hero {
+    min-height: 2.65in !important;
+  }
+  #ticket-print-area .ticket-pass-details,
+  #ticket-print-area .ticket-pass-stub,
+  #ticket-print-area .ticket-pass-note {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

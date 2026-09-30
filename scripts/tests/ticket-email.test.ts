@@ -53,7 +53,7 @@ describe('ticket confirmation email', () => {
   it('renders an event-art boarding pass in the current light/blue brand palette', () => {
     const html = renderTicketEmailHtml(sampleTicket, getTicketSkin(sampleTicket.ticketTypeName, '#1F5FFF'), options);
 
-    assert.match(html, /Your event boarding pass/);
+    assert.match(html, /Your event ticket/);
     assert.match(html, /src="https:\/\/cdn\.example\.test\/events\/lagos-after-dark\.jpg"/);
     assert.match(html, /The New Afrika Shrine/);
     assert.match(html, /Nerho Street, Ikeja, Lagos/);
@@ -63,6 +63,7 @@ describe('ticket confirmation email', () => {
     assert.match(html, /href="https:\/\/lagoslive\.example\/ticket\/order-123\?token=secure-bearer-token"/);
     assert.match(html, /save as PDF/i);
     assert.doesNotMatch(html, /#FF2D95|#8A2BE2/);
+    assert.doesNotMatch(html, /#07152C|#A8EFFF|#AFC2E0/);
   });
 
   it('escapes event-supplied HTML and rejects non-HTTPS cover-image URLs', () => {

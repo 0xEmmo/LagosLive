@@ -7,7 +7,7 @@ import { X, Bell, Heart, Ticket, AlertTriangle, RefreshCw, TicketCheck, Mail } f
 import { useParties } from '@/lib/hooks/useParties';
 import { useLagosLiveStore } from '@/lib/store';
 import { fetchMyTickets } from '@/lib/queries';
-import { partyPhoto } from '@/lib/data';
+import { hostStartHref, partyPhoto } from '@/lib/data';
 import PartyPhoto from '@/components/PartyPhoto';
 import RoleNavButtons from '@/components/RoleNavButtons';
 import type { CustomerTicket } from '@/lib/types';
@@ -318,7 +318,7 @@ export default function ProfilePage() {
         </span>
       </Link>
       <Link
-        href="/host/dashboard"
+        href={hostStartHref(user)}
         className="mb-4 flex w-full items-center justify-between glass rounded-xl px-4 py-[15px] text-sm font-medium transition-all duration-200 hover:border-[rgba(255,255,255,0.15)]"
         style={{ background: 'rgba(255,255,255,0.03)', color: '#FFFFFF' }}
       >

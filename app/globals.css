@@ -2173,3 +2173,5 @@ html[data-theme="light"] .ticket-pass {
     print-color-adjust: exact !important;
   }
 }
+
+.ticket-pass-hero-title { color: #FFFFFF !important; }

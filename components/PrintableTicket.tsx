@@ -72,7 +72,7 @@ export default function PrintableTicket({
           </div>
           <div className="relative z-10 max-w-[420px] text-white">
             <div className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/75">You&apos;re going to</div>
-            <h1 className="mt-2 break-words font-heading text-[32px] font-black uppercase leading-[0.98] tracking-[-0.025em] drop-shadow sm:text-[42px]">{party.title}</h1>
+            <h1 className="ticket-pass-hero-title mt-2 break-words font-heading text-[32px] font-black uppercase leading-[0.98] tracking-[-0.025em] drop-shadow sm:text-[42px]">{party.title}</h1>
             <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold text-white/90">
               <span>{party.date}</span><span aria-hidden="true">·</span><span>{party.time}</span>
             </div>

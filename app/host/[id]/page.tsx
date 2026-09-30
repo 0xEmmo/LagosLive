@@ -265,7 +265,7 @@ export default function EventAnalyticsPage({ params }: { params: { id: string } 
               style={{ color: '#A7A8B5' }}
             >
               <Eye size={13} strokeWidth={2} />
-              View
+              View as User
             </Link>
             <Link
               href={`/host/${party.id}/edit`}

@@ -72,5 +72,7 @@ export function partyPhoto(id: number, coverUrl?: string | null) {
 export function hostStartHref(user?: { id: string; role?: string } | null): string {
   return user?.role === 'organizer' || user?.role === 'admin' || user?.role === 'super_admin'
     ? '/host/dashboard'
-    : '/host/new';
+    : user
+      ? '/host/new'
+      : '/signup?next=%2Fhost%2Fnew';
 }

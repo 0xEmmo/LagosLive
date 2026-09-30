@@ -40,7 +40,8 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    return redirectTo(request, '/login', `${pathname}${request.nextUrl.search}`);
+    const authPath = pathname === '/host/new' ? '/signup' : '/login';
+    return redirectTo(request, authPath, `${pathname}${request.nextUrl.search}`);
   }
 
   const { data: profile } = await supabase

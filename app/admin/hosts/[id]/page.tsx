@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import { ArrowLeft, Mail, Phone, CalendarDays, Wallet, Ticket, Building2, Shield, Ban, RotateCcw, Trash2, ShieldCheck, Check, X } from 'lucide-react';
 import AdminShell from '@/components/admin-shell';
 import { PageHeader, StatCard, LoadingBlock, ErrorBlock, EmptyBlock, TableShell, Cell, Badge, usePermissionGuard } from '@/components/ui/dashboard-ui';
-import { fetchHostDetail, updateProfileStatus, deleteAdminNote, fetchAdminNotes, createAdminNote, logAudit, type HostDetail, type NoteRow } from '@/lib/admin-queries';
+import { fetchHostDetail, updateProfileStatus, deleteAdminNote, fetchAdminNotes, createAdminNote, type HostDetail, type NoteRow } from '@/lib/admin-queries';
 import { formatNaira } from '@/lib/filters';
 import { useLagosLiveStore } from '@/lib/store';
 import { ROLE_LABEL, ACCOUNT_STATUS_LABEL, ACCOUNT_STATUS_COLOR, HOST_VERIFICATION_LABEL, HOST_VERIFICATION_COLOR, type Role, type AccountStatus, type HostVerification } from '@/lib/authz';
@@ -58,11 +58,10 @@ export default function AdminHostDetailPage() {
     if (next === 'suspended' && !confirm(`Suspend ${host.name}?`)) return;
     try {
       await updateProfileStatus(host.id, next);
-      await logAudit(next === 'active' ? 'host_reinstate' : 'host_suspend', 'host', host.id, { name: host.name });
       setHost((h) => h ? { ...h, account_status: next } : h);
       showToast(next === 'active' ? 'Host reinstated' : 'Host suspended', `${host.name} updated.`);
-    } catch {
-      showToast('Something went wrong', "Couldn't update status.");
+    } catch (error) {
+      showToast('Could not update status', error instanceof Error ? error.message : "Couldn't update status.");
     }
   };
 

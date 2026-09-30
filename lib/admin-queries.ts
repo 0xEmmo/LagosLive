@@ -172,13 +172,17 @@ export async function fetchAllProfiles(): Promise<HostProfile[]> {
   return (data ?? []) as HostProfile[];
 }
 
-/** Activate/suspend an account through the staff-gated RPC (audit-logged). */
+/** Activate/suspend an account through the staff-gated server endpoint (audit-logged). */
 export async function updateProfileStatus(userId: string, accountStatus: string): Promise<void> {
-  const { error } = await supabase.rpc('set_user_account_status', {
-    p_user_id: userId,
-    p_account_status: accountStatus,
+  const response = await fetch('/api/admin/hosts/status', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: userId, account_status: accountStatus }),
   });
-  if (error) throw error;
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({ error: 'Could not update account status.' }));
+    throw new Error(body.error || `HTTP ${response.status}`);
+  }
 }
 
 /** Promote or demote a user's role through the staff-gated API (audit-logged). */

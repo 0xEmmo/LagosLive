@@ -126,7 +126,8 @@ export default function RevenuePage() {
 
   if (!ready || !user) return null;
 
-  const confirmed = orders.filter((o) => o.payment_status === 'confirmed');
+  const paidOrders = orders.filter((o) => o.tier !== 'complimentary');
+  const confirmed = paidOrders.filter((o) => o.payment_status === 'confirmed');
   const totalRevenue = confirmed.reduce((s, o) => s + o.total, 0);
   const now = new Date();
   const thisMonth = confirmed.filter((o) => {
@@ -137,8 +138,8 @@ export default function RevenuePage() {
   const pendingPayouts = payouts
     .filter((p) => ['pending', 'processing', 'transfer_pending'].includes(p.status))
     .reduce((s, p) => s + p.amount, 0);
-  const refundCount = orders.filter((o) => o.refund_status !== 'none').length;
-  const refundAmount = orders.filter((o) => o.refund_status === 'refunded').reduce((s, o) => s + o.refund_amount, 0);
+  const refundCount = paidOrders.filter((o) => o.refund_status !== 'none').length;
+  const refundAmount = paidOrders.filter((o) => o.refund_status === 'refunded').reduce((s, o) => s + o.refund_amount, 0);
   // Reversed transfers, surfaced above the payout table rather than buried in it.
   // A reversal means money moved and came back, which is the one payout event
   // that a host will notice as missing from their account, so it is the one that

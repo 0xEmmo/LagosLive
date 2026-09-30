@@ -57,7 +57,7 @@ export interface OverviewMetrics {
 export async function fetchOverviewMetrics(): Promise<OverviewMetrics> {
   const [parties, orders, hosts] = await Promise.all([
     supabase.from('parties').select('id, status, starts_at'),
-    supabase.from('orders').select('party_id, quantity, total, payment_status'),
+    supabase.from('orders').select('party_id, quantity, total, payment_status, tier'),
     supabase.from('profiles').select('id').in('role', ['organizer', 'admin', 'super_admin', 'finance', 'support']),
   ]);
   if (parties.error) throw parties.error;
@@ -71,7 +71,7 @@ export async function fetchOverviewMetrics(): Promise<OverviewMetrics> {
   let totalRevenue = 0;
   let totalTicketsSold = 0;
   for (const o of orderRows) {
-    if (o.payment_status === 'confirmed') {
+    if (o.payment_status === 'confirmed' && o.tier !== 'complimentary') {
       totalRevenue += o.total;
       totalTicketsSold += o.quantity;
     }
@@ -313,7 +313,7 @@ export async function deleteAdminNote(noteId: number): Promise<void> {
 
 // ---- Chart data helpers -----------------------------------------------------
 
-function buildDailyRevenueSeries(days: number, orders: { created_at: string; total: number; payment_status: string }[]): { label: string; value: number }[] {
+function buildDailyRevenueSeries(days: number, orders: { created_at: string; total: number; payment_status: string; tier?: string }[]): { label: string; value: number }[] {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const buckets = new Map<string, { key: string; label: string; value: number }>();
@@ -326,7 +326,7 @@ function buildDailyRevenueSeries(days: number, orders: { created_at: string; tot
     });
   }
   for (const row of orders) {
-    if (row.payment_status !== 'confirmed') continue;
+    if (row.payment_status !== 'confirmed' || row.tier === 'complimentary') continue;
     const b = buckets.get(new Date(row.created_at).toDateString());
     if (b) b.value += row.total;
   }
@@ -334,7 +334,7 @@ function buildDailyRevenueSeries(days: number, orders: { created_at: string; tot
 }
 
 export async function fetchRevenueTrend(): Promise<{ label: string; value: number }[]> {
-  const { data, error } = await supabase.from('orders').select('created_at, total, payment_status');
+  const { data, error } = await supabase.from('orders').select('created_at, total, payment_status, tier');
   if (error) throw error;
   return buildDailyRevenueSeries(30, data ?? []);
 }
@@ -545,7 +545,7 @@ export async function fetchHostAnalytics(userId: string): Promise<HostAnalyticsS
   }
   const { data: orders, error: ordersError } = await supabase
     .from('orders')
-    .select('quantity, total, payment_status')
+    .select('quantity, total, payment_status, tier')
     .in('party_id', eventIds);
   if (ordersError) throw ordersError;
 
@@ -555,7 +555,7 @@ export async function fetchHostAnalytics(userId: string): Promise<HostAnalyticsS
   let pendingOrders = 0;
   let failedOrders = 0;
   for (const o of orders ?? []) {
-    if (o.payment_status === 'confirmed') {
+    if (o.payment_status === 'confirmed' && o.tier !== 'complimentary') {
       totalRevenue += o.total;
       totalTicketsSold += o.quantity;
       totalConfirmed += 1;
@@ -582,7 +582,7 @@ export async function fetchHostRevenueTrend(userId: string, days: number): Promi
   if (eventIds.length === 0) return buildDailyRevenueSeries(days, []);
   const { data } = await supabase
     .from('orders')
-    .select('created_at, total, payment_status')
+    .select('created_at, total, payment_status, tier')
     .in('party_id', eventIds);
   return buildDailyRevenueSeries(days, data ?? []);
 }

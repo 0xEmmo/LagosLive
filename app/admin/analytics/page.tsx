@@ -51,7 +51,8 @@ export default function AnalyticsPage() {
       .catch(() => setStatus('error'));
   }, [ready, attempt]);
 
-  const filtered = useMemo(() => filterOrdersByDays(orders, rangeDays), [orders, rangeDays]);
+  const salesOrders = useMemo(() => orders.filter((o) => o.tier !== 'complimentary'), [orders]);
+  const filtered = useMemo(() => filterOrdersByDays(salesOrders, rangeDays), [salesOrders, rangeDays]);
   const confirmed = useMemo(() => filtered.filter((o) => o.payment_status === 'confirmed'), [filtered]);
 
   const totalRevenue = confirmed.reduce((s, o) => s + o.total, 0);

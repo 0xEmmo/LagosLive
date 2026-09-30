@@ -437,8 +437,26 @@ export async function updateHostProfile(userId: string, patch: {
   name?: string;
   phone?: string | null;
   bio?: string | null;
+  avatar_url?: string | null;
+  public_bio?: string | null;
+  instagram_url?: string | null;
+  tiktok_url?: string | null;
+  x_url?: string | null;
+  website_url?: string | null;
+  public_profile?: boolean;
 }): Promise<void> {
-  const { error } = await supabase.from('profiles').update(patch as Database['public']['Tables']['profiles']['Update']).eq('id', userId);
+  const { error } = await (supabase as any).rpc('update_public_host_profile', {
+    p_name: patch.name ?? null,
+    p_phone: patch.phone ?? null,
+    p_bio: patch.bio ?? null,
+    p_avatar_url: patch.avatar_url ?? null,
+    p_public_bio: patch.public_bio ?? null,
+    p_instagram_url: patch.instagram_url ?? null,
+    p_tiktok_url: patch.tiktok_url ?? null,
+    p_x_url: patch.x_url ?? null,
+    p_website_url: patch.website_url ?? null,
+    p_public_profile: patch.public_profile ?? null,
+  });
   if (error) throw error;
 }
 

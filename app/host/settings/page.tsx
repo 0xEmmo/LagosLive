@@ -6,6 +6,7 @@ import { AlertTriangle, RefreshCw, Save, Building2, User, Phone, FileText } from
 import HostDashboardNav from '@/components/HostDashboardNav';
 import { useLagosLiveStore } from '@/lib/store';
 import { updateHostProfile } from '@/lib/admin-queries';
+import { supabase } from '@/lib/supabase/client';
 
 export default function HostSettingsPage() {
   const router = useRouter();
@@ -17,6 +18,12 @@ export default function HostSettingsPage() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [bio, setBio] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [instagramUrl, setInstagramUrl] = useState('');
+  const [tiktokUrl, setTiktokUrl] = useState('');
+  const [xUrl, setXUrl] = useState('');
+  const [websiteUrl, setWebsiteUrl] = useState('');
   const [bankName, setBankName] = useState('');
   const [bankAccount, setBankAccount] = useState('');
   const [bankAccountName, setBankAccountName] = useState('');
@@ -31,7 +38,17 @@ export default function HostSettingsPage() {
     if (!user) return;
     setStatus('ok');
     setName(user.name || '');
-    // Try to load profile extras from localStorage (or could be from DB)
+    void (async () => {
+      const { data } = await (supabase as any).from('profiles').select('avatar_url, public_bio, instagram_url, tiktok_url, x_url, website_url').eq('id', user.id).maybeSingle();
+      if (!data) return;
+      setAvatarUrl(data.avatar_url ?? null);
+      setBio(data.public_bio ?? '');
+      setInstagramUrl(data.instagram_url ?? '');
+      setTiktokUrl(data.tiktok_url ?? '');
+      setXUrl(data.x_url ?? '');
+      setWebsiteUrl(data.website_url ?? '');
+    })();
+    // Bank details remain separate from the optional public profile.
     const saved = localStorage.getItem('host_bank_details');
     if (saved) {
       try {
@@ -51,10 +68,21 @@ export default function HostSettingsPage() {
     }
     setSaving(true);
     try {
+      let nextAvatarUrl = avatarUrl;
+      if (avatarFile) {
+        const ext = avatarFile.type === 'image/png' ? 'png' : avatarFile.type === 'image/webp' ? 'webp' : 'jpg';
+        const path = `${user.id}/avatar.${ext}`;
+        const { error: uploadError } = await supabase.storage.from('profile-avatars').upload(path, avatarFile, { upsert: true, contentType: avatarFile.type });
+        if (uploadError) throw new Error('Profile picture upload failed. Please try again.');
+        nextAvatarUrl = supabase.storage.from('profile-avatars').getPublicUrl(path).data.publicUrl;
+        setAvatarUrl(nextAvatarUrl);
+        setAvatarFile(null);
+      }
       await updateHostProfile(user.id, {
-        name: name.trim(),
-        phone: phone.trim() || null,
-        bio: bio.trim() || null,
+        name: name.trim(), phone: phone.trim() || null, bio: bio.trim() || null,
+        avatar_url: nextAvatarUrl, public_bio: bio.trim() || null,
+        instagram_url: instagramUrl.trim() || null, tiktok_url: tiktokUrl.trim() || null,
+        x_url: xUrl.trim() || null, website_url: websiteUrl.trim() || null,
       });
       // Save bank details locally (would need encrypted storage in production)
       localStorage.setItem('host_bank_details', JSON.stringify({
@@ -110,6 +138,15 @@ export default function HostSettingsPage() {
                 <User size={16} strokeWidth={2} color="#2B68FF" />
                 <span className="text-[13px] font-bold" style={{ color: '#FFFFFF' }}>Profile</span>
               </div>
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full" style={{ background: 'linear-gradient(135deg, #2B68FF, #00D9FF)' }}>
+                  {avatarUrl ? <img src={avatarUrl} alt="Profile preview" className="h-full w-full object-cover" /> : <User size={25} color="#FFFFFF" />}
+                </div>
+                <label className="cursor-pointer rounded-[10px] px-3 py-2 text-[12px] font-semibold" style={{ background: 'rgba(43,104,255,0.12)', border: '1px solid rgba(43,104,255,0.25)', color: '#8EACFF' }}>
+                  Upload profile picture
+                  <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => setAvatarFile(e.target.files?.[0] ?? null)} />
+                </label>
+              </div>
               <div className="flex flex-col gap-3">
                 <Field label="Full Name" value={name} onChange={setName} placeholder="Your name" />
                 <Field label="Phone" value={phone} onChange={setPhone} placeholder="+234..." icon={<Phone size={14} color="#6B6C80" />} />
@@ -124,6 +161,10 @@ export default function HostSettingsPage() {
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#FFFFFF' }}
                   />
                 </div>
+                <Field label="Instagram" value={instagramUrl} onChange={setInstagramUrl} placeholder="@yourhandle or profile URL" />
+                <Field label="TikTok" value={tiktokUrl} onChange={setTiktokUrl} placeholder="@yourhandle or profile URL" />
+                <Field label="X / Twitter" value={xUrl} onChange={setXUrl} placeholder="@yourhandle or profile URL" />
+                <Field label="Website" value={websiteUrl} onChange={setWebsiteUrl} placeholder="https://yourwebsite.com" />
               </div>
             </div>
 

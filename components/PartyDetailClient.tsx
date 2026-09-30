@@ -29,6 +29,7 @@ import {
 import BackButton from '@/components/BackButton';
 import PartyCard from '@/components/PartyCard';
 import PartyPhoto from '@/components/PartyPhoto';
+import HostProfileCard from '@/components/HostProfileCard';
 import GetThereMenu from '@/components/GetThereMenu';
 import TicketTypePicker from '@/components/TicketTypePicker';
 import { EventDetailSkeleton } from '@/components/ui/loaders-skeleton';
@@ -50,6 +51,7 @@ import { partyPath } from '@/lib/seo';
 import { encodeCartItems, isTicketTypeSellable, MAX_QTY_PER_TYPE, type TicketCart } from '@/lib/tickets';
 import { eventAvailability } from '@/lib/event-state';
 import type { Party, Review, TicketType } from '@/lib/types';
+import { fetchPublicHostProfile, type PublicHostProfile } from '@/lib/host-profile';
 
 // Client section of the event detail page. Rendered by both the /party/[id] and
 // /events/[slug] server routes, which supply metadata/JSON-LD and the seeded
@@ -72,6 +74,7 @@ export default function PartyDetailClient({
   const [ttLoading, setTtLoading] = useState(true);
   const [cart, setCart] = useState<TicketCart>({});
   const [copied, setCopied] = useState(false);
+  const [hostProfile, setHostProfile] = useState<PublicHostProfile | null>(null);
 
   useEffect(() => {
     if (!Number.isInteger(partyId) || partyId <= 0) return;
@@ -107,6 +110,15 @@ export default function PartyDetailClient({
       cancelled = true;
     };
   }, [party]);
+
+  useEffect(() => {
+    if (!party?.createdBy) return;
+    let cancelled = false;
+    fetchPublicHostProfile(party.createdBy)
+      .then((profile) => !cancelled && setHostProfile(profile))
+      .catch(() => !cancelled && setHostProfile(null));
+    return () => { cancelled = true; };
+  }, [party?.createdBy]);
 
   useEffect(() => {
     let cancelled = false;
@@ -456,6 +468,12 @@ export default function PartyDetailClient({
           <p className="text-sm leading-[1.8]" style={{ color: '#A7A8B5' }}>{party.description}</p>
         </div>
 
+        {hostProfile && (
+          <div className="mb-6">
+            <h3 className="mb-3 text-[11px] font-bold uppercase tracking-[1.5px]" style={{ color: '#A7A8B5' }}>Host</h3>
+            <HostProfileCard profile={hostProfile} compact />
+          </div>
+        )}
         {/* Detail info grid */}
         <div className="mb-5 grid grid-cols-2 gap-2.5">
           {[

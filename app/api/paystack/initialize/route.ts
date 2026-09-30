@@ -204,15 +204,27 @@ export async function POST(request: Request) {
       if (!/^[A-Z0-9][A-Z0-9_-]{2,23}$/.test(promoCodeRaw)) {
         return NextResponse.json({ error: 'That promo code is not valid.' }, { status: 400 });
       }
-      const { data: promo } = await service
+      const { data: promoRow } = await service
         .from('promos')
-        .select('code, discount_percent, active, uses, max_uses, starts_at, ends_at')
+        .select('code, discount_percent, active, uses, max_uses, starts_at, ends_at, party_id')
         .eq('code', promoCodeRaw)
         .maybeSingle();
+      const promo = promoRow as {
+        code: string;
+        discount_percent: number;
+        active: boolean;
+        uses: number;
+        max_uses: number | null;
+        starts_at: string | null;
+        ends_at: string | null;
+        party_id: number | null;
+      } | null;
       const now = Date.now();
+      const promoPartyId = (promo as { party_id?: number | null }).party_id ?? null;
       const promoInvalid =
         !promo ||
         !promo.active ||
+        (promoPartyId !== null && promoPartyId !== party.id) ||
         (promo.starts_at && new Date(promo.starts_at).getTime() > now) ||
         (promo.ends_at && new Date(promo.ends_at).getTime() < now) ||
         (promo.max_uses !== null && promo.uses >= promo.max_uses);

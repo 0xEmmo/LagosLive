@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react';
 import HostDashboardNav from '@/components/HostDashboardNav';
 import PartyForm from '@/components/PartyForm';
 import DeleteEventDialog from '@/components/DeleteEventDialog';
+import HostCouponPanel from '@/components/HostCouponPanel';
 import { updateParty, deleteParty, fetchTicketTypes, submitEventForReview, type PartyFormInput, type PartySubmitMode, type TicketFormType } from '@/lib/queries';
 import { notifyTelegramEvent } from '@/lib/telegram-client';
 import { useParty } from '@/lib/hooks/useParty';

@@ -7,6 +7,7 @@ import HostDashboardNav from '@/components/HostDashboardNav';
 import { useLagosLiveStore } from '@/lib/store';
 import { updateHostProfile } from '@/lib/admin-queries';
 import { supabase } from '@/lib/supabase/client';
+import HostAvatarUploader from '@/components/HostAvatarUploader';
 
 export default function HostSettingsPage() {
   const router = useRouter();
@@ -138,15 +139,7 @@ export default function HostSettingsPage() {
                 <User size={16} strokeWidth={2} color="#2B68FF" />
                 <span className="text-[13px] font-bold" style={{ color: '#FFFFFF' }}>Profile</span>
               </div>
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full" style={{ background: 'linear-gradient(135deg, #2B68FF, #00D9FF)' }}>
-                  {avatarUrl ? <img src={avatarUrl} alt="Profile preview" className="h-full w-full object-cover" /> : <User size={25} color="#FFFFFF" />}
-                </div>
-                <label className="cursor-pointer rounded-[10px] px-3 py-2 text-[12px] font-semibold" style={{ background: 'rgba(43,104,255,0.12)', border: '1px solid rgba(43,104,255,0.25)', color: '#8EACFF' }}>
-                  Upload profile picture
-                  <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => setAvatarFile(e.target.files?.[0] ?? null)} />
-                </label>
-              </div>
+              <div className="mb-4"><HostAvatarUploader value={avatarUrl} onFileChange={setAvatarFile} disabled={saving} /></div>
               <div className="flex flex-col gap-3">
                 <Field label="Full Name" value={name} onChange={setName} placeholder="Your name" />
                 <Field label="Phone" value={phone} onChange={setPhone} placeholder="+234..." icon={<Phone size={14} color="#6B6C80" />} />

@@ -8,6 +8,7 @@ import { appUrl } from './seo';
 import { getTicketSkin } from './ticket-skin';
 import { renderTicketEmailHtml } from './ticket-email-template';
 import { emailDocument as ticketEmailDocument } from './email-document';
+import { sendBrevoHtmlEmail } from './brevo';
 
 const RESEND_API = 'https://api.resend.com/emails';
 
@@ -114,11 +115,6 @@ export async function sendTicketConfirmation(data: TicketConfirmationData): Prom
     to: data.to,
   });
 
-  if (!apiKey) {
-    console.warn('[resend] RESEND_API_KEY is not configured — skipping ticket email to', data.to);
-    return false;
-  }
-
   // Sends through the same resilient path as the other emails: the configured
   // sender is tried first, and if Resend rejects it because its domain isn't
   // verified yet, the ticket email is retried from the account default address.
@@ -127,6 +123,7 @@ export async function sendTicketConfirmation(data: TicketConfirmationData): Prom
     subject: `Your ${data.partyTitle} ticket is confirmed — Lagos Live`,
     html: ticketEmailHtml(data),
     colorScheme: 'light',
+    provider: 'resend-fallback',
   });
 }
 
@@ -148,10 +145,6 @@ const PAYOUT_MESSAGES: Record<PayoutStatusEmailData['status'], string> = {
 
 export async function sendPayoutStatusEmail(data: PayoutStatusEmailData): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    console.warn('[resend] RESEND_API_KEY is not configured — skipping payout email to', data.to);
-    return false;
-  }
   const from = process.env.RESEND_FROM_EMAIL || FALLBACK_FROM;
   const line = `<tr>
     <td style="padding:8px 0;"><span style="color:#6B6C80;">Amount</span><br/><strong style="color:#FFFFFF;">${formatNaira(data.amount)}</strong></td>
@@ -172,6 +165,12 @@ export async function sendPayoutStatusEmail(data: PayoutStatusEmailData): Promis
         <p style="color:#6B6C80;font-size:12px;margin:24px 0 0;">— Lagos Live Team</p>
       </div>
     </div>`;
+  const subject = `Lagos Live — Payout ${data.status.toUpperCase()}`;
+  const renderedHtml = emailDocument(html, '#07070B');
+  if (!apiKey) {
+    console.warn('[resend] RESEND_API_KEY is not configured — using Brevo fallback for payout email to', data.to);
+    return sendBrevoHtmlEmail({ to: data.to, subject, html: renderedHtml });
+  }
   try {
     const response = await fetch(RESEND_API, {
       method: 'POST',
@@ -182,20 +181,20 @@ export async function sendPayoutStatusEmail(data: PayoutStatusEmailData): Promis
       body: JSON.stringify({
         from,
         to: [data.to],
-        subject: `Lagos Live — Payout ${data.status.toUpperCase()}`,
-        html: emailDocument(html, '#07070B'),
+        subject,
+        html: renderedHtml,
       }),
     });
     const bodyText = await response.text();
     if (!response.ok) {
       console.error('[resend] payout email send failed', { status: response.status, to: data.to, responseBody: bodyText });
-      return false;
+      return sendBrevoHtmlEmail({ to: data.to, subject, html: renderedHtml });
     }
     console.log('[resend] payout email send succeeded', { to: data.to, status: data.status });
     return true;
   } catch (err) {
     console.error('[resend] unexpected error sending payout email to', data.to, err);
-    return false;
+    return sendBrevoHtmlEmail({ to: data.to, subject, html: renderedHtml });
   }
 }
 
@@ -209,6 +208,7 @@ interface SendHtmlEmailArgs {
   html: string;
   colorScheme?: 'light';
   scheduledAt?: string;
+  provider?: 'resend' | 'resend-fallback' | 'brevo' | 'brevo-fallback';
 }
 
 // Shared best-effort sender for the Batch 18 emails. Never throws: every
@@ -216,11 +216,20 @@ interface SendHtmlEmailArgs {
 // rejects the configured sender (typically a domain that isn't verified yet),
 // the message is retried from the account default address so delivery never
 // silently depends on a pending DNS verification.
-async function sendHtmlEmail({ to, subject, html, colorScheme, scheduledAt }: SendHtmlEmailArgs): Promise<boolean> {
+async function sendHtmlEmail({ to, subject, html, colorScheme, scheduledAt, provider = 'resend' }: SendHtmlEmailArgs): Promise<boolean> {
+  const renderedHtml = colorScheme === 'light'
+    ? ticketEmailDocument(html, '#F5F7FC', 'light')
+    : emailDocument(html);
+  if (provider === 'brevo' || provider === 'brevo-fallback') {
+    const sent = await sendBrevoHtmlEmail({ to, subject, html: renderedHtml });
+    if (sent || provider === 'brevo') return sent;
+  }
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.warn('[resend] RESEND_API_KEY is not configured — skipping email to', to);
-    return false;
+    return provider === 'resend-fallback'
+      ? sendBrevoHtmlEmail({ to, subject, html: renderedHtml })
+      : false;
   }
   const senders = [process.env.RESEND_FROM_EMAIL || FALLBACK_FROM, FALLBACK_FROM];
   for (const from of senders) {
@@ -235,9 +244,7 @@ body: JSON.stringify({
         from,
         to: [to],
         subject,
-        html: colorScheme === 'light'
-          ? ticketEmailDocument(html, '#F5F7FC', 'light')
-          : emailDocument(html),
+        html: renderedHtml,
         ...(scheduledAt ? { scheduled_at: scheduledAt } : {}),
       }),
       });
@@ -254,14 +261,21 @@ body: JSON.stringify({
           continue;
         }
         console.error('[resend] send failed', { status: response.status, to, from, subject, responseBody: bodyText });
-        return false;
+        return provider === 'resend-fallback'
+          ? sendBrevoHtmlEmail({ to, subject, html: renderedHtml })
+          : false;
       }
       console.log('[resend] send succeeded', { to, subject, from });
       return true;
     } catch (err) {
       console.error('[resend] unexpected error sending to', to, err);
-      return false;
+      return provider === 'resend-fallback'
+        ? sendBrevoHtmlEmail({ to, subject, html: renderedHtml })
+        : false;
     }
+  }
+  if (provider === 'resend-fallback') {
+    return sendBrevoHtmlEmail({ to, subject, html: renderedHtml });
   }
   return false;
 }
@@ -310,6 +324,7 @@ export async function sendEventCancellationEmail(data: EventCancellationEmailDat
     to: data.to,
     subject: `Event Cancelled — Refund on the way · ${data.partyTitle}`,
     html,
+    provider: 'brevo-fallback',
   });
 }
 
@@ -377,6 +392,7 @@ export async function sendHostVerificationEmail(data: HostVerificationEmailData)
     to: data.to,
     subject: `Lagos Live — Host verification ${data.decision === 'approved' ? 'approved' : 'update'}`,
     html,
+    provider: 'resend-fallback',
   });
 }
 
@@ -416,6 +432,7 @@ export async function sendReviewRequestEmail(data: ReviewRequestEmailData): Prom
     to: data.to,
     subject: `How was ${data.partyTitle}? Share your review`,
     html,
+    provider: 'brevo-fallback',
     scheduledAt: data.scheduledAt,
   });
 }
@@ -458,6 +475,7 @@ export async function sendNewsletterCampaignEmail(data: NewsletterCampaignEmailD
     to: data.to,
     subject: `This Week's Hottest Lagos Events`,
     html,
+    provider: 'brevo',
   });
 }
 
@@ -575,6 +593,7 @@ export async function sendEventReminderEmail(data: EventReminderEmailData): Prom
     to: data.to,
     subject: `Reminder · ${data.partyTitle} is happening soon`,
     html,
+    provider: 'brevo-fallback',
   });
 }
 
@@ -602,6 +621,7 @@ export async function sendEventChangeEmail(data: EventChangeEmailData): Promise<
     to: data.to,
     subject: `Update · ${data.partyTitle} details changed`,
     html,
+    provider: 'brevo-fallback',
   });
 }
 
@@ -633,6 +653,7 @@ export async function sendAlmostSoldOutEmail(data: AlmostSoldOutEmailData): Prom
     to: data.to,
     subject: `Hurry · ${data.partyTitle} is almost sold out`,
     html,
+    provider: 'brevo-fallback',
   });
 }
 
@@ -665,6 +686,7 @@ export async function sendRefundProcessedEmail(data: RefundProcessedEmailData): 
     to: data.to,
     subject: `Refund processed · ${data.partyTitle}`,
     html,
+    provider: 'resend-fallback',
   });
 }
 
@@ -705,5 +727,6 @@ export async function sendCheckInSummaryEmail(data: CheckInSummaryEmailData): Pr
     to: data.to,
     subject: `Wrap-up · ${data.partyTitle} door report`,
     html,
+    provider: 'brevo-fallback',
   });
 }

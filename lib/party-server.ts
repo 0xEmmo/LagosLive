@@ -70,3 +70,26 @@ export async function fetchPartyBySlugForSeo(slug: string): Promise<Party | null
   if (error || !data) return null;
   return partyFromRow(data);
 }
+
+// Public, upcoming events used for the crawlable marketplace summary and sitemap.
+// Draft, cancelled and past events are intentionally excluded.
+export async function fetchUpcomingPartiesForSeo(limit = 100): Promise<Party[]> {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return [];
+  try {
+    const supabase = createServerSupabase();
+    const { data, error } = await supabase
+      .from('parties')
+      .select('*')
+      .eq('status', 'approved')
+      .is('cancelled_at', null)
+      .gte('starts_at', new Date().toISOString())
+      .order('starts_at', { ascending: true })
+      .limit(limit);
+    if (error) return [];
+    return (data ?? []).map(partyFromRow);
+  } catch {
+    // The public page and sitemap remain valid while the database is restarting
+    // or a preview environment has not been given Supabase variables yet.
+    return [];
+  }
+}

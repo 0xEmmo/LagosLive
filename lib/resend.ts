@@ -657,6 +657,41 @@ export async function sendAlmostSoldOutEmail(data: AlmostSoldOutEmailData): Prom
   });
 }
 
+export interface HostAlmostSoldOutEmailData {
+  to: string;
+  hostName: string;
+  partyTitle: string;
+  partyDate: string;
+  partyTime: string;
+  spotsLeft: number;
+  capacity: number;
+  dashboardUrl: string;
+}
+// Sent once per event when demand reaches the same almost-sold-out threshold
+// used for guest alerts, so hosts know the event is trending without being
+// flooded on every subsequent cron run.
+export async function sendHostAlmostSoldOutEmail(data: HostAlmostSoldOutEmailData): Promise<boolean> {
+  const html = notificationShellHtml({
+    badge: 'Trending event',
+    heading: `${data.partyTitle} is almost sold out`,
+    greeting: `Hi ${data.hostName},`,
+    paragraphs: ['Your event is attracting strong demand and has reached the almost-sold-out threshold.'],
+    details: [
+      { label: 'Event', value: data.partyTitle },
+      { label: 'Date', value: data.partyDate },
+      { label: 'Time', value: data.partyTime },
+      { label: 'Tickets remaining', value: `${data.spotsLeft} of ${data.capacity}` },
+    ],
+    ctaUrl: data.dashboardUrl,
+    ctaLabel: 'View Event Dashboard',
+  });
+  return sendHtmlEmail({
+    to: data.to,
+    subject: `Your event is trending · ${data.partyTitle}`,
+    html,
+    provider: 'resend-fallback',
+  });
+}
 export interface RefundProcessedEmailData {
   to: string;
   guestName: string;

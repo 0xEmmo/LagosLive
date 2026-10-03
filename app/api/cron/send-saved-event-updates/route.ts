@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase/server';
-import { sendAlmostSoldOutEmail } from '@/lib/resend';
+import { sendAlmostSoldOutEmail, sendHostAlmostSoldOutEmail } from '@/lib/resend';
+import { claimNotification, recordNotificationOutcome } from '@/lib/notify';
 import { appUrl } from '@/lib/seo';
 
 // Cron (CRON_SECRET): for approved, un-cancelled, upcoming events that are
@@ -24,7 +25,7 @@ export async function GET(request: Request) {
 
   const { data: parties, error } = await service
     .from('parties')
-    .select('id, title, date, time, capacity, spots_left')
+    .select('id, title, date, time, capacity, spots_left, created_by')
     .eq('status', 'approved')
     .is('cancelled_at', null)
     .gt('starts_at', nowIso)
@@ -38,9 +39,50 @@ export async function GET(request: Request) {
   const nearlyFull = (parties ?? []).filter((p) => p.spots_left > 0 && p.spots_left / p.capacity <= 0.15);
 
   let sent = 0;
+  let hostSent = 0;
   let skipped = 0;
 
   for (const party of nearlyFull) {
+    if (party.created_by) {
+      const { data: host } = await service
+        .from('profiles')
+        .select('id, name, email')
+        .eq('id', party.created_by)
+        .maybeSingle();
+      const { data: hostPref } = await service
+        .from('notification_preferences')
+        .select('email_enabled')
+        .eq('user_id', party.created_by)
+        .maybeSingle();
+      if (host?.email && hostPref?.email_enabled !== false) {
+        const claimed = await claimNotification(service, {
+          userId: party.created_by,
+          email: host.email,
+          type: 'host_almost_sold_out',
+          refId: String(party.id),
+        });
+        if (claimed) {
+          const delivered = await sendHostAlmostSoldOutEmail({
+            to: host.email,
+            hostName: host.name || host.email.split('@')[0] || 'there',
+            partyTitle: party.title,
+            partyDate: party.date,
+            partyTime: party.time,
+            spotsLeft: party.spots_left,
+            capacity: party.capacity,
+            dashboardUrl: `${APP_URL}/host/events`,
+          });
+          await recordNotificationOutcome(service, {
+            email: host.email,
+            type: 'host_almost_sold_out',
+            refId: String(party.id),
+            status: delivered ? 'sent' : 'failed',
+          });
+          if (delivered) hostSent += 1;
+        }
+      }
+    }
+
     const { data: savers, error: saverError } = await service
       .from('saved_parties')
       .select('user_id')
@@ -93,5 +135,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ okay: true, sent, skipped, eligible: nearlyFull.length });
+  return NextResponse.json({ okay: true, sent, hostSent, skipped, eligible: nearlyFull.length });
 }

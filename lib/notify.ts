@@ -19,6 +19,7 @@ export type NotificationType =
   | 'saved_event_update'
   | 'ticket_confirmation'
   | 'review_request'
+  | 'host_almost_sold_out'
   | 'host_verification'
   | 'host_payout'
   | 'check_in_summary'

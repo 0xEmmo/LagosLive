@@ -209,6 +209,7 @@ interface SendHtmlEmailArgs {
   colorScheme?: 'light';
   scheduledAt?: string;
   provider?: 'resend' | 'resend-fallback' | 'brevo' | 'brevo-fallback';
+  simulateResendFailure?: boolean;
 }
 
 // Shared best-effort sender for the Batch 18 emails. Never throws: every
@@ -216,13 +217,19 @@ interface SendHtmlEmailArgs {
 // rejects the configured sender (typically a domain that isn't verified yet),
 // the message is retried from the account default address so delivery never
 // silently depends on a pending DNS verification.
-async function sendHtmlEmail({ to, subject, html, colorScheme, scheduledAt, provider = 'resend-fallback' }: SendHtmlEmailArgs): Promise<boolean> {
+async function sendHtmlEmail({ to, subject, html, colorScheme, scheduledAt, provider = 'resend-fallback', simulateResendFailure }: SendHtmlEmailArgs): Promise<boolean> {
   const renderedHtml = colorScheme === 'light'
     ? ticketEmailDocument(html, '#F5F7FC', 'light')
     : emailDocument(html);
   if (provider === 'brevo' || provider === 'brevo-fallback') {
     const sent = await sendBrevoHtmlEmail({ to, subject, html: renderedHtml });
     if (sent || provider === 'brevo') return sent;
+  }
+  if (simulateResendFailure) {
+    console.warn('[resend] simulated API failure for provider fallback test', { to, subject });
+    return provider === 'resend-fallback'
+      ? sendBrevoHtmlEmail({ to, subject, html: renderedHtml })
+      : false;
   }
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -281,7 +288,7 @@ body: JSON.stringify({
 }
 
 /** Sends a fixed-content provider diagnostic; never includes customer or event data. */
-export function sendProviderTestEmail(to: string): Promise<boolean> {
+export function sendProviderTestEmail(to: string, options?: { simulateResendFailure?: boolean }): Promise<boolean> {
   return sendHtmlEmail({
     to,
     subject: 'Lagos Live — email provider test',
@@ -292,6 +299,7 @@ export function sendProviderTestEmail(to: string): Promise<boolean> {
     </div>`,
     colorScheme: 'light',
     provider: 'resend-fallback',
+    simulateResendFailure: options?.simulateResendFailure,
   });
 }
 

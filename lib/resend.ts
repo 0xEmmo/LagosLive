@@ -216,7 +216,7 @@ interface SendHtmlEmailArgs {
 // rejects the configured sender (typically a domain that isn't verified yet),
 // the message is retried from the account default address so delivery never
 // silently depends on a pending DNS verification.
-async function sendHtmlEmail({ to, subject, html, colorScheme, scheduledAt, provider = 'resend' }: SendHtmlEmailArgs): Promise<boolean> {
+async function sendHtmlEmail({ to, subject, html, colorScheme, scheduledAt, provider = 'resend-fallback' }: SendHtmlEmailArgs): Promise<boolean> {
   const renderedHtml = colorScheme === 'light'
     ? ticketEmailDocument(html, '#F5F7FC', 'light')
     : emailDocument(html);
@@ -324,7 +324,7 @@ export async function sendEventCancellationEmail(data: EventCancellationEmailDat
     to: data.to,
     subject: `Event Cancelled — Refund on the way · ${data.partyTitle}`,
     html,
-    provider: 'brevo-fallback',
+    provider: 'resend-fallback',
   });
 }
 
@@ -432,7 +432,7 @@ export async function sendReviewRequestEmail(data: ReviewRequestEmailData): Prom
     to: data.to,
     subject: `How was ${data.partyTitle}? Share your review`,
     html,
-    provider: 'brevo-fallback',
+    provider: 'resend-fallback',
     scheduledAt: data.scheduledAt,
   });
 }
@@ -475,7 +475,7 @@ export async function sendNewsletterCampaignEmail(data: NewsletterCampaignEmailD
     to: data.to,
     subject: `This Week's Hottest Lagos Events`,
     html,
-    provider: 'brevo',
+    provider: 'resend-fallback',
   });
 }
 
@@ -593,7 +593,7 @@ export async function sendEventReminderEmail(data: EventReminderEmailData): Prom
     to: data.to,
     subject: `Reminder · ${data.partyTitle} is happening soon`,
     html,
-    provider: 'brevo-fallback',
+    provider: 'resend-fallback',
   });
 }
 
@@ -621,7 +621,7 @@ export async function sendEventChangeEmail(data: EventChangeEmailData): Promise<
     to: data.to,
     subject: `Update · ${data.partyTitle} details changed`,
     html,
-    provider: 'brevo-fallback',
+    provider: 'resend-fallback',
   });
 }
 
@@ -653,7 +653,7 @@ export async function sendAlmostSoldOutEmail(data: AlmostSoldOutEmailData): Prom
     to: data.to,
     subject: `Hurry · ${data.partyTitle} is almost sold out`,
     html,
-    provider: 'brevo-fallback',
+    provider: 'resend-fallback',
   });
 }
 
@@ -762,6 +762,6 @@ export async function sendCheckInSummaryEmail(data: CheckInSummaryEmailData): Pr
     to: data.to,
     subject: `Wrap-up · ${data.partyTitle} door report`,
     html,
-    provider: 'brevo-fallback',
+    provider: 'resend-fallback',
   });
 }

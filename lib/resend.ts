@@ -280,6 +280,21 @@ body: JSON.stringify({
   return false;
 }
 
+/** Sends a fixed-content provider diagnostic; never includes customer or event data. */
+export function sendProviderTestEmail(to: string): Promise<boolean> {
+  return sendHtmlEmail({
+    to,
+    subject: 'Lagos Live — email provider test',
+    html: `<div style="font-family:Arial,sans-serif;padding:24px;color:#171923;">
+      <h2>Lagos Live email test</h2>
+      <p>This is a controlled delivery test from the Lagos Live production email system.</p>
+      <p>Resend is the primary provider. Brevo is configured as the fallback.</p>
+    </div>`,
+    colorScheme: 'light',
+    provider: 'resend-fallback',
+  });
+}
+
 export interface EventCancellationEmailData {
   to: string;
   guestName: string;

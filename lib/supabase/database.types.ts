@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_events: {
+        Row: {
+          audience: string
+          created_at: string
+          device_type: string
+          duration_ms: number
+          event_name: string
+          id: number
+          party_id: number | null
+          path: string
+          referrer_origin: string | null
+          session_id: string
+          visitor_id: string
+        }
+        Insert: {
+          audience?: string
+          created_at?: string
+          device_type?: string
+          duration_ms?: number
+          event_name: string
+          id?: number
+          party_id?: number | null
+          path: string
+          referrer_origin?: string | null
+          session_id: string
+          visitor_id: string
+        }
+        Update: {
+          audience?: string
+          created_at?: string
+          device_type?: string
+          duration_ms?: number
+          event_name?: string
+          id?: number
+          party_id?: number | null
+          path?: string
+          referrer_origin?: string | null
+          session_id?: string
+          visitor_id?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           admin_notes: string | null

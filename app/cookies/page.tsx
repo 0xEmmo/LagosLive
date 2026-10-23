@@ -29,7 +29,7 @@ export default function CookiesPage() {
       eyebrow="Legal"
       title={<>Cookie <span className="gradient-text">Notice</span></>}
       subtitle="The cookies and browser storage Lagos Live uses, and what they are for."
-      updated="September 2026"
+      updated="October 2026"
     >
       <InfoSection title="Essential cookies">
         <p>
@@ -51,6 +51,7 @@ export default function CookiesPage() {
             'Notices you have dismissed, so they do not reappear.',
             'The check-in gate you last used, to speed up scanning on event day.',
             'Bank details you choose to save locally when setting up your host profile.',
+            'A random anonymous visitor and session ID used to count page views, sessions and time spent. It does not contain your name, email, account ID, IP address or raw browser fingerprint.',
           ]}
         />
         <p>
@@ -75,8 +76,10 @@ export default function CookiesPage() {
 
       <InfoSection title="Advertising and analytics">
         <p>
-          Lagos Live does not currently use advertising or marketing cookies, and does not run third-party
-          analytics trackers.
+          Lagos Live does not use advertising or marketing cookies, and does not run third-party analytics trackers.
+          We do use our own first-party anonymous traffic measurement so we can see totals such as visitors, sessions,
+          page views and ticket-intent clicks. This data is aggregated for administrators and is not used to identify
+          you.
         </p>
       </InfoSection>
 

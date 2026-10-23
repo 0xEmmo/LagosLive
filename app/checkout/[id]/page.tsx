@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, CheckCircle2, Loader2, AlertTriangle, X, ShieldCheck, Ticket } from 'lucide-react';
@@ -14,6 +14,7 @@ import PartyPhoto from '@/components/PartyPhoto';
 import TicketTypePicker from '@/components/TicketTypePicker';
 import { CheckoutSkeleton } from '@/components/ui/loaders-skeleton';
 import { formatNaira } from '@/lib/filters';
+import { trackAnalyticsEvent } from '@/components/AnalyticsTracker';
 import {
   cartDiscount,
   computeCart,
@@ -144,6 +145,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   const [promoError, setPromoError] = useState('');
   const [ticketToken, setTicketToken] = useState('');
   const [emailSent, setEmailSent] = useState<boolean | null>(null);
+  const purchaseTracked = useRef(false);
   const [lineTickets, setLineTickets] = useState<LineTicket[]>([]);
   const [successLines, setSuccessLines] = useState<SuccessLine[]>([]);
   const [promoDismissed, setPromoDismissed] = useState(false);
@@ -243,6 +245,13 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     if (legacySelected) setQty((q) => Math.min(q, Math.max(1, Math.min(MAX_QTY_PER_TYPE, legacyRemaining))));
   }, [legacyRemaining, legacySelected]);
+
+  useEffect(() => {
+    if (step === 'success' && !purchaseTracked.current) {
+      purchaseTracked.current = true;
+      trackAnalyticsEvent('purchase_completed', { partyId });
+    }
+  }, [partyId, step]);
 
   if (!party) {
     if (loading) return <CheckoutSkeleton />;
@@ -769,6 +778,8 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
 
           <button
             onClick={startPayment}
+            data-analytics-event="checkout_started"
+            data-analytics-party-id={party.id}
             disabled={payDisabled || (hasTicketTypes ? !hasSelection : legacySoldOut)}
             className="btn-primary mt-5 w-full py-[15px] text-sm font-bold disabled:opacity-60"
           >

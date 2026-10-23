@@ -53,7 +53,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: '/admin/promos', label: 'Promos', icon: Tag, permissions: ['promos.view'] },
   { href: '/admin/revenue', label: 'Revenue', icon: Wallet, permissions: ['revenue.view'] },
   { href: '/admin/finance-tools', label: 'Finance Tools', icon: Wallet, permissions: ['wallets.adjust'] },
-  { href: '/admin/analytics', label: 'Analytics', icon: BarChart3, permissions: ['analytics.view'] },
+  { href: '/admin/analytics', label: 'Analytics', icon: BarChart3, roles: ['admin', 'super_admin'] },
   { href: '/admin/support', label: 'Support', icon: LifeBuoy, permissions: ['support.view'] },
   { href: '/admin/logs', label: 'Audit Logs', icon: ScrollText, permissions: ['audit.view'] },
   { href: '/admin/settings', label: 'Settings', icon: Settings, permissions: ['settings.view'] },

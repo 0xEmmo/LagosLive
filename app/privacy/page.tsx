@@ -29,7 +29,7 @@ export default function PrivacyPage() {
       eyebrow="Legal"
       title={<>Privacy <span className="gradient-text">Policy</span></>}
       subtitle="How Lagos Live collects, uses and protects your information."
-      updated="September 2026"
+      updated="October 2026"
     >
       <InfoSection title="Information we collect">
         <InfoList
@@ -66,8 +66,10 @@ export default function PrivacyPage() {
       <InfoSection title="Cookies and similar technologies">
         <p>
           We use a session cookie to keep you signed in, and browser storage on your device to remember
-          preferences such as your theme, saved events and reminders. We do not currently use advertising or
-          third-party analytics cookies. See our{' '}
+          preferences such as your theme, saved events and reminders. We also use first-party browser storage for a
+          random anonymous visitor and session identifier so we can count visits and understand how long pages are
+          used. These identifiers are not linked to your name, email address, account ID or IP address. We do not use
+          advertising or third-party analytics cookies. See our{' '}
           <a href="/cookies" className="font-semibold underline" style={{ color: '#75A1FF' }}>
             Cookie Notice
           </a>{' '}
@@ -77,9 +79,12 @@ export default function PrivacyPage() {
 
       <InfoSection title="Analytics">
         <p>
-          Lagos Live does not currently run third-party advertising or analytics trackers. The analytics shown in
-          our dashboards are generated from our own platform data so organizers and staff can understand event
-          performance.
+          Lagos Live does not run third-party advertising or analytics trackers. Our first-party platform analytics
+          record anonymous page views, sessions, approximate device category, referrer origin, selected ticket-funnel
+          actions and time spent on a page. We use random visitor and session IDs only to calculate totals such as
+          unique visitors, sessions, page views, average time and ticket-intent clicks. We do not store names,
+          emails, account IDs, IP addresses, raw browser fingerprints or the text of buttons clicked for this purpose.
+          Platform traffic analytics are available only to administrators.
         </p>
       </InfoSection>
 

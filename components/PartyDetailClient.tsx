@@ -347,6 +347,8 @@ export default function PartyDetailClient({
           ) : (
             <Link
               href={checkoutHref}
+              data-analytics-event="buy_ticket_clicked"
+              data-analytics-party-id={party.id}
               className="btn-primary flex flex-1 items-center justify-center gap-2 py-4 text-[13px] font-bold tracking-[0.5px]"
             >
               <Ticket size={15} strokeWidth={2.5} />

@@ -8,6 +8,7 @@ import ReminderScheduler from '@/components/ReminderScheduler';
 import Toast from '@/components/Toast';
 import GlobalChrome from '@/components/GlobalChrome';
 import EntryShutter from '@/components/EntryShutter';
+import AnalyticsTracker from '@/components/AnalyticsTracker';
 import { appUrl, DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGE_HEIGHT, DEFAULT_OG_IMAGE_WIDTH } from '@/lib/seo';
 
 const bebasNeue = Bebas_Neue({
@@ -95,6 +96,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </div>
         <HashScroll />
         <AuthListener />
+        <AnalyticsTracker />
         <ReminderScheduler />
         <Toast />
         <GlobalChrome placement="header" />

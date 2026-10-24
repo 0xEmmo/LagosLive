@@ -962,6 +962,8 @@ export default function PartyForm({ initial, initialTicketTypes, onSubmit, disab
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) handleImageSelect(file);
+            // Let the same file be selected again after an earlier attempt.
+            e.currentTarget.value = '';
           }}
         />
         <FieldError message={imageError} />

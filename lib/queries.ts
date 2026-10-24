@@ -5,6 +5,7 @@ import { formatNaira } from './filters';
 import { haversineKm } from './geo';
 import { appUrl, slugify } from './seo';
 import { isAccountTicketOwner } from './ticket-account-policy';
+import { buildEventCoverObjectPath } from './event-cover';
 
 type PartyRow = Database['public']['Tables']['parties']['Row'];
 type PartyInsert = Database['public']['Tables']['parties']['Insert'];
@@ -325,11 +326,14 @@ export async function createParty(input: PartyFormInput, createdBy: string): Pro
 async function uploadCoverImage(partyId: number, file: File): Promise<string> {
   try {
     const resized = await resizeImage(file, 1200);
-    const ext = file.type === 'image/png' ? 'png' : 'jpg';
-    const path = `events/${partyId}/cover.${ext}`;
+    const contentType = resized.type || file.type;
+    // Never overwrite a fixed public URL: image CDNs, browsers, and Next's
+    // optimizer may keep serving the old bytes even after a successful upload.
+    // Each edit writes a UUID-versioned object and then stores that new URL.
+    const path = buildEventCoverObjectPath(partyId, contentType, crypto.randomUUID());
     const { error } = await supabase.storage.from('event-images').upload(path, resized, {
-      upsert: true,
-      contentType: file.type,
+      cacheControl: '31536000',
+      contentType,
     });
     if (error) {
       console.error('Cover upload failed:', error.message);

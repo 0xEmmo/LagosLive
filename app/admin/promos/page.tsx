@@ -335,7 +335,7 @@ export default function AdminPromosPage() {
       )}
 
       <p className="mt-5 text-[12px]" style={{ color: '#6B6C80' }}>
-        {usable.length} promo{usable.length === 1 ? '' : 's'} currently usable. Discounts apply to ticket prices only — service fees are never discounted.
+        {usable.length} promo{usable.length === 1 ? '' : 's'} currently usable. Discounts apply to ticket prices only.
       </p>
     </AdminShell>
   );

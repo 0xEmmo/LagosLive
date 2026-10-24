@@ -1,10 +1,11 @@
 // Client-safe ticket cart helpers shared by the public event page and the
-// checkout page. All amounts are integer naira; Paystack charges kobo on top.
+// checkout page. Prices are integer naira; the server converts the final total to kobo for Paystack.
 
 import type { TicketType } from './types';
 
 export const MAX_QTY_PER_TYPE = 6;
-export const SERVICE_FEE_PER_TICKET = 500;
+// Lagos Live absorbs Paystack processing fees; no additional customer fee is charged.
+export const SERVICE_FEE_PER_TICKET = 0;
 
 // A cart maps ticket_type id -> quantity. id 0 is the synthesized "General
 // Entry" fallback used for legacy events that predate real ticket_types rows.
@@ -27,10 +28,16 @@ export function remainingOf(t: TicketType): number {
 
 // Percent-off promo discount for a paid (price > 0) line, in naira. Integer
 // math keeps amounts exact — a 10% cut of a ₦3,000 ticket is floor(300) = ₦300.
-// Service fees are platform revenue and are never discounted.
+// Discounts apply to ticket prices; no separate customer service fee is added.
 export function lineDiscount(price: number, qty: number, discountPercent: number): number {
   if (price <= 0 || qty <= 0 || discountPercent <= 0) return 0;
   return Math.floor((price * qty * discountPercent) / 100);
+}
+
+export function ticketLineAmounts(unitPrice: number, qty: number): { subtotal: number; serviceFee: number; total: number } {
+  const subtotal = unitPrice * qty;
+  const serviceFee = unitPrice > 0 ? SERVICE_FEE_PER_TICKET * qty : 0;
+  return { subtotal, serviceFee, total: subtotal + serviceFee };
 }
 
 // Total naira discount a promo would remove from a cart summary.
@@ -65,14 +72,15 @@ export function computeCart(cart: TicketCart, types: TicketType[]): CartSummary 
     if (qty === 0) continue;
     lines.push({ type, qty });
     tickets += qty;
-    subtotal += type.price * qty;
-    if (type.price > 0) serviceFee += SERVICE_FEE_PER_TICKET * qty;
+    const amounts = ticketLineAmounts(type.price, qty);
+    subtotal += amounts.subtotal;
+    serviceFee += amounts.serviceFee;
   }
   return { lines, tickets, subtotal, serviceFee, total: subtotal + serviceFee, free: totalPriceIsFree(cart, types) };
 }
 
-// A cart is "free" when every selected line is a free ticket type. (A mixed
-// free + paid cart still charges the paid lines and their service fees.)
+// A cart is free when every selected line is a free ticket type. (A mixed
+// free + paid cart charges only the paid ticket prices.)
 function totalPriceIsFree(cart: TicketCart, types: TicketType[]): boolean {
   for (const type of types) {
     const qty = Math.min(Math.max(0, Math.trunc(cart[type.id] ?? 0)), remainingOf(type));

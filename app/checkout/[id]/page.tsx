@@ -23,7 +23,7 @@ import {
   MAX_QTY_PER_TYPE,
   parseItemsParam,
   remainingOf,
-  SERVICE_FEE_PER_TICKET,
+  ticketLineAmounts,
   type TicketCart,
 } from '@/lib/tickets';
 import type { TicketType } from '@/lib/types';
@@ -323,9 +323,8 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   const computed = hasTicketTypes ? computeCart(cart, sellableTypes) : { lines: [], tickets: 0, subtotal: 0, serviceFee: 0, total: 0, free: true };
   const hasSelection = hasTicketTypes ? computed.lines.length > 0 : qty >= 1;
   const cartIsFree = hasTicketTypes ? computed.free && hasSelection : legacySelected.price === 0;
-  const cartTotal = hasTicketTypes ? computed.total : legacySelected.price * qty + (legacySelected.price > 0 ? SERVICE_FEE_PER_TICKET * qty : 0);
+  const cartTotal = hasTicketTypes ? computed.total : ticketLineAmounts(legacySelected.price, qty).total;
   const cartSubtotal = hasTicketTypes ? computed.subtotal : legacySelected.price * qty;
-  const cartServiceFee = hasTicketTypes ? computed.serviceFee : legacySelected.price > 0 ? SERVICE_FEE_PER_TICKET * qty : 0;
   const discountPercent = promo?.discountPercent ?? 0;
   const appliedDiscount =
     discountPercent > 0
@@ -395,13 +394,13 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
       ? computed.lines.map((line) => ({
           name: line.type.name,
           qty: line.qty,
-          total: line.type.price * line.qty + (line.type.price > 0 ? SERVICE_FEE_PER_TICKET * line.qty : 0),
+          total: ticketLineAmounts(line.type.price, line.qty).total,
         }))
       : [
           {
             name: legacySelected.name,
             qty,
-            total: legacySelected.price * qty + (legacySelected.price > 0 ? SERVICE_FEE_PER_TICKET * qty : 0),
+            total: ticketLineAmounts(legacySelected.price, qty).total,
           },
         ];
 
@@ -771,7 +770,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
               computed.lines.map((line) => (
                 <div key={line.type.id} className="mb-2 flex justify-between text-[13px]" style={{ color: '#A7A8B5' }}>
                   <span>{line.type.name} × {line.qty}</span>
-                  <span>{formatNaira(line.type.price * line.qty + (line.type.price > 0 ? SERVICE_FEE_PER_TICKET * line.qty : 0))}</span>
+                  <span>{formatNaira(ticketLineAmounts(line.type.price, line.qty).total)}</span>
                 </div>
               ))
             ) : !hasTicketTypes ? (
@@ -780,12 +779,6 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
                 <span>{formatNaira(cartSubtotal)}</span>
               </div>
             ) : null}
-            {cartServiceFee > 0 && (
-              <div className="mb-2 flex justify-between text-[13px]" style={{ color: '#A7A8B5' }}>
-                <span>Service Fee</span>
-                <span>{formatNaira(cartServiceFee)}</span>
-              </div>
-            )}
             {promo && appliedDiscount > 0 && (
               <div className="mb-2 flex justify-between text-[13px] font-semibold" style={{ color: '#5DE0B1' }}>
                 <span>Promo ({promo.code} · {promo.discountPercent}%)</span>

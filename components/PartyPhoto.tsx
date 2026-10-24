@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import Image from 'next/image';
 
 interface PartyPhotoProps {
@@ -11,26 +14,31 @@ interface PartyPhotoProps {
 
 export default function PartyPhoto({ src, alt, gradient, sizes, priority, tone = 'default' }: PartyPhotoProps) {
   const editorial = tone === 'editorial';
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const fallbackBackground = editorial
+    ? 'linear-gradient(135deg, #10151e 0%, #182438 100%)'
+    : `linear-gradient(135deg, rgba(8,19,45,0.76) 0%, rgba(19,45,99,0.56) 100%), ${gradient}`;
 
-  if (!src) {
+  if (!src || failedSrc === src) {
     return (
       <div
-        className="h-full w-full"
-        style={{ background: editorial ? 'linear-gradient(135deg, #10151e 0%, #182438 100%)' : gradient }}
+        className={`party-photo__fallback h-full w-full${editorial ? ' party-photo__fallback--editorial' : ''}`}
+        role="img"
+        aria-label={alt}
+        style={{ background: fallbackBackground }}
       />
     );
   }
 
   return (
-    <>
-      <Image
-        src={src}
-        alt={alt}
-        fill
-        sizes={sizes}
-        priority={priority}
-        className="object-cover"
-      />
-    </>
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      sizes={sizes}
+      priority={priority}
+      className="party-photo__image object-cover"
+      onError={() => setFailedSrc(src)}
+    />
   );
 }

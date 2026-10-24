@@ -4,7 +4,7 @@ import { generatePaymentRef, paystackInitialize } from '@/lib/paystack-server';
 import { buildTicketUrl, generateTicketAccessToken, isValidEmail, ticketAccessExpiryDate } from '@/lib/ticket-access';
 import { sendTicketConfirmation } from '@/lib/resend';
 import { claimNotification, recordNotificationOutcome } from '@/lib/notify';
-import { lineDiscount, MAX_QTY_PER_TYPE } from '@/lib/tickets';
+import { lineDiscount, MAX_QTY_PER_TYPE, ticketLineAmounts } from '@/lib/tickets';
 
 interface CheckoutLine {
   ticketTypeId: number | null;
@@ -148,13 +148,14 @@ export async function POST(request: Request) {
     const resolved: ResolvedLine[] = [];
     for (const line of lines) {
       if (line.ticketTypeId === null) {
+        const amounts = ticketLineAmounts(party.fee_num, line.quantity);
         resolved.push({
           ticketTypeId: null,
           ticketTypeName: 'General Entry',
           quantity: line.quantity,
           unitPrice: party.fee_num,
-          serviceFee: party.fee_num > 0 ? 500 * line.quantity : 0,
-          total: party.fee_num * line.quantity + (party.fee_num > 0 ? 500 * line.quantity : 0),
+          serviceFee: amounts.serviceFee,
+          total: amounts.total,
         });
         continue;
       }
@@ -177,23 +178,23 @@ export async function POST(request: Request) {
       if (remaining < line.quantity) {
         return NextResponse.json({ error: `Not enough "${ticketType.name}" tickets left.` }, { status: 400 });
       }
+      const amounts = ticketLineAmounts(ticketType.price, line.quantity);
       resolved.push({
         ticketTypeId: ticketType.id,
         ticketTypeName: ticketType.name,
         quantity: line.quantity,
         unitPrice: ticketType.price,
-        serviceFee: ticketType.price > 0 ? 500 * line.quantity : 0,
-        total: ticketType.price * line.quantity + (ticketType.price > 0 ? 500 * line.quantity : 0),
+        serviceFee: amounts.serviceFee,
+        total: amounts.total,
       });
     }
 
     const service = createServiceSupabase();
 
     // Promo discount: server-authoritative. The client may preview a code, but
-    // the charge is always computed here. Discounts apply to paid ticket
-    // subtotals only (never the service fee) and are folded into each line's
-    // stored total, so verify/confirm and the Paystack amount check keep seeing
-    // exactly what was charged.
+    // the charge is always computed here. Discounts apply to ticket prices
+    // only and are folded into each line's stored total, so verify/confirm and
+    // the Paystack amount check keep seeing exactly what was charged.
     let promoCode: string | null = null;
     let discountPercent = 0;
     const hasPaidLine = resolved.some((line) => line.unitPrice > 0);

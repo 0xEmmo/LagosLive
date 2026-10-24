@@ -45,20 +45,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
     }
 
-    // Settle every still-pending line sharing this payment ref — the whole
-    // group that a multi-type checkout created together.
+    // Settle the whole group atomically. This also releases any wallet hold.
     if (!anchor.payment_ref) {
       return NextResponse.json({ ok: true });
     }
-    const { data: group } = await service
-      .from('orders')
-      .select('id, payment_status')
-      .eq('payment_ref', anchor.payment_ref)
-      .eq('party_id', anchor.party_id);
-    for (const order of group ?? []) {
-      if (order.payment_status === 'pending') {
-        await service.rpc('settle_order_payment', { p_order_id: order.id, p_payment_status: 'cancelled' });
-      }
+    const { error: settleError } = await service.rpc('settle_order_group_payment', {
+      p_payment_ref: anchor.payment_ref,
+      p_payment_status: 'cancelled',
+    });
+    if (settleError) {
+      console.error('[paystack cancel] could not settle order group', anchor.payment_ref, settleError.message);
     }
 
     return NextResponse.json({ ok: true });

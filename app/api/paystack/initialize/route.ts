@@ -250,13 +250,23 @@ export async function POST(request: Request) {
     // a closed/never-opened Paystack window doesn't accumulate.
     let staleQuery = service
       .from('orders')
-      .select('id')
+      .select('id, payment_ref')
       .eq('party_id', party.id)
       .eq('payment_status', 'pending');
     staleQuery = userId ? staleQuery.eq('user_id', userId) : staleQuery.eq('customer_email', email);
     const { data: stale } = await staleQuery;
+    const settledStaleRefs = new Set<string>();
     for (const row of stale ?? []) {
-      await service.rpc('settle_order_payment', { p_order_id: row.id, p_payment_status: 'cancelled' });
+      if (row.payment_ref) {
+        if (settledStaleRefs.has(row.payment_ref)) continue;
+        settledStaleRefs.add(row.payment_ref);
+        await service.rpc('settle_order_group_payment', {
+          p_payment_ref: row.payment_ref,
+          p_payment_status: 'cancelled',
+        });
+      } else {
+        await service.rpc('settle_order_payment', { p_order_id: row.id, p_payment_status: 'cancelled' });
+      }
     }
 
     // One shared payment ref binds the group together across N order rows, each
@@ -346,14 +356,25 @@ export async function POST(request: Request) {
     };
 
     const settleGroup = async (paymentStatus: 'cancelled' | 'failed') => {
-      for (const order of orders) {
-        await service.rpc('settle_order_payment', { p_order_id: order.id, p_payment_status: paymentStatus });
-      }
+      await service.rpc('settle_order_group_payment', { p_payment_ref: reference, p_payment_status: paymentStatus });
     };
+
+    const { data: walletSplitData, error: walletSplitError } = await service.rpc('reserve_wallet_for_payment', {
+      p_payment_ref: reference,
+      p_user_id: userId,
+    });
+    if (walletSplitError || !walletSplitData) {
+      await settleGroup('failed');
+      console.error('[checkout] wallet reservation failed', walletSplitError?.message ?? 'missing split');
+      return NextResponse.json({ error: 'Your order could not reserve wallet credit. Please try again.' }, { status: 409 });
+    }
+    const walletSplit = walletSplitData as { wallet_amount?: number; paystack_amount?: number };
+    const walletAmount = Number(walletSplit.wallet_amount ?? 0);
+    const paystackAmount = Number(walletSplit.paystack_amount ?? groupTotal);
 
     // Free orders never touch Paystack — confirm the whole group atomically,
     // server-side, then notify. All-or-nothing per payment_ref.
-    if (groupTotal === 0) {
+    if (paystackAmount === 0) {
       const { error: confirmError } = await service.rpc('confirm_order_group', { p_payment_ref: reference });
       if (confirmError) {
         await settleGroup('failed');
@@ -362,6 +383,9 @@ export async function POST(request: Request) {
       const emailSent = await sendLineEmails();
       return NextResponse.json({
         free: true,
+        walletAmount,
+        paystackAmount,
+        amountKobo: 0,
         reference,
         orderId: orders[0].id,
         lineTickets: orders.map((o) => ({
@@ -376,7 +400,7 @@ export async function POST(request: Request) {
     try {
       const init = await paystackInitialize({
         email,
-        amountKobo: groupTotal * 100,
+        amountKobo: paystackAmount * 100,
         reference,
         metadata: { partyId: party.id, partyTitle: party.title, reference },
       });
@@ -389,7 +413,9 @@ export async function POST(request: Request) {
           ticketAccessToken: o.ticket_access_token,
         })),
         authorizationUrl: init.authorizationUrl,
-        amountKobo: groupTotal * 100,
+        amountKobo: paystackAmount * 100,
+        walletAmount,
+        paystackAmount,
         free: false,
         promo: promoCode ? { code: promoCode, discountPercent } : undefined,
       });

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import HostDashboardNav from '@/components/HostDashboardNav';
+import HostCouponPanel from '@/components/HostCouponPanel';
 import PartyForm from '@/components/PartyForm';
 import { createParty, submitEventForReview, type PartyFormInput, type PartySubmitMode } from '@/lib/queries';
 import { notifyTelegramEvent } from '@/lib/telegram-client';
@@ -146,6 +147,9 @@ export default function NewEventPage() {
                 </>
               )}
             </ol>
+          </div>
+          <div className="w-full max-w-[520px] text-left">
+            <HostCouponPanel partyId={created.id} />
           </div>
           <div className="flex w-full max-w-[340px] flex-col gap-2.5">
             {!submitted && (

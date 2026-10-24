@@ -19,10 +19,9 @@ import type { Json } from '@/lib/supabase/database.types';
 // that stayed 'pending' forever, with nothing in the database recording that
 // the provider had reported a payment at all.
 //
-// Every handler must be fast and must return 2xx for an event it has durably
-// recorded: Paystack retries anything that is not, so raising on a business
-// outcome turns into duplicate deliveries (which the ledger below absorbs) and
-// duplicated work.
+// A delivery is deduplicated after its outcome is stamped. If processing fails
+// after the append-only event row is written, a retry resumes that same row
+// instead of being discarded; order-group RPCs own payment idempotency.
 
 export const runtime = 'nodejs';
 
@@ -74,28 +73,45 @@ export async function POST(request: Request) {
 
   const service = createServiceSupabase();
 
-  // Durable, idempotent record of the delivery. The unique key on
-  // (provider, event, reference) is what makes a retry a no-op instead of a
-  // second confirmation: Paystack delivers the same event more than once in
-  // normal operation.
+  // Durable record of the delivery. The unique key identifies retries, but an
+  // unstamped row means its work did not finish and must be resumed.
   const record = await service
     .from('payment_events')
     .insert({ provider: 'paystack', event: name, reference: reference || null, payload: asJsonPayload(rawBody) })
     .select('id')
     .maybeSingle();
 
+  let paymentEventId = record.data?.id ?? null;
   if (record.error) {
-    // A unique violation means this exact event was already delivered.
-    if (record.error.code === '23505') {
+    if (record.error.code !== '23505') {
+      console.error('[paystack webhook] could not record event', record.error);
+      return NextResponse.json({ error: 'Could not record event' }, { status: 500 });
+    }
+    let priorQuery = service
+      .from('payment_events')
+      .select('id,outcome')
+      .eq('provider', 'paystack')
+      .eq('event', name);
+    priorQuery = reference ? priorQuery.eq('reference', reference) : priorQuery.is('reference', null);
+    const { data: prior, error: priorError } = await priorQuery.maybeSingle();
+    if (priorError || !prior) {
+      console.error('[paystack webhook] could not read duplicate event', priorError);
+      return NextResponse.json({ error: 'Could not load event record' }, { status: 500 });
+    }
+    if (prior.outcome) {
       return NextResponse.json({ received: true, duplicate: true });
     }
-    console.error('[paystack webhook] could not record event', record.error);
+    paymentEventId = prior.id;
+  }
+  if (!paymentEventId) {
+    console.error('[paystack webhook] event row has no id');
     return NextResponse.json({ error: 'Could not record event' }, { status: 500 });
   }
 
   try {
     if (name === 'charge.success') {
       if (!reference) {
+        await markEvent(service, paymentEventId, 'ignored_no_reference');
         return NextResponse.json({ received: true, ignored: 'no_reference' });
       }
       const result = await reconcilePaidOrderGroup(service, reference);
@@ -104,9 +120,10 @@ export async function POST(request: Request) {
         // real operational problem, not a code error: record it, alert loudly,
         // and do not guess. Logged with the reference so support can trace it.
         console.error('[paystack webhook] charge.success for unknown reference', reference);
+        await markEvent(service, paymentEventId, 'unmatched');
         return NextResponse.json({ received: true, unmatched: true });
       }
-      await markEvent(service, record.data!.id, result.status);
+      await markEvent(service, paymentEventId, result.status);
       return NextResponse.json({
         received: true,
         status: result.status,
@@ -116,14 +133,16 @@ export async function POST(request: Request) {
 
     if (name === 'charge.failed') {
       if (!reference) {
+        await markEvent(service, paymentEventId, 'ignored_no_reference');
         return NextResponse.json({ received: true, ignored: 'no_reference' });
       }
       const group = await loadPaymentGroup(service, reference);
       if (group.length === 0) {
+        await markEvent(service, paymentEventId, 'unmatched');
         return NextResponse.json({ received: true, unmatched: true });
       }
       const result = await failPaymentGroup(service, group, 'Payment was not completed.');
-      await markEvent(service, record.data!.id, result.status);
+      await markEvent(service, paymentEventId, result.status);
       return NextResponse.json({ received: true, status: result.status });
     }
 
@@ -132,43 +151,36 @@ export async function POST(request: Request) {
     // initiating request returned gets finished.
     if (TRANSFER_EVENTS.has(name)) {
       const handled = await handleTransferEvent(service, name, event.data ?? {}, asJsonPayload(rawBody));
+      await markEvent(service, paymentEventId, `${handled.matched}:${handled.outcome}`);
       return NextResponse.json({ received: true, transfer: handled });
     }
 
     // Every other Paystack event is recorded and deliberately not acted on.
     // The ledger exists so that when a dispute or refund question comes up,
     // the delivery is visible even though nothing was automated.
-    await markEvent(service, record.data!.id, 'recorded');
+    await markEvent(service, paymentEventId, 'recorded');
     return NextResponse.json({ received: true, ignored: name });
   } catch (err) {
     console.error('[paystack webhook] processing failed for', name, reference, err);
-    // 500 so Paystack retries. The event is already recorded, so the retry
-    // takes the duplicate path above and re-runs nothing — reconciliation is
-    // driven by the operator or the next genuine delivery, not by this call.
+    // 500 so Paystack retries. The event row remains unstamped, so that retry
+    // resumes the same idempotent order/transfer operation.
     return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
   }
 }
 
-/**
- * Stamps the outcome onto a recorded event.
- *
- * Best effort by design: the delivery is already durable in payment_events, and
- * a failure to write the outcome must not turn a recorded event into a 5xx that
- * Paystack retries, because the retry would be deduplicated on the way back in
- * and the outcome would be lost again. The event row keeps the payload, so the
- * outcome can be re-derived if this write is lost.
- */
+/** Stamp via the service-only RPC; an unstamped event is safely retryable. */
 async function markEvent(
   service: Service,
   eventId: string,
   outcome: string,
 ): Promise<void> {
-  const { error } = await service
-    .from('payment_events')
-    .update({ outcome, processed_at: new Date().toISOString() })
-    .eq('id', eventId);
+  const { error } = await service.rpc('record_payment_event_outcome', {
+    p_event_id: eventId,
+    p_outcome: outcome,
+  });
   if (error) {
     console.error('[paystack webhook] could not stamp the event outcome', eventId, error.message);
+    throw new Error('Could not stamp webhook event outcome');
   }
 }
 
@@ -227,13 +239,38 @@ async function handleTransferEvent(
   });
   if (recordError) {
     console.error('[paystack webhook] could not record a transfer event', recordError);
+    throw new Error('Could not record payout transfer event');
   }
   // Null for a redelivery, which is not a failure: the row it would duplicate is
   // already on record carrying its own outcome.
-  const ledgerId = (ledgerRow as string | null) ?? null;
+  let ledgerId = (ledgerRow as string | null) ?? null;
+  if (!ledgerId && (transferCode || transferRef)) {
+    let priorTransferQuery = service
+      .from('payout_transfer_events')
+      .select('id')
+      .eq('event', eventName);
+    priorTransferQuery = transferCode
+      ? priorTransferQuery.eq('transfer_code', transferCode)
+      : priorTransferQuery.is('transfer_code', null);
+    priorTransferQuery = transferRef
+      ? priorTransferQuery.eq('reference', transferRef)
+      : priorTransferQuery.is('reference', null);
+    const { data: priorTransfer, error: priorTransferError } = await priorTransferQuery
+      .order('received_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (priorTransferError || !priorTransfer) {
+      console.error('[paystack webhook] could not recover prior transfer event', priorTransferError);
+      throw new Error('Could not recover prior payout transfer event');
+    }
+    ledgerId = priorTransfer.id;
+  }
 
   const settle = async (outcome: string) => {
-    await service.rpc('mark_transfer_event_outcome', { p_event_id: ledgerId, p_outcome: outcome });
+    if (ledgerId) {
+      const { error } = await service.rpc('mark_transfer_event_outcome', { p_event_id: ledgerId, p_outcome: outcome });
+      if (error) throw new Error(`Could not stamp payout transfer outcome: ${error.message}`);
+    }
     return outcome;
   };
 

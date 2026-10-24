@@ -136,9 +136,13 @@ export async function failPaymentGroup(
   group: OrderRow[],
   reason: string,
 ): Promise<{ status: 'failed'; reason: string }> {
-  for (const order of group) {
-    if (order.payment_status === 'confirmed') continue;
-    await service.rpc('settle_order_payment', { p_order_id: order.id, p_payment_status: 'failed' });
+  const paymentRef = group.find((order) => order.payment_ref)?.payment_ref;
+  if (paymentRef) {
+    const { error } = await service.rpc('settle_order_group_payment', {
+      p_payment_ref: paymentRef,
+      p_payment_status: 'failed',
+    });
+    if (error) console.error('[payments] could not settle failed order group', paymentRef, error.message);
   }
   return { status: 'failed', reason };
 }
@@ -169,7 +173,7 @@ export async function reconcilePaidOrderGroup(
     return { status: 'confirmed', alreadyConfirmed: true, emailSent: true, lines: toLines(group) };
   }
 
-  const expectedKobo = group.reduce((sum, o) => sum + o.total, 0) * 100;
+  const expectedKobo = group.reduce((sum, o) => sum + o.paystack_paid, 0) * 100;
 
   let verified;
   try {

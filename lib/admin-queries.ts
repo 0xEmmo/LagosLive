@@ -637,6 +637,34 @@ export async function requestPayout(): Promise<void> {
   if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
 }
 
+export type HostPayoutBalance = {
+  sales_revenue: number;
+  platform_fee: number;
+  sales_earnings: number;
+  ledger_adjustments: number;
+  available: number;
+};
+
+export type HostPayoutAdjustment = {
+  id: number;
+  amount: number;
+  note: string;
+  reference: string | null;
+  created_at: string;
+};
+
+export async function fetchHostPayoutBalance(): Promise<HostPayoutBalance> {
+  const { data, error } = await supabase.rpc('host_payout_balance');
+  if (error) throw error;
+  return data?.[0] ?? { sales_revenue: 0, platform_fee: 0, sales_earnings: 0, ledger_adjustments: 0, available: 0 };
+}
+
+export async function fetchMyHostPayoutAdjustments(): Promise<HostPayoutAdjustment[]> {
+  const { data, error } = await supabase.rpc('my_host_payout_adjustments');
+  if (error) throw error;
+  return data ?? [];
+}
+
 // ---- Bank accounts (verified payout destinations) --------------------------
 
 export type HostBankAccount = {

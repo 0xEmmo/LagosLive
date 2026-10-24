@@ -230,7 +230,7 @@ export default function PartyDetailClient({
   const checkoutHref = cartTickets > 0 ? `/checkout/${party.id}?items=${encodeCartItems(cart)}` : `/checkout/${party.id}`;
 
   return (
-    <div className="mx-auto max-w-[720px] animate-fade-in">
+    <div className="ll-event-detail mx-auto max-w-[720px] animate-fade-in">
       <div
         className="sticky top-0 z-40 flex items-center justify-between border-b px-5 py-3.5 backdrop-blur-[22px] backdrop-saturate-150"
         style={{ background: 'var(--c-header)', borderColor: 'rgba(255,255,255,0.04)' }}
@@ -262,7 +262,7 @@ export default function PartyDetailClient({
       </div>
 
       {/* Event cover — one event, one cover image */}
-      <div className="relative h-[320px] overflow-hidden" style={{ background: party.gradient }}>
+      <div className="ll-event-detail__cover relative h-[320px] overflow-hidden" style={{ background: party.gradient }}>
         <PartyPhoto
           src={coverSrc}
           alt={`${party.title} cover`}
@@ -287,7 +287,7 @@ export default function PartyDetailClient({
             {party.title}
           </h1>
           <div
-            className="flex-shrink-0 rounded-xl px-3.5 py-2.5 text-center"
+            className="ll-event-detail__price-badge flex-shrink-0 rounded-xl px-3.5 py-2.5 text-center"
             style={{
               background: 'linear-gradient(135deg, rgba(43,104,255,0.12), rgba(110,141,255,0.10))',
               border: '1px solid rgba(43,104,255,0.2)',

@@ -1,0 +1,29 @@
+name: Expire pending ticket checkouts
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: expire-pending-orders
+  cancel-in-progress: false
+
+jobs:
+  expire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Release abandoned checkout reservations
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          test -n "$CRON_SECRET"
+          curl --fail --silent --show-error --retry 2 --max-time 60 \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "https://www.lagoslive.com.ng/api/cron/expire-pending-orders"
+          printf '\nPending checkout expiry sweep completed.\n'

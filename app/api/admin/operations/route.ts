@@ -161,7 +161,7 @@ export async function POST(request: Request) {
       }
       const { data: order } = await service
         .from('orders')
-        .select('id, total, payment_ref, refund_status, customer_email, guest_name, order_ref, party_id')
+        .select('id, total, wallet_paid, paystack_paid, payment_ref, refund_status, customer_email, guest_name, order_ref, party_id')
         .eq('id', op.orderId)
         .eq('payment_status', 'confirmed')
         .maybeSingle();
@@ -187,7 +187,7 @@ export async function POST(request: Request) {
           { status: 409 }
         );
       }
-      const refund = created as { id: string; status: string };
+      const refund = created as { id: string; status: string; wallet_amount: number; paystack_amount: number };
 
       if (refund.status === 'refunded') {
         // A replay of a refund that already succeeded.
@@ -219,8 +219,11 @@ export async function POST(request: Request) {
         );
       }
 
-      // 3. The provider decides, and only a provider refund id counts as success.
-      const result = await paystackRefundTransaction(order.payment_ref ?? '', order.total);
+      // 3. Only the provider-funded share is sent to Paystack. A wallet-only
+      // refund is completed internally, with its credit recorded by the ledger.
+      const result = refund.paystack_amount > 0
+        ? await paystackRefundTransaction(order.payment_ref ?? '', refund.paystack_amount)
+        : { outcome: 'refunded' as const, providerRefundId: null, providerStatus: 'wallet_only', message: '' };
       const { error: completeError } = await service.rpc('complete_order_refund', {
         p_refund_id: refund.id,
         p_outcome: result.outcome,

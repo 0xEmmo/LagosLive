@@ -74,6 +74,7 @@ export type Database = {
           party_id: number
           payment_method: string | null
           payment_ref: string | null
+          paystack_paid: number
           payment_status: string
           promo_code: string | null
           promo_discount: number | null
@@ -91,6 +92,7 @@ export type Database = {
           total: number
           unit_price: number
           user_id: string | null
+          wallet_paid: number
         }
         Insert: {
           admin_notes?: string | null
@@ -109,6 +111,7 @@ export type Database = {
           party_id: number
           payment_method?: string | null
           payment_ref?: string | null
+          wallet_paid?: number
           payment_status?: string
           promo_code?: string | null
           promo_discount?: number | null
@@ -160,6 +163,7 @@ export type Database = {
           total?: number
           unit_price?: number
           user_id?: string | null
+          wallet_paid?: number
         }
         Relationships: [
           {
@@ -656,6 +660,7 @@ page_views: number
           period_end: string
           period_start: string
           platform_fee: number
+          adjustment_total: number
           revenue: number
           reversal_code: string | null
           reversal_reason: string | null
@@ -678,6 +683,7 @@ page_views: number
           period_end: string
           period_start: string
           platform_fee?: number
+          adjustment_total?: number
           revenue?: number
           reversal_code?: string | null
           reversal_reason?: string | null
@@ -700,6 +706,7 @@ page_views: number
           period_end?: string
           period_start?: string
           platform_fee?: number
+          adjustment_total?: number
           revenue?: number
           reversal_code?: string | null
           reversal_reason?: string | null
@@ -1323,6 +1330,8 @@ page_views: number
           ends_at: string | null
           id: string
           max_uses: number | null
+          party_id: number | null
+          created_by: string | null
           starts_at: string | null
           updated_at: string
           uses: number
@@ -1336,6 +1345,8 @@ page_views: number
           ends_at?: string | null
           id?: string
           max_uses?: number | null
+          party_id?: number | null
+          created_by?: string | null
           starts_at?: string | null
           updated_at?: string
           uses?: number
@@ -1349,6 +1360,8 @@ page_views: number
           ends_at?: string | null
           id?: string
           max_uses?: number | null
+          party_id?: number | null
+          created_by?: string | null
           starts_at?: string | null
           updated_at?: string
           uses?: number
@@ -1659,6 +1672,8 @@ page_views: number
           id: string
           idempotency_key: string
           inventory_released_at: string | null
+          wallet_amount: number
+          paystack_amount: number
           order_id: string
           party_id: number
           provider: string
@@ -1682,6 +1697,8 @@ page_views: number
           id?: string
           idempotency_key: string
           inventory_released_at?: string | null
+          wallet_amount?: number
+          paystack_amount?: number
           order_id: string
           party_id: number
           provider?: string
@@ -1705,6 +1722,8 @@ page_views: number
           id?: string
           idempotency_key?: string
           inventory_released_at?: string | null
+          wallet_amount?: number
+          paystack_amount?: number
           order_id?: string
           party_id?: number
           provider?: string
@@ -1733,6 +1752,42 @@ page_views: number
             referencedRelation: "parties"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      wallets: {
+        Row: { user_id: string; balance: number; updated_at: string }
+        Insert: { user_id: string; balance?: number; updated_at?: string }
+        Update: { user_id?: string; balance?: number; updated_at?: string }
+        Relationships: []
+      }
+      wallet_ledger: {
+        Row: { id: number; user_id: string; amount: number; balance_after: number; kind: string; note: string; reference: string | null; actor_id: string | null; created_at: string }
+        Insert: { id?: number; user_id: string; amount: number; balance_after: number; kind: string; note: string; reference?: string | null; actor_id?: string | null; created_at?: string }
+        Update: { id?: number; user_id?: string; amount?: number; balance_after?: number; kind?: string; note?: string; reference?: string | null; actor_id?: string | null; created_at?: string }
+        Relationships: []
+      }
+      wallet_reservations: {
+        Row: { payment_ref: string; user_id: string; amount: number; status: string; created_at: string; updated_at: string }
+        Insert: { payment_ref: string; user_id: string; amount: number; status?: string; created_at?: string; updated_at?: string }
+        Update: { payment_ref?: string; user_id?: string; amount?: number; status?: string; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      host_payout_adjustments: {
+        Row: { id: number; host_user_id: string; amount: number; note: string; reference: string | null; actor_id: string | null; created_at: string }
+        Insert: { id?: number; host_user_id: string; amount: number; note: string; reference?: string | null; actor_id?: string | null; created_at?: string }
+        Update: { id?: number; host_user_id?: string; amount?: number; note?: string; reference?: string | null; actor_id?: string | null; created_at?: string }
+        Relationships: [
+          { foreignKeyName: "host_payout_adjustments_host_user_id_fkey"; columns: ["host_user_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+          { foreignKeyName: "host_payout_adjustments_actor_id_fkey"; columns: ["actor_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+        ]
+      }
+      payout_adjustment_items: {
+        Row: { id: number; payout_id: number; adjustment_id: number; amount: number; released: boolean; created_at: string }
+        Insert: { id?: number; payout_id: number; adjustment_id: number; amount: number; released?: boolean; created_at?: string }
+        Update: { id?: number; payout_id?: number; adjustment_id?: number; amount?: number; released?: boolean; created_at?: string }
+        Relationships: [
+          { foreignKeyName: "payout_adjustment_items_payout_id_fkey"; columns: ["payout_id"]; isOneToOne: false; referencedRelation: "payouts"; referencedColumns: ["id"] },
+          { foreignKeyName: "payout_adjustment_items_adjustment_id_fkey"; columns: ["adjustment_id"]; isOneToOne: false; referencedRelation: "host_payout_adjustments"; referencedColumns: ["id"] },
         ]
       }
     }
@@ -2112,6 +2167,50 @@ page_views: number
           p_quantity: number
         }
         Returns: undefined
+      }
+      reserve_wallet_for_payment: {
+        Args: { p_payment_ref: string; p_user_id: string | null }
+        Returns: Json
+      }
+      release_wallet_reservation: {
+        Args: { p_payment_ref: string }
+        Returns: boolean
+      }
+      settle_order_group_payment: {
+        Args: { p_payment_ref: string; p_payment_status: string }
+        Returns: undefined
+      }
+      host_payout_balance: {
+        Args: Record<PropertyKey, never>
+        Returns: { sales_revenue: number; platform_fee: number; sales_earnings: number; ledger_adjustments: number; available: number }[]
+      }
+      my_host_payout_adjustments: {
+        Args: Record<PropertyKey, never>
+        Returns: { id: number; amount: number; note: string; reference: string | null; created_at: string }[]
+      }
+      admin_host_payout_ledger: {
+        Args: { p_host_user_id: string }
+        Returns: Json
+      }
+      admin_adjust_host_payout: {
+        Args: { p_host_user_id: string; p_amount: number; p_note: string; p_reference?: string | null }
+        Returns: Json
+      }
+      adjust_wallet: {
+        Args: { p_user_id: string; p_amount: number; p_kind: string; p_note: string; p_reference?: string | null }
+        Returns: Database["public"]["Tables"]["wallets"]["Row"]
+      }
+      create_host_promo: {
+        Args: { p_party_id: number; p_code: string; p_discount_percent: number; p_description?: string | null; p_max_uses?: number | null; p_starts_at?: string | null; p_ends_at?: string | null }
+        Returns: string
+      }
+      issue_complimentary_ticket: {
+        Args: { p_party_id: number; p_ticket_type_id: number; p_quantity: number; p_email: string; p_guest_name?: string | null; p_user_id?: string | null }
+        Returns: Json
+      }
+      event_profitability: {
+        Args: { p_party_id: number }
+        Returns: { event_id: number; gross_revenue: number; discounts: number; refunds: number; platform_fee: number; net_platform_gain: number; host_earnings: number; paid_tickets: number; complimentary_tickets: number; wallet_used: number; paystack_collected: number }[]
       }
     }
     Enums: {

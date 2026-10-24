@@ -145,6 +145,9 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   const [promoError, setPromoError] = useState('');
   const [ticketToken, setTicketToken] = useState('');
   const [emailSent, setEmailSent] = useState<boolean | null>(null);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [walletApplied, setWalletApplied] = useState(0);
+  const [paystackPaid, setPaystackPaid] = useState(0);
   const purchaseTracked = useRef(false);
   const [lineTickets, setLineTickets] = useState<LineTicket[]>([]);
   const [successLines, setSuccessLines] = useState<SuccessLine[]>([]);
@@ -158,6 +161,24 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     if (user?.email) setEmail(user.email);
   }, [user?.email]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setWalletBalance(null);
+    if (!user?.id) return () => { cancelled = true; };
+    fetch('/api/wallet/balance', { cache: 'no-store' })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Wallet unavailable');
+        return response.json() as Promise<{ balance?: number }>;
+      })
+      .then((data) => {
+        if (!cancelled) setWalletBalance(Number(data.balance ?? 0));
+      })
+      .catch(() => {
+        if (!cancelled) setWalletBalance(null);
+      });
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   useEffect(() => {
     if (step !== 'success') return;
@@ -364,6 +385,8 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ orderId: oid, token: accessToken || undefined }),
     }).catch(() => {});
+    setWalletApplied(0);
+    setPaystackPaid(0);
     setPayState('cancelled');
   };
 
@@ -391,7 +414,7 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
       const res = await fetch('/api/promos/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code, partyId: party.id }),
       });
       const data = (await res.json()) as { valid?: boolean; code?: string; discountPercent?: number; error?: string };
       if (!res.ok || !data.valid || typeof data.discountPercent !== 'number') {
@@ -420,6 +443,8 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
   const startPayment = async () => {
     if (!hasSelection) return;
     setError('');
+    setWalletApplied(0);
+    setPaystackPaid(0);
     if (isGuest) {
       const trimmed = email.trim().toLowerCase();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(trimmed)) {
@@ -467,6 +492,8 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
         reference?: string;
         orderId?: string;
         amountKobo?: number;
+        walletAmount?: number;
+        paystackAmount?: number;
         ticketAccessToken?: string;
         emailSent?: boolean;
         lineTickets?: LineTicket[];
@@ -481,6 +508,8 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
       setOrderId(data.orderId ?? '');
       setTicketToken(data.ticketAccessToken ?? '');
       setEmailSent(data.emailSent ?? null);
+      setWalletApplied(Number(data.walletAmount ?? 0));
+      setPaystackPaid(Number(data.paystackAmount ?? ((data.amountKobo ?? 0) / 100)));
       if (data.lineTickets && data.lineTickets.length > 0) setLineTickets(data.lineTickets);
       if (data.free) {
         setStep('success');
@@ -763,6 +792,12 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
                 <span>-{formatNaira(appliedDiscount)}</span>
               </div>
             )}
+            {walletBalance !== null && walletBalance > 0 && netCartTotal > 0 && (
+              <div className="mb-2 flex justify-between text-[13px]" style={{ color: '#A7A8B5' }}>
+                <span>Wallet credit applied first</span>
+                <span>{formatNaira(Math.min(walletBalance, netCartTotal))}</span>
+              </div>
+            )}
             <div className="my-2 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
             <div className="flex justify-between font-heading text-[15px] font-bold" style={{ color: '#FFFFFF' }}>
               <span>Total</span>
@@ -846,6 +881,18 @@ export default function CheckoutPage({ params }: { params: { id: string } }) {
                   <div className="text-[13px] font-bold" style={{ color: '#5DE0B1' }}>
                     -{formatNaira(appliedDiscount)}
                   </div>
+                </div>
+              )}
+              {walletApplied > 0 && (
+                <div className="flex items-center justify-between border-t border-dashed px-[18px] py-3.5" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+                  <div className="text-xs font-semibold" style={{ color: '#5DE0B1' }}>Wallet credit applied</div>
+                  <div className="text-[13px] font-bold" style={{ color: '#5DE0B1' }}>-{formatNaira(walletApplied)}</div>
+                </div>
+              )}
+              {walletApplied > 0 && paystackPaid > 0 && (
+                <div className="flex items-center justify-between border-t border-dashed px-[18px] py-3.5" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+                  <div className="text-xs" style={{ color: '#A7A8B5' }}>Remaining paid via Paystack</div>
+                  <div className="text-[13px] font-semibold" style={{ color: '#FFFFFF' }}>{formatNaira(paystackPaid)}</div>
                 </div>
               )}
               <div className="px-[18px] py-4">

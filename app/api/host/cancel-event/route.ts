@@ -82,13 +82,15 @@ export async function POST(request: Request) {
       order_ref: string;
       refund_id: string | null;
       amount: number;
+      wallet_amount: number;
+      paystack_amount: number;
       quantity: number;
       customer_email: string | null;
       guest_name: string | null;
       needs_refund: boolean;
     }>;
 
-    // ---- Phase 2: talk to Paystack, one refund row at a time -----------------
+    // ---- Phase 2: refund each tender through its own ledger/provider ---------
     let refundedCount = 0;
     let failedCount = 0;
     let pendingCount = 0;
@@ -129,7 +131,9 @@ export async function POST(request: Request) {
           console.warn('[cancel-event] refund not in a submittable state', refundId, submitError.message);
           pendingCount += 1;
         } else {
-          const result = await paystackRefundTransaction(paymentRef, item.amount);
+          const result = item.paystack_amount > 0
+            ? await paystackRefundTransaction(paymentRef, item.paystack_amount)
+            : { outcome: 'refunded' as const, providerRefundId: null, providerStatus: 'wallet_only', message: '' };
           const { error: completeError } = await service.rpc('complete_order_refund', {
             p_refund_id: refundId,
             p_outcome: result.outcome,
@@ -164,9 +168,9 @@ export async function POST(request: Request) {
         }
       }
 
-      // Tell the guest what happened either way. The amount claimed is only ever
-      // the amount Paystack confirmed, so the email cannot promise money that
-      // did not move.
+      // Tell the guest the amount the refund ledger confirmed across both
+      // tender sources. Wallet refunds return to their wallet; Paystack refunds
+      // return through the provider.
       if (item.customer_email) {
         const claimed = await claimNotification(service, {
           userId: orderOwners.get(item.order_id) ?? undefined,

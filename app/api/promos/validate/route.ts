@@ -25,6 +25,17 @@ function allow(clientIp: string): boolean {
 
 const CODE_PATTERN = /^[A-Z0-9][A-Z0-9_-]{2,23}$/;
 
+interface PromoPreview {
+  code: string;
+  discount_percent: number;
+  active: boolean;
+  uses: number;
+  max_uses: number | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  party_id: number | null;
+}
+
 export async function POST(request: Request) {
   try {
     const ip =
@@ -35,21 +46,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 });
     }
 
-    const body = (await request.json()) as { code?: unknown };
+    const body = (await request.json()) as { code?: unknown; partyId?: unknown };
+    const partyId = Number(body.partyId);
+    if (!Number.isInteger(partyId) || partyId <= 0) {
+      return NextResponse.json({ error: 'A valid event ID is required.', valid: false }, { status: 400 });
+    }
     const code = typeof body.code === 'string' ? body.code.trim().toUpperCase() : '';
     if (!CODE_PATTERN.test(code)) {
       return NextResponse.json({ error: 'That promo code is not valid.', valid: false });
     }
 
     const service = createServiceSupabase();
-    const { data: promo } = await service
+    const { data: promoData } = await service
       .from('promos')
-      .select('code, discount_percent, active, uses, max_uses, starts_at, ends_at')
+      .select('code, discount_percent, active, uses, max_uses, starts_at, ends_at, party_id')
       .eq('code', code)
       .maybeSingle();
+    const promo = promoData as unknown as PromoPreview | null;
 
     if (!promo) {
       return NextResponse.json({ error: 'That promo code is not valid.', valid: false });
+    }
+    if (promo.party_id !== null && promo.party_id !== partyId) {
+      return NextResponse.json({ error: 'That promo code is not valid for this event.', valid: false });
     }
     if (!promo.active) {
       return NextResponse.json({ error: 'That promo code is paused right now.', valid: false });

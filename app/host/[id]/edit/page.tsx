@@ -130,6 +130,7 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
         ) : (
           <PartyForm initial={party} initialTicketTypes={ticketTypes} onSubmit={submit} disableSubmit={isAdminEditingOthersEvent} />
         )}
+        {!isAdminEditingOthersEvent && <HostCouponPanel partyId={party.id} />}
         <button
           onClick={() => setDeleteOpen(true)}
           className="mt-3 w-full rounded-xl py-[13px] text-sm font-semibold transition-all duration-200 active:scale-[0.98]"

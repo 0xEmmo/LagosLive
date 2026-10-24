@@ -46,9 +46,18 @@ export default function FinanceToolsPage() {
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [kind, setKind] = useState('admin_credit');
+  const [payoutHostEmail, setPayoutHostEmail] = useState('');
+  const [payoutHost, setPayoutHost] = useState<WalletUser | null>(null);
+  const [payoutHostBusy, setPayoutHostBusy] = useState(false);
+  const [payoutHostLedger, setPayoutHostLedger] = useState<HostPayoutLedger | null>(null);
+  const [payoutAdjustmentAmount, setPayoutAdjustmentAmount] = useState('');
+  const [payoutAdjustmentNote, setPayoutAdjustmentNote] = useState('');
+  const [payoutAdjustmentReference, setPayoutAdjustmentReference] = useState('');
   const [partyId, setPartyId] = useState('');
   const [typeId, setTypeId] = useState('');
   const [email, setEmail] = useState('');
+  const [compAccount, setCompAccount] = useState<WalletUser | null>(null);
+  const [compLookupBusy, setCompLookupBusy] = useState(false);
   const [name, setName] = useState('');
   const [qty, setQty] = useState('1');
   const [events, setEvents] = useState<AdminEventJoined[]>([]);
@@ -128,6 +137,81 @@ export default function FinanceToolsPage() {
     }
   };
 
+  const findPayoutHost = async () => {
+    const target = payoutHostEmail.trim().toLowerCase();
+    if (!target) return;
+    setPayoutHostBusy(true);
+    setPayoutHost(null);
+    setPayoutHostLedger(null);
+    try {
+      const response = await fetch(`/api/admin/users/search?email=${encodeURIComponent(target)}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      const account = data.user as WalletUser;
+      if (!['organizer', 'finance', 'support', 'admin', 'super_admin'].includes(account.role ?? '')) {
+        throw new Error('That account is not a host account.');
+      }
+      const ledgerResponse = await fetch(`/api/admin/host-payout-adjustments?hostUserId=${encodeURIComponent(account.id)}`);
+      const ledgerData = await ledgerResponse.json();
+      if (!ledgerResponse.ok) throw new Error(ledgerData.error);
+      setPayoutHost(account);
+      setPayoutHostLedger(ledgerData.ledger as HostPayoutLedger);
+    } catch (error) {
+      toast('Host account not found', error instanceof Error ? error.message : 'Could not load that host.');
+    } finally {
+      setPayoutHostBusy(false);
+    }
+  };
+
+  const applyHostPayoutAdjustment = async () => {
+    if (!payoutHost) return;
+    setPayoutHostBusy(true);
+    try {
+      const response = await fetch('/api/admin/host-payout-adjustments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hostUserId: payoutHost.id,
+          amount: Number(payoutAdjustmentAmount),
+          note: payoutAdjustmentNote,
+          reference: payoutAdjustmentReference,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      const ledger = data.ledger as HostPayoutLedger;
+      setPayoutHostLedger(ledger);
+      setPayoutAdjustmentAmount('');
+      setPayoutAdjustmentNote('');
+      setPayoutAdjustmentReference('');
+      toast('Host payout ledger updated', `New available balance: ${formatNaira(Number(ledger.available))}`);
+    } catch (error) {
+      toast('Could not adjust payout balance', error instanceof Error ? error.message : 'Try again.');
+    } finally {
+      setPayoutHostBusy(false);
+    }
+  };
+
+  const findCompAccount = async () => {
+    const target = email.trim().toLowerCase();
+    if (!target) return;
+    setCompLookupBusy(true);
+    setCompAccount(null);
+    try {
+      const response = await fetch(`/api/admin/users/search?email=${encodeURIComponent(target)}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      const account = data.user as WalletUser;
+      if (account.email.trim().toLowerCase() !== target) throw new Error('Use the exact email address on the Lagos Live account.');
+      setCompAccount(account);
+      toast('Account linked', `The free ticket will be attached to ${account.email}.`);
+    } catch (error) {
+      toast('No matching account', error instanceof Error ? error.message : 'The ticket can still be sent as a guest email.');
+    } finally {
+      setCompLookupBusy(false);
+    }
+  };
+
   const adjust = async () => {
     setBusy(true);
     try {
@@ -160,11 +244,12 @@ export default function FinanceToolsPage() {
   const gift = async () => {
     setBusy(true);
     try {
-      const r = await fetch('/api/admin/complimentary-tickets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ partyId: Number(partyId), ticketTypeId: Number(typeId), quantity: Number(qty), email, guestName: name }) });
+      const r = await fetch('/api/admin/complimentary-tickets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ partyId: Number(partyId), ticketTypeId: Number(typeId), quantity: Number(qty), email, guestName: name, userId: compAccount?.id ?? null }) });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error);
       toast('Ticket issued', `${d.orderRef}${d.emailSent ? ' · email sent' : ' · email could not be sent'}`);
       setEmail('');
+      setCompAccount(null);
       setName('');
     } catch (e) {
       toast('Could not issue ticket', e instanceof Error ? e.message : 'Try again.');
@@ -180,10 +265,10 @@ export default function FinanceToolsPage() {
         <div className="grid gap-5 lg:grid-cols-2">
           <section className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)' }}>
             <h2 className="mb-1 text-sm font-bold text-white">Wallet adjustment</h2>
-            <p className="mb-4 text-xs" style={{ color: '#A7A8B5' }}>Credit or debit a host/user for offline payments or a deal. Negative balances are blocked.</p>
+            <p className="mb-4 text-xs" style={{ color: '#A7A8B5' }}>Credit or debit a customer&apos;s spendable ticket wallet for a top-up, offline payment, or deal. This does not change host payout balances.</p>
             <div className="grid gap-3">
               <div className="flex items-end gap-2">
-                <div className="min-w-0 flex-1"><Field label="Host/user email" value={userEmail} onChange={(value) => { setUserEmail(value); setWalletUser(null); }} type="email" placeholder="host@example.com" /></div>
+                <div className="min-w-0 flex-1"><Field label="Customer account email" value={userEmail} onChange={(value) => { setUserEmail(value); setWalletUser(null); }} type="email" placeholder="customer@example.com" /></div>
                 <button type="button" disabled={userSearchBusy || !userEmail.trim()} onClick={findWalletUser} className="rounded-xl px-4 py-2.5 text-sm font-bold disabled:opacity-50" style={{ background: '#6E8DFF', color: '#FFF' }}>{userSearchBusy ? 'Finding…' : 'Find account'}</button>
               </div>
               {walletUser && <div className="rounded-lg px-3 py-2 text-[11px]" style={{ background: 'rgba(0,169,143,.1)', color: '#8DE8D6' }}>Selected account: <strong>{walletUser.name || walletUser.email}</strong> · {walletUser.email} · {walletUser.role || 'user'}</div>}
@@ -210,7 +295,12 @@ export default function FinanceToolsPage() {
                 {ticketTypes.map((tier) => { const remaining = Math.max(0, tier.quantity - tier.sold); return <option key={tier.id} value={tier.id} disabled={remaining < 1 || tier.active === false}>{tier.name} · {formatNaira(tier.price)} · {remaining} left</option>; })}
               </SelectField>
               {selectedTier && <div className="rounded-lg px-3 py-2 text-[11px]" style={{ background: 'rgba(0,169,143,.1)', color: '#8DE8D6' }}>Ticket tier ID automatically selected: <strong>{selectedTier.id}</strong> · {Math.max(0, selectedTier.quantity - selectedTier.sold)} remaining</div>}
-              <div className="grid grid-cols-2 gap-3"><Field label="Guest email" value={email} onChange={setEmail} type="email" /><Field label="Quantity" value={qty} onChange={setQty} type="number" /></div>
+              <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+                <Field label="Guest email" value={email} onChange={(value) => { setEmail(value); setCompAccount(null); }} type="email" />
+                <button type="button" disabled={compLookupBusy || !email.trim()} onClick={findCompAccount} className="min-h-10 rounded-xl px-3 py-2.5 text-xs font-bold disabled:opacity-50" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: '#FFF' }}>{compLookupBusy ? 'Finding…' : 'Link account'}</button>
+                <Field label="Quantity" value={qty} onChange={setQty} type="number" />
+              </div>
+              {compAccount && <div className="rounded-lg px-3 py-2 text-[11px]" style={{ background: 'rgba(0,169,143,.1)', color: '#8DE8D6' }}>Linked Lagos Live account: <strong>{compAccount.name || compAccount.email}</strong> · {compAccount.email}</div>}
               <Field label="Guest name (optional)" value={name} onChange={setName} />
               <button disabled={busy || !partyId || !typeId || !email} onClick={gift} className="rounded-xl px-4 py-2.5 text-sm font-bold disabled:opacity-50" style={{ background: '#00A98F', color: '#FFF' }}>Issue free ticket & email guest</button>
             </div>
@@ -218,12 +308,68 @@ export default function FinanceToolsPage() {
         </div>
 
         <section className="mt-5 rounded-2xl p-5" style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)' }}>
+          <h2 className="mb-1 text-sm font-bold text-white">Host payout ledger adjustment</h2>
+          <p className="mb-4 text-xs" style={{ color: '#A7A8B5' }}>Separate from customer wallets and event sales. A positive amount tops up withdrawable host payout balance; a negative amount deducts it. Every change requires an audit note.</p>
+          <div className="grid gap-3">
+            <div className="flex items-end gap-2">
+              <div className="min-w-0 flex-1"><Field label="Host account email" value={payoutHostEmail} onChange={(value) => { setPayoutHostEmail(value); setPayoutHost(null); setPayoutHostLedger(null); }} type="email" placeholder="host@example.com" /></div>
+              <button type="button" disabled={payoutHostBusy || !payoutHostEmail.trim()} onClick={findPayoutHost} className="rounded-xl px-4 py-2.5 text-sm font-bold disabled:opacity-50" style={{ background: '#6E8DFF', color: '#FFF' }}>{payoutHostBusy ? 'Loading…' : 'Find host'}</button>
+            </div>
+            {payoutHost && <div className="rounded-lg px-3 py-2 text-[11px]" style={{ background: 'rgba(0,169,143,.1)', color: '#8DE8D6' }}>Selected host: <strong>{payoutHost.name || payoutHost.email}</strong> · {payoutHost.email} · {payoutHost.role}</div>}
+            {payoutHostLedger && (
+              <>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                  {[
+                    ['Eligible sales', formatNaira(payoutHostLedger.sales_revenue)],
+                    ['Platform fee', formatNaira(payoutHostLedger.platform_fee)],
+                    ['Sales earnings', formatNaira(payoutHostLedger.sales_earnings)],
+                    ['Unclaimed adjustments', formatNaira(payoutHostLedger.ledger_adjustments)],
+                    ['Available', formatNaira(payoutHostLedger.available)],
+                  ].map(([label, value]) => <div key={label} className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,.04)' }}><div className="text-[10px] uppercase" style={{ color: '#6B6C80' }}>{label}</div><div className="mt-1 text-sm font-bold text-white">{value}</div></div>)}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Signed amount (₦; negative deducts)" value={payoutAdjustmentAmount} onChange={setPayoutAdjustmentAmount} type="number" placeholder="e.g. -5000 or 5000" />
+                  <Field label="Reference (optional)" value={payoutAdjustmentReference} onChange={setPayoutAdjustmentReference} placeholder="Offline transfer / deal reference" />
+                </div>
+                <Field label="Audit note" value={payoutAdjustmentNote} onChange={setPayoutAdjustmentNote} placeholder="Why this host payout balance is changing" />
+                <button type="button" disabled={payoutHostBusy || !payoutHost || !payoutAdjustmentAmount || !payoutAdjustmentNote.trim()} onClick={applyHostPayoutAdjustment} className="rounded-xl px-4 py-2.5 text-sm font-bold disabled:opacity-50" style={{ background: '#2B68FF', color: '#FFF' }}>{payoutHostBusy ? 'Saving…' : 'Record host payout adjustment'}</button>
+                {payoutHostLedger.ledger.length > 0 && (
+                  <div className="space-y-2 border-t pt-3" style={{ borderColor: 'rgba(255,255,255,.08)' }}>
+                    <div className="text-xs font-bold text-white">Adjustment history</div>
+                    {payoutHostLedger.ledger.slice(0, 8).map((entry) => <div key={entry.id} className="flex items-start justify-between gap-3 rounded-xl px-3 py-2" style={{ background: 'rgba(255,255,255,.04)' }}><div className="min-w-0"><div className="text-[11px] text-white">{entry.note}</div><div className="text-[10px]" style={{ color: '#6B6C80' }}>{new Date(entry.created_at).toLocaleString('en-NG')}{entry.reference ? ` · ${entry.reference}` : ''}</div></div><div className="shrink-0 text-xs font-bold" style={{ color: entry.amount < 0 ? '#FF8A00' : '#00A98F' }}>{entry.amount > 0 ? '+' : ''}{formatNaira(entry.amount)}</div></div>)}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </section>
+
+        <section className="mt-5 rounded-2xl p-5" style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)' }}>
           <h2 className="mb-1 text-sm font-bold text-white">Event gain</h2>
-          <p className="mb-4 text-xs" style={{ color: '#A7A8B5' }}>Select a listed event to calculate paid revenue, refunds, platform fee and host earnings. Complimentary orders are not included in revenue.</p>
+          <p className="mb-4 text-xs" style={{ color: '#A7A8B5' }}>Paid sales, completed refunds, platform gain and host earnings are reported separately. Complimentary tickets have their own count and are excluded from sales and payout.</p>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end"><div className="min-w-0 flex-1"><SelectField label="Listed event" value={partyId} onChange={selectEvent} disabled={eventsLoading}><option value="">{eventsLoading ? 'Loading listed events…' : 'Select an event'}</option>{selectableEvents.map((event) => <option key={event.id} value={event.id}>{eventLabel(event)}</option>)}</SelectField></div><button disabled={busy || !partyId} onClick={loadProfit} className="rounded-xl px-4 py-2.5 text-sm font-bold disabled:opacity-50" style={{ background: '#6E8DFF', color: '#FFF' }}>Calculate gain</button></div>
-          {profit && <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-5">{[['Gross revenue', profit.gross_revenue], ['Discounts', profit.discounts], ['Refunds', profit.refunds], ['Platform gain', profit.net_platform_gain], ['Host earnings', profit.host_earnings]].map(([label, value]) => <div key={String(label)} className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,.04)' }}><div className="text-[10px] uppercase" style={{ color: '#6B6C80' }}>{label}</div><div className="mt-1 text-sm font-bold text-white">{formatNaira(Number(value))}</div></div>)}</div>}
+          {profit && <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-5">{[
+            ['Gross revenue', formatNaira(Number(profit.gross_revenue ?? 0))],
+            ['Discounts', formatNaira(Number(profit.discounts ?? 0))],
+            ['Refunds', formatNaira(Number(profit.refunds ?? 0))],
+            ['Platform gain', formatNaira(Number(profit.net_platform_gain ?? 0))],
+            ['Host earnings', formatNaira(Number(profit.host_earnings ?? 0))],
+            ['Paid tickets', String(Number(profit.paid_tickets ?? 0))],
+            ['Complimentary', String(Number(profit.complimentary_tickets ?? 0))],
+            ['Wallet used', formatNaira(Number(profit.wallet_used ?? 0))],
+            ['Paystack collected', formatNaira(Number(profit.paystack_collected ?? 0))],
+          ].map(([label, value]) => <div key={label} className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,.04)' }}><div className="text-[10px] uppercase" style={{ color: '#6B6C80' }}>{label}</div><div className="mt-1 text-sm font-bold text-white">{value}</div></div>)}</div>}
         </section>
       </div>
     </AdminShell>
   );
 }
+type HostPayoutLedger = {
+  host_user_id: string;
+  sales_revenue: number;
+  platform_fee: number;
+  sales_earnings: number;
+  ledger_adjustments: number;
+  available: number;
+  ledger: { id: number; amount: number; note: string; reference: string | null; created_at: string }[];
+};

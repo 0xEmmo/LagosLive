@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { AlertTriangle, RefreshCw, Wallet, Landmark, CalendarDays, XCircle, Plus, ShieldCheck } from 'lucide-react';
 import HostDashboardNav from '@/components/HostDashboardNav';
 import { useLagosLiveStore } from '@/lib/store';
-import { fetchPayouts, fetchHostOrders, requestPayout, fetchBankAccounts, registerBankAccount, removeBankAccount, type PayoutRow, type AdminOrderJoined, type HostBankAccount, type NigerianBank } from '@/lib/admin-queries';
+import { fetchPayouts, fetchHostPayoutBalance, fetchMyHostPayoutAdjustments, requestPayout, fetchBankAccounts, registerBankAccount, removeBankAccount, type PayoutRow, type HostPayoutBalance, type HostPayoutAdjustment, type HostBankAccount, type NigerianBank } from '@/lib/admin-queries';
 import { formatNaira } from '@/lib/filters';
 
 const STATUS_BADGE: Record<string, { label: string; bg: string; color: string }> = {
@@ -37,7 +37,8 @@ export default function HostPayoutsPage() {
   const user = useLagosLiveStore((s) => s.user);
   const authLoading = useLagosLiveStore((s) => s.authLoading);
   const [payouts, setPayouts] = useState<PayoutRow[]>([]);
-  const [orders, setOrders] = useState<AdminOrderJoined[]>([]);
+  const [payoutBalance, setPayoutBalance] = useState<HostPayoutBalance | null>(null);
+  const [adjustments, setAdjustments] = useState<HostPayoutAdjustment[]>([]);
   const [status, setStatus] = useState<'loading' | 'error' | 'ok'>('loading');
   const [attempt, setAttempt] = useState(0);
   const [requesting, setRequesting] = useState(false);
@@ -119,10 +120,11 @@ export default function HostPayoutsPage() {
   useEffect(() => {
     if (!user) return;
     setStatus('loading');
-    Promise.all([fetchPayouts(), fetchHostOrders(user.id)])
-      .then(([p, o]) => {
+    Promise.all([fetchPayouts(), fetchHostPayoutBalance(), fetchMyHostPayoutAdjustments()])
+      .then(([p, balance, ledger]) => {
         setPayouts(p);
-        setOrders(o);
+        setPayoutBalance(balance);
+        setAdjustments(ledger);
         setStatus('ok');
       })
       .catch(() => setStatus('error'));
@@ -135,17 +137,10 @@ export default function HostPayoutsPage() {
   // so it counts as pending rather than paid.
   const pending = payouts.filter((p) => ['pending', 'processing', 'approved', 'transfer_pending'].includes(p.status)).reduce((s, p) => s + p.amount, 0);
 
-  const confirmed = orders.filter((o) => o.payment_status === 'confirmed');
-  const totalRevenue = confirmed.reduce((s, o) => s + o.total, 0);
-  // A payout awaiting reconciliation is not money that left, so it is neither
-  // paid out nor spoken for: the revenue is owed again and the host can be paid
-  // for it once finance finishes reviewing the reversal. It is deliberately not
-  // in the "pending" figure either, because nothing is in flight.
-  //
-  // 'transfer_pending' is in here because the money genuinely is committed and
-  // must not be counted as available to be requested again.
-  const paidOut = payouts.filter((p) => ['paid', 'approved', 'processing', 'pending', 'transfer_pending'].includes(p.status)).reduce((s, p) => s + p.amount, 0);
-  const available = Math.max(0, totalRevenue - paidOut);
+  const salesRevenue = payoutBalance?.sales_revenue ?? 0;
+  const platformFee = payoutBalance?.platform_fee ?? 0;
+  const ledgerAdjustments = payoutBalance?.ledger_adjustments ?? 0;
+  const available = payoutBalance?.available ?? 0;
   const underReview = payouts.filter((p) => p.status === 'reconciliation_required');
   // A verified bank account is a hard precondition, enforced by the server as
   // well: the button is disabled so the host is told why rather than being
@@ -153,7 +148,7 @@ export default function HostPayoutsPage() {
   const hasBankAccount = accounts.length > 0;
   const canRequest =
     underReview.length === 0 &&
-    available >= MIN_PAYOUT &&
+    available > 0 && (salesRevenue >= MIN_PAYOUT || available >= MIN_PAYOUT) &&
     user.hostVerificationStatus === 'verified' &&
     hasBankAccount;
   const requestBlockedReason = underReview.length > 0
@@ -162,7 +157,7 @@ export default function HostPayoutsPage() {
     ? 'Add a verified bank account to receive payouts.'
     : user.hostVerificationStatus !== 'verified'
     ? 'Complete host verification to request payouts.'
-    : `Minimum payout: ${formatNaira(MIN_PAYOUT)}. Available: ${formatNaira(available)}`;
+    : `Minimum payout: ${formatNaira(MIN_PAYOUT)} in eligible sales or payout adjustments. Available: ${formatNaira(available)}`;
 
   const handleRequestPayout = async () => {
     if (!user || !canRequest) return;
@@ -237,6 +232,24 @@ export default function HostPayoutsPage() {
               ))}
             </div>
           </div>
+        )}
+
+        {adjustments.length > 0 && (
+          <section className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="mb-1 text-[13px] font-semibold" style={{ color: '#FFFFFF' }}>Payout adjustment history</div>
+            <div className="mb-3 text-[11px]" style={{ color: '#A7A8B5' }}>This separate ledger changes payout availability only; it does not change event sales or ticket counts.</div>
+            <div className="space-y-2">
+              {adjustments.slice(0, 8).map((entry) => (
+                <div key={entry.id} className="flex items-start justify-between gap-3 rounded-xl px-3 py-2" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-semibold" style={{ color: '#FFFFFF' }}>{entry.note}</div>
+                    <div className="mt-0.5 text-[10px]" style={{ color: '#6B6C80' }}>{fmtDate(entry.created_at)}{entry.reference ? ` · ${entry.reference}` : ''}</div>
+                  </div>
+                  <div className="shrink-0 text-[12px] font-bold" style={{ color: entry.amount < 0 ? '#FF8A00' : '#00F5D4' }}>{entry.amount > 0 ? '+' : ''}{formatNaira(entry.amount)}</div>
+                </div>
+              ))}
+            </div>
+          </section>
         )}
 
         {user.hostVerificationStatus !== 'verified' && (
@@ -401,11 +414,12 @@ export default function HostPayoutsPage() {
             <div className="mt-3 border-t pt-3" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
               <div className="rounded-xl p-3 text-[12px]" style={{ background: 'rgba(255,255,255,0.03)', color: '#A7A8B5' }}>
                 <div className="mb-2 font-semibold" style={{ color: '#FFFFFF' }}>Payout Summary</div>
-                <div className="flex justify-between"><span>Gross revenue</span><span style={{ color: '#FFFFFF' }}>{formatNaira(available)}</span></div>
-                <div className="flex justify-between"><span>Platform fee (15%)</span><span style={{ color: '#FFFFFF' }}>-{formatNaira(Math.round(available * 0.15))}</span></div>
+                <div className="flex justify-between"><span>Eligible sales</span><span style={{ color: '#FFFFFF' }}>{formatNaira(salesRevenue)}</span></div>
+                <div className="flex justify-between"><span>Platform fee (15%)</span><span style={{ color: '#FFFFFF' }}>-{formatNaira(platformFee)}</span></div>
+                {ledgerAdjustments !== 0 && <div className="flex justify-between"><span>Payout ledger adjustments</span><span style={{ color: '#FFFFFF' }}>{ledgerAdjustments > 0 ? '+' : ''}{formatNaira(ledgerAdjustments)}</span></div>}
                 <div className="mt-1 flex justify-between border-t pt-1 font-bold" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-                  <span style={{ color: '#00F5D4' }}>You receive</span>
-                  <span style={{ color: '#00F5D4' }}>{formatNaira(available - Math.round(available * 0.15))}</span>
+                  <span style={{ color: '#00F5D4' }}>Available to request</span>
+                  <span style={{ color: '#00F5D4' }}>{formatNaira(available)}</span>
                 </div>
                 {activeAccount && (
                   <div className="mt-2 flex justify-between border-t pt-2" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
@@ -414,8 +428,7 @@ export default function HostPayoutsPage() {
                   </div>
                 )}
                 <div className="mt-2 text-[11px]">
-                  These figures are calculated by the server from your paid orders. The amount sent is
-                  whatever it confirms at the time you press the button.
+                  Sales and the 15% platform fee are calculated by the server. Payout adjustments are recorded separately and never change event sales reports.
                 </div>
               </div>
               <button
@@ -485,6 +498,7 @@ export default function HostPayoutsPage() {
                   <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t pt-3 text-[11px]" style={{ borderColor: 'rgba(255,255,255,0.05)', color: '#A7A8B5' }}>
                     <span>Revenue <span className="font-semibold" style={{ color: '#FFFFFF' }}>{formatNaira(p.revenue)}</span></span>
                     <span>Platform fee <span className="font-semibold" style={{ color: '#FFFFFF' }}>{formatNaira(p.platform_fee)}</span></span>
+                    {p.adjustment_total !== 0 && <span>Payout adjustments <span className="font-semibold" style={{ color: '#FFFFFF' }}>{p.adjustment_total > 0 ? '+' : ''}{formatNaira(p.adjustment_total)}</span></span>}
                     {p.bank_last4 && <span>Bank •••• {p.bank_last4}</span>}
                   </div>
                   {p.paid_at && <div className="mt-2 text-[10.5px]" style={{ color: '#6B6C80' }}>Paid {fmtDate(p.paid_at)}</div>}
